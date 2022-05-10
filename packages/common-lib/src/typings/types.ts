@@ -120,6 +120,22 @@ export namespace NHQ {
 		DateMod: string;
 	}
 
+	export interface Commanders {
+		ORGID: number;
+		Region: string;
+		Wing: string;
+		Unit: string;
+		CAPID: number;
+		DateAsg: string;
+		UsrID: string;
+		DateMod: string;
+		NameLast: string;
+		NameFirst: string;
+		NameMiddle: string;
+		NameSuffix: string;
+		Rank: string;
+	}
+
 	export interface OFlight {
 		CAPID: number;
 		Wing: string;

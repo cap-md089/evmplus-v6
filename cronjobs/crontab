@@ -15,6 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 
-1 0 * * * bash /usr/evm-plus/cronjobs/download.sh 2>&1 >> /var/log/cron.log
-1 0 * * 0 bash /usr/evm-plus/cronjobs/backup.sh 2>&1 >> /var/log/cron.log
+0 9 * * * bash /usr/evm-plus/cronjobs/download.sh 2>&1 >> /var/log/cron.log
+0 9 * * 0 bash /usr/evm-plus/cronjobs/backup.sh 2>&1 >> /var/log/cron.log
 

@@ -19,6 +19,7 @@
 
 import type { Schema } from '@mysql/xdevapi';
 import {
+	api,
 	AccountObject,
 	AsyncEither,
 	asyncLeft,
@@ -37,6 +38,7 @@ import {
 	errorGenerator,
 	get,
 	getORGIDsFromCAPAccount,
+	getFullMemberName,
 	isPartOfTeam,
 	iterFind,
 	Maybe,
@@ -114,6 +116,7 @@ export const resolveCAPReference = (schema: Schema) => (backends: Backends<[Team
 ) => <T extends CAPMemberReference = CAPMemberReference>(
 	reference: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	reference.type === 'CAPNHQMember' && typeof reference.id === 'number'
 		? getNHQMember(schema)(backends)(account)(reference.id)
 		: reference.type === 'CAPProspectiveMember' && typeof reference.id === 'string'
@@ -123,6 +126,7 @@ export const resolveCAPReference = (schema: Schema) => (backends: Backends<[Team
 export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => (
 	reference: CAPMemberReference,
 ): AsyncEither<ServerError, string> =>
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	reference.type === 'CAPNHQMember'
 		? getNameForCAPNHQMember(schema)(reference)
 		: reference.type === 'CAPProspectiveMember'
@@ -135,6 +139,59 @@ export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
 	member.type === 'CAPNHQMember'
 		? getNHQMemberAccount(backend)(member)
 		: getProspectiveMemberAccounts(backend)(member);
+
+interface CommanderInfo {
+	commanderName: string;
+	orgName: string;
+}
+
+const getCommanderName = Maybe.map<CommanderInfo, string>(get('commanderName'));
+const getOrgName = Maybe.map<CommanderInfo, string>(get('orgName'));
+
+export const getOrgInfo = (backend: Backends<[RawMySQLBackend]>) => (
+	member: CAPNHQMemberObject,
+): ServerEither<api.events.events.SquadronPOC> =>
+	AsyncEither.All([
+		asyncRight(
+			backend.getCollection('NHQ_Commanders'),
+			errorGenerator('Could not get unit commander name'),
+		)
+			.map(collection =>
+				findAndBind(collection, {
+					ORGID: member.orgid,
+				}),
+			)
+			.map(collectResults)
+			.map(commanders =>
+				commanders.length === 1
+					? Maybe.some({
+							commanderName: getFullMemberName({
+								memberRank: commanders[0].Rank,
+								nameFirst: commanders[0].NameFirst,
+								nameLast: commanders[0].NameLast,
+								nameMiddle: commanders[0].NameMiddle,
+								nameSuffix: commanders[0].NameSuffix,
+							}),
+							orgName: `${commanders[0].Wing}-${commanders[0].Unit}`,
+					  })
+					: Maybe.none(),
+			),
+		asyncRight(
+			backend.getCollection('NHQ_OrgContact'),
+			errorGenerator('Could not get unit contact information'),
+		)
+			.map(collection =>
+				findAndBind(collection, {
+					ORGID: member.orgid,
+				}),
+			)
+			.map(collectResults)
+			.map(contact => contact.map(({ Contact, Type }) => ({ contact: Contact, type: Type }))),
+	]).map(([commanderInfo, contacts]) => ({
+		commanderName: getCommanderName(commanderInfo),
+		contacts,
+		orgName: getOrgName(commanderInfo),
+	}));
 
 // -------------------------------------------------
 //
@@ -160,6 +217,7 @@ export const addTemporaryDutyPosition = (position: TemporaryDutyPosition) => (
 		});
 	} else {
 		if (dutyPosition.type === 'CAPUnit') {
+			// eslint-disable-next-line @typescript-eslint/no-for-in-array
 			for (const key in dutyPositions) {
 				if (dutyPositions.hasOwnProperty(key)) {
 					const oldDuty = dutyPositions[key];
@@ -252,6 +310,7 @@ export interface CAPMemberBackend {
 	) => (newMember: CAPNHQMemberReference) => ServerEither<void>;
 	getBirthday: (member: CAPMember) => ServerEither<DateTime>;
 	getPromotionRequirements: (member: CAPNHQMemberObject) => ServerEither<CadetPromotionStatus>;
+	getOrgInfo: (member: CAPNHQMemberObject) => ServerEither<api.events.events.SquadronPOC>;
 }
 
 export const getCAPMemberBackend = (req: BasicAccountRequest): CAPMemberBackend =>
@@ -290,6 +349,7 @@ export const getRequestFreeCAPMemberBackend = (
 		getCadetPromotionRequirements(mysqlx),
 		stringifyMemberReference,
 	),
+	getOrgInfo: memoize(getOrgInfo(prevBackends), ({ orgid }) => orgid),
 });
 
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
@@ -302,4 +362,5 @@ export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 	upgradeProspectiveMember: () => () => () => notImplementedError('upgradeProspectiveMember'),
 	getBirthday: () => notImplementedError('getBirthday'),
 	getPromotionRequirements: () => notImplementedError('getPromotionRequirements'),
+	getOrgInfo: () => notImplementedError('getOrgInfo'),
 });

@@ -54,8 +54,8 @@ import {
 import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-const memberSearchSQL = (schema: Schema, orgids: number[]): string => /* sql */ `SELECT
-	CAPID
+const memberSearchSQL = (schema: Schema, orgids: number[]): string => /* sql */ `SELECT DISTINCT
+	M.CAPID
 FROM
 	${schema.getName()}.NHQ_Member as M
 INNER JOIN

@@ -36,12 +36,21 @@ import {
 } from '../../types';
 
 /**
+ * contains information needed to display home unit commander contact information in EventViewer attendance spreadsheet download
+ */
+export interface SquadronPOC {
+	commanderName: MaybeObj<string>;
+	contacts: Array<{ contact: string; type: string }>;
+	orgName: MaybeObj<string>;
+}
+
+/**
  * Contains information needed to display an attendance record in EventViewer.tsx
  */
 export interface EventViewerAttendanceRecord {
 	record: AttendanceRecord;
 	member: MaybeObj<Member>;
-	orgName: MaybeObj<string>;
+	orgInformation: MaybeObj<SquadronPOC>;
 }
 
 /**

@@ -19,5 +19,6 @@
 		"packages/server-common",
 		"packages/server-jest-config",
 		"packages/util-cli",
-	]
+	],
+	"FSharp.suggestGitignore": false
 }

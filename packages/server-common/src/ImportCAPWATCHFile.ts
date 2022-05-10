@@ -29,12 +29,14 @@ import cadetActivities from './capwatch-modules/cadetactivities';
 import cadetDutyPosition from './capwatch-modules/cadetdutypositions';
 import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
 import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
+import commanders from './capwatch-modules/commanders';
 import dutyPosition from './capwatch-modules/dutyposition';
 import mbrAchievements from './capwatch-modules/mbrachievement';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
+import orgContact from './capwatch-modules/orgcontact';
 import { CAP } from './member/members';
 import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
@@ -180,21 +182,21 @@ const modules: Array<{
 		file: 'MbrChars.txt'
 	},*/
 	/* the following modules need only be imported occassionally as they do not change often */
-	/*	{
+	{
 		module: commanders,
-		file: 'Commanders.txt'
-	},*/
+		file: 'Commanders.txt',
+	},
 	{
 		module: organization,
 		file: 'Organization.txt',
+	},
+	{
+		module: orgContact,
+		file: 'OrgContact.txt',
 	} /*
 	{
 		module: orgAddresses,
 		file: 'OrganizationAddresses.txt'
-	},
-	{
-		module: orgContact,
-		file: 'OrganizationContacts.txt'
 	},
 	{
 		module: orgMeeting,
