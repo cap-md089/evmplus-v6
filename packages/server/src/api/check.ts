@@ -38,23 +38,26 @@ import {
 	Right,
 	ServerError,
 	SigninReturn,
-	toReference,
 	User,
 } from 'common-lib';
 import * as debug from 'debug';
 import {
 	Backends,
-	getCombinedMemberBackend,
 	MemberBackend,
 	ServerEither,
 	withBackends,
+	PAM,
+	getCombinedPAMBackend,
 } from 'server-common';
 import { Endpoint } from '..';
 import wrapper, { Wrapped } from '../lib/wrapper';
 
 const logFunc = debug('server:api:check');
 
-export const func: Endpoint<Backends<[MemberBackend]>, api.Check> = backend => req => {
+export const func: Endpoint<
+	Backends<[PAM.PAMBackend, MemberBackend]>,
+	api.Check
+> = backend => req => {
 	logFunc('Starting check request: %o', req.member);
 	return Maybe.cata<[User, ActiveSession], ServerEither<Wrapped<SigninReturn>>>(
 		always(
@@ -75,7 +78,7 @@ export const func: Endpoint<Backends<[MemberBackend]>, api.Check> = backend => r
 						asyncIterFilter<
 							EitherObj<ServerError, AccountLinkTarget>,
 							Right<AccountLinkTarget>
-						>(Either.isRight)(backend.getAdminAccountIDs(toReference(user))),
+						>(Either.isRight)(backend.getAdminAccountIDs(backend)(user)),
 					),
 				),
 				errorGenerator('Could not get admin account IDs for member'),
@@ -100,4 +103,4 @@ export const func: Endpoint<Backends<[MemberBackend]>, api.Check> = backend => r
 	)(Maybe.And([req.member, req.session]));
 };
 
-export default withBackends(func, getCombinedMemberBackend());
+export default withBackends(func, getCombinedPAMBackend());
