@@ -149,6 +149,13 @@ export const ReportsWidget = withFetchApi(
 									SQR 60-1 Cadet status report &nbsp;
 									<Button onClick={() => this.createSQR601()} buttonType="none">
 										pdf
+									</Button>{' '}
+									&nbsp;
+									<Button
+										buttonType="none"
+										onClick={this.createsqr601Spreadsheet}
+									>
+										xlsx
 									</Button>
 									<br />
 								</div>
@@ -292,6 +299,46 @@ export const ReportsWidget = withFetchApi(
 
 			wsName = 'HFZStatus';
 			const [wsDataAttendance, widths] = spreadsheets.sqr6020MembersXL(
+				this.state.nhqMembers,
+				this.state.newMembers,
+				// this.props.registry,
+			);
+			ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+			sheet = spreadsheets.Formatsqr6020MembersXL(ws, widths, wsDataAttendance.length);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
+			XLSX.writeFile(wb, `SQR 60-20 ${this.props.account.id}-${formatdate}.xlsx`);
+		};
+
+		private createsqr601Spreadsheet = async (): Promise<void> => {
+			if (this.state.state !== 'LOADED' || !this.props.member) {
+				return;
+			}
+
+			const XLSX = await import('xlsx');
+
+			const wb = XLSX.utils.book_new();
+
+			let wsName = 'UnitInfo';
+			const wsDataEvent = spreadsheets.sqr6020XL();
+			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let sheet = spreadsheets.Formatsqr6020XL(ws);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+			wsName = 'CadetInfo';
+			const [wsDataAttendance, widths] = spreadsheets.sqr601MembersXL(
 				this.state.nhqMembers,
 				this.state.newMembers,
 				// this.props.registry,
