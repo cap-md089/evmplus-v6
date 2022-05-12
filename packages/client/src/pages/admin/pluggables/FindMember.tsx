@@ -29,6 +29,7 @@ import {
 	HTTPError,
 	isRioux,
 	Maybe,
+	NHQ,
 	pipe,
 	stringifyMemberReference,
 } from 'common-lib';
@@ -589,7 +590,12 @@ const MemberSearchRenderSearchedMembers = (): ReactElement => {
 							: ''
 					}
 				>
-					{getFullMemberName(val.member)}
+					{getFullMemberName(val.member)}&nbsp;
+					{Maybe.orSome('')(
+						Maybe.map((org: NHQ.Organization) => '[' + org.Wing + '-' + org.Unit + ']')(
+							val.organization,
+						),
+					)}
 				</li>
 			))}
 		</ul>
