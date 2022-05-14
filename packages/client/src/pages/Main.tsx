@@ -74,6 +74,11 @@ export default class Main extends Page<PageProps, MainState> {
 				text: 'Team list',
 				type: 'Link',
 			},
+			{
+				target: '/changelog',
+				text: 'Change log',
+				type: 'Link',
+			},
 		];
 
 		if (this.props.member) {

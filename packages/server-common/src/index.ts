@@ -46,6 +46,7 @@ export {
 	TimeBackend,
 	withBackends,
 } from './backends';
+export { getChangeLogBackend, ChangeLogBackend } from './ChangeLog';
 export * as conf from './conf';
 export * from './Error';
 export {
