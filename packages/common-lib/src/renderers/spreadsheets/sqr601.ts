@@ -447,7 +447,7 @@ export const Formatsqr601MembersXL = (
 	columnMaxWidths: number[],
 	numRows: number,
 ): XLSX.Sheet => {
-	const dateFormat = 'mm/dd/yyyy';
+	const dateFormat = 'yyyy-mm-dd';
 	const dateWidth = dateFormat.length + 1;
 	const rowHeight = 22;
 

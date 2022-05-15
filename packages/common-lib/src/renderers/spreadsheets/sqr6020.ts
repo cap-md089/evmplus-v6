@@ -254,7 +254,7 @@ export const Formatsqr6020MembersXL = (
 	columnMaxWidths: number[],
 	numRows: number,
 ): XLSX.Sheet => {
-	const dateFormat = 'mm/dd/yyyy';
+	const dateFormat = 'yyyy-mm-dd';
 	const dateWidth = dateFormat.length + 1;
 	// let rowCount = 0;
 	// let emails = '';

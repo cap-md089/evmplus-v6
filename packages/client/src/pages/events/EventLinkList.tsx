@@ -30,10 +30,12 @@ import {
 	Permissions,
 	RadioReturnWithOther,
 	RawResolvedEventObject,
+	spreadsheets,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
+import Button from '../../components/Button';
 import Dialogue, { DialogueButtons } from '../../components/dialogues/Dialogue';
 import DialogueButtonForm from '../../components/dialogues/DialogueButtonForm';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
@@ -230,6 +232,10 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			<div>No events to list</div>
 		) : (
 			<div className="eventlinklist">
+				<Button buttonType="none" onClick={this.createELSpreadsheet}>
+					Click here to download Event List in xlsx format
+				</Button>
+				<br />
 				<h3>
 					Click on the event number to view details. Click on the event name to edit
 					event. Click on the Event Status link to change the event status from this page.
@@ -388,5 +394,41 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 				statusSetError: Maybe.some(result.value.message),
 			});
 		}
+	};
+
+	private createELSpreadsheet = async (): Promise<void> => {
+		if (this.state.state !== 'LOADED' || !this.props.member) {
+			return;
+		}
+
+		const XLSX = await import('xlsx');
+
+		const wb = XLSX.utils.book_new();
+
+		const wsName = 'UnitInfo';
+		const [wsEventData, widths, eventids] = spreadsheets.EventListXL(this.state.events);
+		const ws = XLSX.utils.aoa_to_sheet(wsEventData);
+		const myurl = new URL(`${window.location.href}`);
+		const sheet = spreadsheets.FormatEventListXL(
+			ws,
+			widths,
+			eventids,
+			wsEventData.length,
+			myurl.protocol + '//' + myurl.hostname + '/eventviewer/',
+		);
+		XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+		const now = new Date();
+		const formatdate =
+			now.getFullYear().toString() +
+			'-' +
+			(now.getMonth() + 1).toString().padStart(2, '0') +
+			'-' +
+			now.getDate().toString().padStart(2, '0') +
+			' ' +
+			now.getHours().toString().padStart(2, '0') +
+			now.getMinutes().toString().padStart(2, '0');
+
+		XLSX.writeFile(wb, `EventList ${this.props.account.id}-${formatdate}.xlsx`);
 	};
 }

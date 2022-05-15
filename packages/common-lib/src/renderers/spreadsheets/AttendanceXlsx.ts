@@ -351,7 +351,7 @@ export const FormatAttendanceXL = (
 	encodeCell: (val: { c: number; r: number }) => string,
 	numRows: number,
 ): XLSX.Sheet => {
-	const dateFormat = 'mm/dd/yyyy hh:mm';
+	const dateFormat = 'yyyy-mm-dd hh:mm';
 	const numStaticColumns = 12;
 	let rowCount = 0;
 	let emails = '';
