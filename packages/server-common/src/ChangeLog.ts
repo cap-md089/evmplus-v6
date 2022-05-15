@@ -30,14 +30,15 @@ export const getChangeLog = (schema: Backends<[RawMySQLBackend]>) => (): ServerE
 		errorGenerator('Could not get change log'),
 	).map(collectResults);
 
-export const addChangeLog = (schema: Backends<[RawMySQLBackend]>) => (values: {
-	entryDateTime: number;
-	entryCAPID: number;
-	noteDateTime: number;
-	noteText: string;
-}): ServerEither<ChangeLogItem> =>
+export const addChangeLog = (schema: Backends<[RawMySQLBackend]>) => (
+	values: ChangeLogItem,
+): ServerEither<ChangeLogItem> =>
 	asyncRight(schema.getCollection('ChangeLog'), errorGenerator('Could not add to change log'))
-		.map(collection => collection.add(values).execute())
+		.map(collection =>
+			collection
+				.add({ ...values, noteText: values.noteText.replace(/\\n/g, '\n') })
+				.execute(),
+		)
 		.map(always(values));
 
 export interface ChangeLogBackend {
