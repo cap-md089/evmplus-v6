@@ -2,6 +2,7 @@ import { PAMTypes } from '..';
 import {
 	AccountObject,
 	AllAudits,
+	ChangeLogItem,
 	DiscordAccount,
 	Errors,
 	NHQ,
@@ -30,6 +31,7 @@ export interface TableNameMap {
 	Accounts: AccountObject;
 	Attendance: RawAttendanceDBRecord;
 	Audits: AllAudits;
+	ChangeLog: ChangeLogItem;
 	DiscordAccounts: DiscordAccount;
 	Errors: Errors;
 	Events: RawEventObject;
