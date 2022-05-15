@@ -41,6 +41,7 @@ import FlightAssign from '../pages/admin/pages/FlightAssign';
 // import Notifications from '../pages/admin/pages/Notifications';
 import RegEdit from '../pages/admin/pages/RegEdit';
 import Calendar from '../pages/Calendar';
+import ChangeLog from '../pages/changelog/ChangeLog';
 import Debug from '../pages/Debug';
 import Drive from '../pages/drive/Drive';
 import AddEvent from '../pages/events/AddEvent';
@@ -110,6 +111,11 @@ const pages: Array<{
 		url: '/modifyevent/:id',
 		component: ModifyEvent,
 		exact: false,
+	},
+	{
+		url: '/changelog',
+		component: ChangeLog,
+		exact: true,
 	},
 	{
 		url: '/calendar/:month?/:year?',

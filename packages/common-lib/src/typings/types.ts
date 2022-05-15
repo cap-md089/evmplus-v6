@@ -3185,6 +3185,28 @@ export interface RegistryValues extends AccountIdentifiable {
 }
 
 /**
+ * Change Log / Release Notes Items
+ */
+export interface ChangeLogItem {
+	/**
+	 * the date and time the change log was entered
+	 */
+	entryDateTime: number;
+	/**
+	 * the CAPID of the person who entered the changelog item
+	 */
+	entryCAPID: number;
+	/**
+	 * the date and time the change went into effect
+	 */
+	noteDateTime: number;
+	/**
+	 * the textual description of the system change
+	 */
+	noteText: string;
+}
+
+/**
  * A team member being added or modified
  */
 export interface NewTeamMember {

@@ -33,6 +33,7 @@ import { getAccountID, MySQLRequest } from 'server-common';
 // API Routers
 import accountcheck from './api/accountcheck';
 import check from './api/check';
+import changelog from './api/changelog';
 import echo from './api/echo';
 import errors from './api/errors';
 import servererror from './api/errors/servererror';
@@ -173,6 +174,7 @@ export default async (
 		);
 	}
 
+	router.use(changelog);
 	router.use(errors);
 	router.use(events);
 	router.use(files);

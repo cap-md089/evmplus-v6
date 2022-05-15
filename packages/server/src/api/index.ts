@@ -31,6 +31,8 @@ import { func as getattendance } from './events/attendance/getattendance';
 import { func as modifyattendance } from './events/attendance/modifyattendance';
 import { func as adddebrief } from './events/debrief/adddebrief';
 import { func as deletedebrief } from './events/debrief/deletedebrief';
+import { func as getchangelog } from './changelog/get';
+import { func as addchangelog } from './changelog/add';
 import { func as addevent } from './events/events/addevent';
 import { func as copyevent } from './events/events/copy';
 import { func as deleteevent } from './events/events/deleteevent';
@@ -111,6 +113,10 @@ export const api = {
 		client: clienterror,
 		geterrors,
 		markerrordone,
+	},
+	changelog: {
+		get: getchangelog,
+		add: addchangelog,
 	},
 	events: {
 		events: {

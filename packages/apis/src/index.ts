@@ -23,6 +23,10 @@ import { api, defaultAPICallBase } from 'common-lib';
 // Must be type definition to work with macros
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type Tree = {
+	changelog: {
+		get: api.changelog.GetChangeLog;
+		add: api.changelog.AddChangeLog;
+	};
 	errors: {
 		clientError: api.errors.ClientError;
 		getErrors: api.errors.GetErrors;

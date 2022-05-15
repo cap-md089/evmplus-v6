@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -17,10 +17,13 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Either, isRioux, Member, toReference } from 'common-lib';
+import { Either, isRioux, Member, toReference, ChangeLogItem } from 'common-lib';
 import React from 'react';
 import { DialogueButtons } from '../../../components/dialogues/Dialogue';
+import DialogueButtonForm from '../../../components/dialogues/DialogueButtonForm';
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
+import TextBox from '../../../components/form-inputs/TextBox';
+import { DateTimeInput, Label, TextInput } from '../../../components/forms/SimpleForm';
 import LoaderShort from '../../../components/LoaderShort';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
@@ -100,6 +103,46 @@ export default class SuWidget extends Page<PageProps, SuState> {
 						>
 							Select a member
 						</MemberSelectorButton>
+						<br />
+						<br />
+						<DialogueButtonForm<ChangeLogItem>
+							buttonText="Add release note"
+							buttonClass="underline-button"
+							buttonType="none"
+							displayButtons={DialogueButtons.OK_CANCEL}
+							onOk={this.addNote}
+							title="Add release note"
+							labels={['Add note', 'Cancel']}
+							values={{
+								entryDateTime: Date.now(),
+								entryCAPID: !!this.props.member ? +this.props.member.id : 0,
+								noteDateTime: Date.now(),
+								noteText: 'Enter changelog item here',
+							}}
+						>
+							<TextBox name="null">
+								<span
+									style={{
+										lineHeight: '1px',
+									}}
+								>
+									Add your relase note in the text box. Markdown formatting is
+									supported. Use '\n' to force a new line.
+								</span>
+							</TextBox>
+
+							<TextInput name="noteText" />
+
+							{/* <Label>Copy files to new event</Label>
+								<Checkbox name="copyFiles" /> */}
+
+							<Label>Change log date</Label>
+							<DateTimeInput
+								name="noteDateTime"
+								time={true}
+								originalTimeZoneOffset={'America/New_York'}
+							/>
+						</DialogueButtonForm>
 					</div>
 				)}
 			</div>
@@ -123,5 +166,27 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		} else {
 			this.props.authorizeUser(newMember.value);
 		}
+	};
+
+	private addNote = async ({
+		entryDateTime,
+		entryCAPID,
+		noteDateTime,
+		noteText,
+	}: ChangeLogItem): Promise<void> => {
+		const mem = this.props.member;
+		if (!mem) {
+			return;
+		}
+
+		await fetchApi.changelog.add(
+			{},
+			{
+				entryDateTime,
+				entryCAPID,
+				noteDateTime,
+				noteText,
+			},
+		);
 	};
 }

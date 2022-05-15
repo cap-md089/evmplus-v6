@@ -25,6 +25,7 @@
 import { APIEither } from '../api';
 import { AccountObject, FileObject, SigninRequest, SigninReturn } from '../types';
 
+export * as changelog from './changelog';
 export * as errors from './errors';
 export * as events from './events';
 export * as files from './files';
