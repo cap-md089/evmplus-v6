@@ -48,7 +48,7 @@ import {
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-const upcomingQuery = 'showUpcoming = true AND endDateTime > :endDateTime';
+const upcomingQuery = 'showUpcoming = true AND pickupDateTime > :endDateTime';
 
 export const func: Endpoint<
 	Backends<[TimeBackend, AccountBackend, EventsBackend, RegistryBackend]>,
