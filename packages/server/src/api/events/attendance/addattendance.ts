@@ -26,12 +26,14 @@ import {
 	// asyncEither,
 	AsyncEither,
 	asyncRight,
+	AttendanceRecord,
 	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
 	// destroy,
 	Either,
 	errorGenerator,
 	EventObject,
+	get,
 	getFullMemberName,
 	getMemberEmail,
 	// getMemberEmail,
@@ -141,19 +143,22 @@ const addAttendance: Endpoint<
 					),
 				)
 				// .tap(writeEmail(backend)(registry)(req.member)(event)),
-				.tap(() => {
-					const emailMaybe = Maybe.And([
-						getMemberEmail(req.member.contact),
-						event.emailBody,
-					]);
-
-					if (Maybe.isSome(emailMaybe)) {
-						const [email, emailBody] = emailMaybe.value;
-						return sendEmailToMember(backend)(req.account)(req.member)(event)(email)(
-							emailBody,
-						);
-					}
-				}),
+				.flatMap<AttendanceRecord>(rec =>
+					backend
+						.getMember(req.account)(rec.memberID)
+						.map(get('contact'))
+						.map(getMemberEmail)
+						.map(email => Maybe.And([email, event.emailBody]))
+						.map(
+							Maybe.map(([email, emailBody]) =>
+								sendEmailToMember(backend)(req.account)(req.member)(event)(email)(
+									emailBody,
+								),
+							),
+						)
+						.flatMap(Maybe.orSome(asyncRight(void 0, errorGenerator('huh?'))))
+						.map(always(rec)),
+				),
 		)
 		.map(wrapper);
 
