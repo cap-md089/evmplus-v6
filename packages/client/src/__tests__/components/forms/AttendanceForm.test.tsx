@@ -25,6 +25,7 @@ import {
 	AttendanceStatus,
 	CAPNHQMemberReference,
 	getDefaultMemberPermissions,
+	MemberCreateError,
 	toReference,
 } from 'common-lib';
 import {
@@ -65,6 +66,15 @@ const testUser1 = {
 // };
 const testRegistry = getTestRegistry(testAccount);
 
+const testSigninReturn1 = {
+	error: MemberCreateError.NONE,
+	member: testUser1,
+	notificationCount: 0,
+	taskCount: 0,
+	linkableAccounts: [],
+	requirementTags: [],
+};
+
 describe('AttendanceView', () => {
 	it('should render without crashing', () => {
 		act(() => {
@@ -75,6 +85,7 @@ describe('AttendanceView', () => {
 					account={testAccount}
 					event={testEvent}
 					member={testUser1}
+					fullMember={testSigninReturn1}
 					updateRecord={() => void 0}
 					updated={false}
 					clearUpdated={() => void 0}
@@ -115,6 +126,7 @@ describe('AttendanceView', () => {
 					account={testAccount}
 					event={testEvent}
 					member={testUser1}
+					fullMember={testSigninReturn1}
 					updateRecord={() => void 0}
 					updated={false}
 					clearUpdated={() => void 0}
