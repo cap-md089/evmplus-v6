@@ -111,11 +111,13 @@ export const sendEmail = (config: ServerConfiguration) => (bccAddresses: string[
 				})
 				.promise(),
 		)
-		.flatMap(result =>
+		.leftTap(e => console.log('Email error 1 occurred:', e))
+		.flatMap<void>(result =>
 			!!result.$response.error
 				? asyncLeft(errorGenerator('Could not send email')(result.$response.error))
 				: asyncRight(void 0, errorGenerator('Could not send email')),
-		);
+		)
+		.leftTap(e => console.log('Email error 2 occurred:', e));
 
 export interface EmailToSend {
 	to: string[];

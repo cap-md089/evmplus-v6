@@ -221,7 +221,9 @@ const requirementTagLabels = [
 	'VIR SCC- The Complaint Process and Your Responsibility',
 ];
 
-export const defaultEmailBody = 'signed up for event';
+export const defaultEmailBody =
+	'%%MEMBER_NAME%%, you are now signed up for event %%EVENT_NAME%% on %%START_DATE%%.' +
+	'\n\nSee [the event page here](%%EVENT_LINK%%) for complete event details.';
 
 export interface NewEventFormValues {
 	name: string;
@@ -402,7 +404,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	limitSignupsToTeam: false,
 	fileIDs: [],
 	privateAttendance: false,
-	useEmailBody: false,
+	useEmailBody: true,
 	emailBody: { body: defaultEmailBody },
 	requirementTag: 0,
 });
@@ -586,13 +588,18 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 			});
 		}
 		if (this.emailBodyRef.current) {
-			this.setState({
-				emailBody: new mde({
-					element: this.emailBodyRef.current,
-					...mdeOptions,
-					initialValue: this.props.event.emailBody.body,
-				}),
-			});
+			this.setState(
+				{
+					emailBody: new mde({
+						element: this.emailBodyRef.current,
+						...mdeOptions,
+						initialValue: this.props.event.emailBody.body,
+					}),
+				},
+				() => {
+					this.state.emailBody?.value?.(this.props.event.emailBody.body);
+				},
+			);
 		}
 	}
 
@@ -775,10 +782,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 							directly
 							<br />
 							Like C/CMSgt John Doe
+							<br />
+							<br />
+							(Click in the editor box to display existing text)
 						</Label>
-						<div className="formbox">
+						<TextBox>
 							<textarea ref={this.emailBodyRef} />
-						</div>
+						</TextBox>
 					</FormBlock>
 
 					{/* <Label>Allow signing up part time</Label>
@@ -961,30 +971,37 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		error: boolean,
 		fieldChanged: keyof NewEventFormValues | 'addPOCbyID',
 	): void => {
-		if (fieldChanged !== 'addPOCbyID') {
-			if (!this.props.isEventUpdate) {
-				const dateTimesHaveBeenModified =
-					changed.startDateTime || changed.endDateTime || changed.pickupDateTime;
+		switch (fieldChanged) {
+			case 'addPOCbyID':
+				this.setState({ addPOCbyID: event.addPOCbyID, pocAddbyIDError: null });
+				break;
 
-				if (!dateTimesHaveBeenModified) {
-					event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
-					event.endDateTime = event.meetDateTime + (900 + 7200) * 1000; // Two hours, 15 minutes
-					event.pickupDateTime = event.meetDateTime + (900 + 7200 + 900) * 1000; // Two hours, 30 minutes
-				} else if (!changed.pickupDateTime) {
-					event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
+			/* case 'useEmailBody' :
+				break;*/
+
+			default:
+				if (!this.props.isEventUpdate) {
+					const dateTimesHaveBeenModified =
+						changed.startDateTime || changed.endDateTime || changed.pickupDateTime;
+
+					if (!dateTimesHaveBeenModified) {
+						event.startDateTime = event.meetDateTime + 900 * 1000; // Fifteen minutes
+						event.endDateTime = event.meetDateTime + (900 + 7200) * 1000; // Two hours, 15 minutes
+						event.pickupDateTime = event.meetDateTime + (900 + 7200 + 900) * 1000; // Two hours, 30 minutes
+					} else if (!changed.pickupDateTime) {
+						event.pickupDateTime = event.endDateTime + 900 * 1000; // Fifteen minutes
+					}
+
+					const locationsHaveBeenModified = changed.location || changed.pickupLocation;
+
+					if (!locationsHaveBeenModified) {
+						event.location = event.meetLocation;
+						event.pickupLocation = event.meetLocation;
+					}
 				}
 
-				const locationsHaveBeenModified = changed.location || changed.pickupLocation;
-
-				if (!locationsHaveBeenModified) {
-					event.location = event.meetLocation;
-					event.pickupLocation = event.meetLocation;
-				}
-			}
-
-			this.props.onEventChange(event, !error);
-		} else {
-			this.setState({ addPOCbyID: event.addPOCbyID, pocAddbyIDError: null });
+				this.props.onEventChange(event, !error);
+				break;
 		}
 	};
 

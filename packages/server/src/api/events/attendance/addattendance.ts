@@ -19,33 +19,36 @@
 
 import { ServerAPIRequestParameter } from 'auto-client-api';
 import {
+	AccountObject,
 	always,
 	api,
 	applyCustomAttendanceFields,
+	// asyncEither,
 	AsyncEither,
 	asyncRight,
 	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
-	destroy,
+	// destroy,
 	Either,
 	errorGenerator,
 	EventObject,
 	getFullMemberName,
 	getMemberEmail,
+	// getMemberEmail,
 	hasBasicAttendanceManagementPermission,
 	isValidMemberReference,
 	Maybe,
 	MaybeObj,
 	Member,
 	NewAttendanceRecord,
-	RawResolvedEventObject,
+	// RawResolvedEventObject,
 	RawTeamObject,
-	RegistryValues,
+	// RegistryValues,
 	ServerError,
 	SessionType,
 	toReference,
 } from 'common-lib';
-import { toHTML } from 'markdown';
+import * as markdown from 'markdown';
 import {
 	AttendanceBackend,
 	Backends,
@@ -63,7 +66,8 @@ import {
 	PAM,
 	RawMySQLBackend,
 	RegistryBackend,
-	SUPPORT_BCC_ADDRESS,
+	ServerEither,
+	// SUPPORT_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -116,7 +120,7 @@ const addAttendance: Endpoint<
 			),
 		backend.getRegistry(req.account),
 	])
-		.flatMap(([[event, teamMaybe], registry]) =>
+		.flatMap(([[event, teamMaybe]]) =>
 			getRecord(backend)(req)(event)(teamMaybe)
 				.flatMap(rec =>
 					Either.map<ServerError, void, Required<NewAttendanceRecord>>(always(rec))(
@@ -136,9 +140,29 @@ const addAttendance: Endpoint<
 						hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe),
 					),
 				)
-				.tap(writeEmail(backend)(registry)(req.member)(event)),
+				// .tap(writeEmail(backend)(registry)(req.member)(event)),
+				.tap(() => {
+					const emailMaybe = Maybe.And([
+						getMemberEmail(req.member.contact),
+						event.emailBody,
+					]);
+
+					if (Maybe.isSome(emailMaybe)) {
+						const [email, emailBody] = emailMaybe.value;
+						return sendEmailToMember(backend)(req.account)(req.member)(event)(email)(
+							emailBody,
+						);
+					}
+				}),
 		)
 		.map(wrapper);
+
+// 	const emailMaybe = getMemberEmail(member.contact);
+
+// 	if (Maybe.isSome(emailMaybe) && Maybe.isSome(emailBody)) {
+// 		return backend
+// 			.sendEmail(registry)(getEmail(member)(emailMaybe.value)(event)(emailBody.value))
+// 			.map(destroy);
 
 export const func: Endpoint<
 	Backends<
@@ -174,30 +198,33 @@ export const func: Endpoint<
 			.flatMap(addAttendance(backend)),
 	);
 
-const getEmail = (member: Member) => (email: string) => (
-	event: RawResolvedEventObject,
-) => (emailBody: { body: string }): EmailSetup => ({ url }) => ({
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+const replaceEmailContent = (member: Member) => (event: EventObject) => (url: string) => (
+	body: string,
+) =>
+	body
+		.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))
+		.replace(/%%EVENT_NAME%%/, event.name)
+		.replace(/%%START_DATE%%/, new Date(event.startDateTime).toDateString())
+		.replace(/%%EVENT_LINK%%/, `${url}/eventviewer/${event.id}`);
+const generateEmail = (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
+	body: string;
+}): EmailSetup => ({ url }) => ({
+	bccAddresses: [],
 	to: [email],
 	subject: 'Event Signup Notice',
-	textBody: emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member)),
-	htmlBody: toHTML(emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))),
+	textBody: replaceEmailContent(member)(event)(url)(emailBody.body),
+	htmlBody: markdown.markdown.toHTML(replaceEmailContent(member)(event)(url)(emailBody.body)),
 });
 
-const writeEmail = (backend: EmailBackend) => (registry: RegistryValues) => (member: Member) => (
-	event: RawResolvedEventObject,
-) => () => {
-	const emailMaybe = getMemberEmail(member.contact);
-	const emailBody = event.emailBody ?? Maybe.none();
-
-	if (Maybe.isSome(emailMaybe) && Maybe.isSome(emailBody)) {
-		return backend
-			.sendEmail(registry)(getEmail(member)(emailMaybe.value)(event)(emailBody.value))
-			.map(destroy);
-	} else {
-		return asyncRight(void 0, errorGenerator('Could not send email'));
-	}
-};
+const sendEmailToMember = (backend: Backends<[EmailBackend, RegistryBackend]>) => (
+	account: AccountObject,
+) => (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
+	body: string;
+}): ServerEither<void> =>
+	backend
+		.getRegistry(account)
+		.map(backend.sendEmail)
+		.flatApply(generateEmail(member)(event)(email)(emailBody));
 
 export default withBackends(
 	func,
