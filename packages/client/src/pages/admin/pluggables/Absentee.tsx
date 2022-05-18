@@ -111,6 +111,7 @@ export class AbsenteeWidget extends Page<AbsenteeProps, AbsenteeState> {
 			notificationCount: this.props.fullMemberDetails.notificationCount,
 			taskCount: this.props.fullMemberDetails.taskCount,
 			linkableAccounts: this.props.fullMemberDetails.linkableAccounts,
+			requirementTags: this.props.fullMemberDetails.requirementTags,
 		});
 	};
 }

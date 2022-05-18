@@ -45,6 +45,7 @@ import {
 import {
 	Backends,
 	BasicAccountRequest,
+	CAP,
 	combineBackends,
 	GenBackend,
 	getCombinedMemberBackend,
@@ -67,9 +68,11 @@ interface Wrapped<T> {
 	>;
 }
 
-const handleSuccess = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
-	req: ServerAPIRequestParameter<api.Signin>,
-) => (result: PAM.SigninSuccess): ServerEither<Wrapped<SuccessfulSigninReturn>> =>
+const handleSuccess = (
+	backend: Backends<[MemberBackend, CAP.CAPMemberBackend, PAM.PAMBackend]>,
+) => (req: ServerAPIRequestParameter<api.Signin>) => (
+	result: PAM.SigninSuccess,
+): ServerEither<Wrapped<SuccessfulSigninReturn>> =>
 	AsyncEither.All([
 		backend
 			.getMember(req.account)(result.member)
@@ -93,25 +96,37 @@ const handleSuccess = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
 			.map(PAM.getDefaultPermissions(req.account)),
 		backend.getUnreadNotificationCountForMember(req.account)(result.member),
 		backend.getUnfinishedTaskCountForMember(req.account)(result.member),
+		result.member.type === 'CAPNHQMember'
+			? backend.getMemberEventTags(req.account.id)(toReference(result.member))
+			: asyncRight([], errorGenerator('what?')),
 		backend.logSignin(req.account)(result.member),
-	]).map(([[member, linkableAccounts], permissions, notificationCount, taskCount]) => ({
-		response: {
-			error: MemberCreateError.NONE,
-			member: {
-				...member,
-				permissions,
-			},
+	]).map(
+		([
+			[member, linkableAccounts],
+			permissions,
 			notificationCount,
 			taskCount,
-			linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
-		},
-		cookies: {
-			sessionID: {
-				expires: result.expires,
-				value: result.sessionID,
+			requirementTags,
+		]) => ({
+			response: {
+				error: MemberCreateError.NONE,
+				member: {
+					...member,
+					permissions,
+				},
+				notificationCount,
+				taskCount,
+				linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+				requirementTags,
 			},
-		},
-	}));
+			cookies: {
+				sessionID: {
+					expires: result.expires,
+					value: result.sessionID,
+				},
+			},
+		}),
+	);
 
 const handlePasswordExpired = (
 	result: PAM.SigninPasswordOld,
@@ -147,7 +162,7 @@ const handleFailure = (result: PAM.SigninFailed): ServerEither<Wrapped<FailedSig
 		  )
 	).map(wrapper);
 
-const handleMFA = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
+const handleMFA = (backend: Backends<[MemberBackend, CAP.CAPMemberBackend, PAM.PAMBackend]>) => (
 	req: ServerAPIRequestParameter<api.Signin>,
 ) => (token: SigninToken) => (result: PAM.SigninRequiresMFA): ServerEither<Wrapped<SigninReturn>> =>
 	token.type === 'Recaptcha'
@@ -190,28 +205,42 @@ const handleMFA = (backend: Backends<[MemberBackend, PAM.PAMBackend]>) => (
 					.map(PAM.getDefaultPermissions(req.account)),
 				backend.getUnreadNotificationCountForMember(req.account)(result.member),
 				backend.getUnfinishedTaskCountForMember(req.account)(result.member),
+				result.member.type === 'CAPNHQMember'
+					? backend.getMemberEventTags(req.account.id)(toReference(result.member))
+					: asyncRight([], errorGenerator('what?')),
 				backend.logSignin(req.account)(result.member),
-		  ]).map(([[member, linkableAccounts], permissions, notificationCount, taskCount]) => ({
-				response: {
-					error: MemberCreateError.NONE,
-					member: {
-						...member,
-						permissions,
-					},
+		  ]).map(
+				([
+					[member, linkableAccounts],
+					permissions,
 					notificationCount,
 					taskCount,
-					linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
-				},
-				cookies: {
-					sessionID: {
-						expires: result.expires,
-						value: result.sessionID,
+					requirementTags,
+				]) => ({
+					response: {
+						error: MemberCreateError.NONE,
+						member: {
+							...member,
+							permissions,
+						},
+						notificationCount,
+						taskCount,
+						linkableAccounts: linkableAccounts.filter(
+							({ id }) => id !== req.account.id,
+						),
+						requirementTags,
 					},
-				},
-		  }));
+					cookies: {
+						sessionID: {
+							expires: result.expires,
+							value: result.sessionID,
+						},
+					},
+				}),
+		  );
 
 export const func: Endpoint<
-	Backends<[MemberBackend, PAM.PAMBackend]>,
+	Backends<[MemberBackend, CAP.CAPMemberBackend, PAM.PAMBackend]>,
 	api.Signin
 > = backend => req =>
 	backend

@@ -1384,6 +1384,11 @@ export interface NewEventObject {
 	 * Whether or not attendance view should be displayed to all members or only to Managers and POCs
 	 */
 	privateAttendance: boolean;
+
+	/**
+	 * Used to mark it as an educational event, one which fulfills the specified requirement
+	 */
+	requirementTag?: null | string;
 }
 
 /**
@@ -2815,6 +2820,10 @@ export interface SuccessfulSigninReturn {
 	 * Returns the accounts that a member is able to link events to
 	 */
 	linkableAccounts: AccountLinkTarget[];
+	/**
+	 * Returns all the academic tags from events this member has attended
+	 */
+	requirementTags: string[];
 }
 
 /**

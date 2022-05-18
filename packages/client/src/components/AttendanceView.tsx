@@ -30,6 +30,7 @@ import {
 	NewAttendanceRecord,
 	RawResolvedEventObject,
 	RegistryValues,
+	SuccessfulSigninReturn,
 } from 'common-lib';
 import { DateTime } from 'luxon';
 import React, { Component } from 'react';
@@ -56,6 +57,7 @@ interface AttendanceItemViewProps extends FetchAPIProps {
 	owningEvent: RawResolvedEventObject;
 	owningAccount: AccountObject;
 	member: ClientUser;
+	fullMember: SuccessfulSigninReturn;
 	registry: RegistryValues;
 	attendanceRecord: AttendanceRecord;
 	removeAttendance: (record: AttendanceRecord) => void;
@@ -107,6 +109,7 @@ export class AttendanceItemView extends Component<
 				event={this.props.owningEvent}
 				registry={this.props.registry}
 				member={this.props.member}
+				fullMember={this.props.fullMember}
 				updateRecord={rec => this.props.updateAttendance(rec, this.props.recordMember)}
 				record={this.props.attendanceRecord}
 				updated={this.props.updated}

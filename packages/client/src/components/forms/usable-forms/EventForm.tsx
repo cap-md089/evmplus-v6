@@ -63,6 +63,7 @@ import { BooleanForField } from '../../form-inputs/FormBlock';
 import { InputProps } from '../../form-inputs/Input';
 import POCInput, { InternalPointOfContactEdit, POCInputProps } from '../../form-inputs/POCInput';
 import SimpleMultCheckbox from '../../form-inputs/SimpleMultCheckbox';
+import Select from '../../form-inputs/Select';
 import SimpleForm, {
 	BigTextBox,
 	Checkbox,
@@ -95,6 +96,130 @@ interface EventFormProps {
 	saving: boolean;
 	formDisabled?: boolean;
 }
+
+export enum RequirementTags {
+	NotNeeded,
+	L2_1,
+	L2_2,
+	L2_3,
+	L2_4,
+	L2_5,
+	L2_6,
+	L2_7,
+	L2_8,
+	L2_9,
+	L2_10,
+	L2_11,
+	L2_12,
+	L2_13,
+	L2_14,
+	L2_15,
+	L2_16,
+	L3_1,
+	L3_2,
+	L3_3,
+	L3_4,
+	L3_5,
+	L3_6,
+	L3_7,
+	L3_8,
+	L3_9,
+	L3_10,
+	L3_11,
+	L3_12,
+	L3_13,
+	L3_14,
+	L3_15,
+	L3_16,
+	L4_1,
+	L4_2,
+	L4_3,
+	L4_4,
+	L4_5,
+	L4_6,
+	L4_7,
+	L4_8,
+	L4_9,
+	L4_10,
+	L4_11,
+	L4_12,
+	L4_13,
+	L4_14,
+	L4_15,
+	L5_1,
+	L5_2,
+	L5_3,
+	L5_4,
+	L5_5,
+	L5_6,
+	L5_7,
+	L5_8,
+	L5_9,
+	L5_10,
+	L5_11,
+}
+
+const requirementTagLabels = [
+	'Not Needed',
+	'VIR LEVEL 2- Accountability & Responsibility of the Adult Leader',
+	'VIR LEVEL 2- Basic Drill',
+	'VIR LEVEL 2- BLOCK: Part 1 & 2 CADET',
+	'VIR LEVEL 2- BLOCK: Part 1 MILITARY',
+	'VIR LEVEL 2- BLOCK: Part 1 NEW/GENERAL AND PROFESSIONAL',
+	'VIR LEVEL 2- BLOCK: Part 2 MILITARY',
+	'VIR LEVEL 2- BLOCK: Part 2 NEW/GENERAL',
+	'VIR LEVEL 2- BLOCK: Part 2 PROFESSIONAL',
+	'VIR LEVEL 2- Bringing Your Service to the Civil Air Patrol ',
+	'VIR LEVEL 2- Cadet Protection from the Senior Perspective',
+	'VIR LEVEL 2- CAP Communications Fundamentals',
+	'VIR LEVEL 2- Choosing Your Duty Assignment & Specialty Track',
+	'VIR LEVEL 2- Communication Fundamentals',
+	'VIR LEVEL 2- Leadership Fundamentals',
+	'VIR LEVEL 2- Leading Volunteers',
+	'VIR LEVEL 2- Mentoring',
+	'VIR LEVEL 3- Advanced Civil Air Patrol Communications',
+	'VIR LEVEL 3- Care and Feeding of a Member ',
+	'VIR LEVEL 3- Compliance Requirements',
+	'VIR LEVEL 3- Core Values for Leaders',
+	'VIR LEVEL 3- Data-Driven Decision Making',
+	'VIR LEVEL 3- Developing our Members',
+	'VIR LEVEL 3- Effective Volunteer Teams',
+	'VIR LEVEL 3- Finance and Physical Assets',
+	'VIR LEVEL 3- Leading People & Managing Stuff',
+	'VIR LEVEL 3- Legal & Complaint Process',
+	'VIR LEVEL 3- Meetings & Meeting Planning',
+	'VIR LEVEL 3- Motivating & Mentoring',
+	'VIR LEVEL 3- Public Affairs and Branding',
+	'VIR LEVEL 3- Reaching Outside the Squadron',
+	'VIR LEVEL 3- Safety & Risk Management',
+	'VIR LEVEL 3- Squadrons & The Missions',
+	'VIR LEVEL 4- Boards and Board Leadership',
+	'VIR LEVEL 4- Developing Personal Leadership Philosophy',
+	'VIR LEVEL 4- Effective Communication with External Partners',
+	'VIR LEVEL 4- Leadership Challenges Today',
+	'VIR LEVEL 4- Maintaining High Performing Teams',
+	'VIR LEVEL 4- Management Principles',
+	'VIR LEVEL 4- Mentoring Skills and Program Development',
+	'VIR LEVEL 4- Operations at Group and Wing Levels',
+	'VIR LEVEL 4- Planning and Leading A Major Activity',
+	'VIR LEVEL 4- Prioritization and Time Management',
+	'VIR LEVEL 4- Recruiting and Retention',
+	'VIR LEVEL 4- Shaping Cultures of Trust and Innovation',
+	'VIR LEVEL 4- Staff Processes',
+	'VIR LEVEL 4- The Civil Air Patrol Safety Program for Group or Wing Leader',
+	'VIR LEVEL 4- Using New Media to Communicate',
+	'VIR SCC- Appointing and Utilizing Staff',
+	'VIR SCC- Command Responsibility in Finance',
+	'VIR SCC- Commander’s Intent',
+	'VIR SCC- Communication Skills for Command',
+	'VIR SCC- Customs, Courtesies and Ceremonies',
+	'VIR SCC- How Commanders Use eServices',
+	'VIR SCC- Partnership Between CAC & Commander',
+	'VIR SCC- Responsibilities of Squadron/Flight Commander',
+	'VIR SCC- Stewardship and Risk Management',
+	'VIR SCC- Taking Command',
+	'VIR SCC- The Complaint Process and Your Responsibility',
+];
 
 export const defaultEmailBody = 'signed up for event';
 
@@ -136,6 +261,7 @@ export interface NewEventFormValues {
 	privateAttendance: boolean;
 	groupEventNumber: RadioReturnWithOther<EchelonEventNumber>;
 	regionEventNumber: RadioReturnWithOther<EchelonEventNumber>;
+	requirementTag: RequirementTags | -1;
 
 	// These are special values used
 	useRegistration: boolean;
@@ -183,6 +309,10 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 		registration: event.useRegistration ? event.registration : null,
 		requiredEquipment: event.requiredEquipment,
 		requiredForms: event.requiredForms,
+		requirementTag:
+			event.requirementTag !== -1 && event.requirementTag !== 0
+				? requirementTagLabels[event.requirementTag]
+				: null,
 		showUpcoming: event.showUpcoming,
 		signUpDenyMessage: event.signUpDenyMessage,
 		signUpPartTime: event.signUpPartTime,
@@ -274,6 +404,7 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	privateAttendance: false,
 	useEmailBody: false,
 	emailBody: { body: defaultEmailBody },
+	requirementTag: 0,
 });
 
 export const convertToFormValues = (event: NewEventObject): NewEventFormValues => ({
@@ -341,6 +472,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	privateAttendance: event.privateAttendance,
 	useEmailBody: Maybe.isSome(event.emailBody),
 	emailBody: Maybe.isSome(event.emailBody) ? event.emailBody.value : { body: defaultEmailBody },
+	requirementTag: requirementTagLabels.indexOf(event.requirementTag ?? ''),
 });
 
 const eventValidator: FormValidator<NewEventFormValues> = {
@@ -737,6 +869,17 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						account={this.props.account}
 						member={this.props.member}
 					/>
+
+					{this.props.account.id === 'volu' && <Title>Academic Requirements</Title>}
+
+					{this.props.account.id === 'volu' && (
+						<Label>
+							Academic requirement tag (what course does this event satisfy?)
+						</Label>
+					)}
+					{this.props.account.id === 'volu' && (
+						<Select name="requirementTag" labels={requirementTagLabels} />
+					)}
 
 					<Title>Extra information</Title>
 
