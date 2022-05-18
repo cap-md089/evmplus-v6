@@ -704,7 +704,7 @@ WITH RECURSIVE Units AS (
 )
 SELECT id FROM Units;`;
 
-export const getSubordinateCAPUnits = (backend: AccountBackend) => (schema: Schema) => (
+export const getSubordinateCAPUnits = (backend: AccountBackend) => (
 	wing: RegularCAPAccountObject,
 ): ServerEither<RegularCAPAccountObject[]> =>
 	backend
@@ -818,7 +818,7 @@ export const getRequestFreeAccountsBackend = (
 			get('id'),
 		),
 		getSubordinateCAPUnitIDs: memoize(getSubordinateCAPUnitIDs(mysqlx), get('id')),
-		getSubordinateCAPUnits: unit => getSubordinateCAPUnits(backend)(mysqlx)(unit),
+		getSubordinateCAPUnits: unit => getSubordinateCAPUnits(backend)(unit),
 	};
 
 	return backend;

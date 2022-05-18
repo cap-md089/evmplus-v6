@@ -27,6 +27,7 @@ import {
 	areMembersTheSame,
 	AsyncEither,
 	AttendanceRecord,
+	AttendanceStatus,
 	canSignUpForEvent,
 	CAPMemberContact,
 	ClientUser,
@@ -207,7 +208,11 @@ const renderName = (renderMember: ClientUser | null) => (event: RawResolvedEvent
 		const contact = [contactEmail, contactPhone].filter(Maybe.isSome).map(get('value'));
 		const renderedContact = contact.length === 0 ? '' : `[${contact.join(', ')}]`;
 
-		return `${id}: ${memberName} ${accountName} ${renderedContact}`;
+		const memberReturn =
+			member.record.status === AttendanceStatus.COMMITTEDATTENDED
+				? `${id}: ${memberName}`
+				: `*${id}: ${memberName}`;
+		return `${memberReturn} ${accountName} ${renderedContact}`;
 	} else {
 		return defaultRenderName;
 	}
@@ -1192,6 +1197,11 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 									>
 										{this.state.eventInformation.attendees
 											.filter(
+												val =>
+													val.record.status ===
+													AttendanceStatus.COMMITTEDATTENDED,
+											)
+											.filter(
 												val => val.record.memberID.type === 'CAPNHQMember',
 											)
 											.map(rec => rec.record.memberID.id)
@@ -1204,9 +1214,18 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 										onClose={() => this.setState({ showingemails: false })}
 									>
 										{this.state.eventInformation.attendees
+											.filter(
+												val =>
+													val.record.status ===
+													AttendanceStatus.COMMITTEDATTENDED,
+											)
 											.map(getEmails(member))
 											.join(', ')}
 									</Dialogue>
+									<h5>
+										Entries marked with an asterisk (*) are indicated as not
+										attending/attended
+									</h5>
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
 										titles={renderName(member)(event)}
 										values={attendees}
