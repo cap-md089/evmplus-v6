@@ -250,7 +250,8 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 			>
 				{this.props.updated ? <TextBox>Attendance information updated</TextBox> : null}
 
-				{this.props.fullMember.requirementTags.includes(
+				{!this.props.record &&
+				this.props.fullMember.requirementTags.includes(
 					this.props.event.requirementTag ?? '',
 				) ? (
 					<TextBox>
