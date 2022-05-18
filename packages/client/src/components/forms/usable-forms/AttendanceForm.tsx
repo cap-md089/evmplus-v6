@@ -20,7 +20,6 @@
 import {
 	AccountObject,
 	applyCustomAttendanceFields,
-	areMembersTheSame,
 	AttendanceRecord,
 	AttendanceStatus,
 	ClientUser,
