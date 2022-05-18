@@ -1285,7 +1285,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 									? rec
 									: {
 											member: Maybe.fromValue(member),
-											orgName: Maybe.some(this.props.registry.Website.Name),
+											orgInformation: Maybe.none(),
 											record: {
 												...record,
 												timestamp: rec.record.timestamp,
