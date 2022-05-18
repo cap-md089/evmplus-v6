@@ -1110,7 +1110,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 							)}
 						</div>
 					</div>
-					{member !== null ? (
+					{member !== null && fullMemberDetails.error === MemberCreateError.NONE ? (
 						this.state.teamState === 'LOADING' ? (
 							<Loader />
 						) : this.state.teamState === 'ERROR' ? (
@@ -1130,6 +1130,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 													account={this.props.account}
 													event={viewerDataToEventObject(eventViewerInfo)}
 													member={member}
+													fullMember={fullMemberDetails}
 													updateRecord={this.addAttendanceRecord}
 													updated={false}
 													clearUpdated={this.clearPreviousMember}
@@ -1222,6 +1223,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 												owningEvent={event}
 												registry={this.props.registry}
 												member={member}
+												fullMember={fullMemberDetails}
 												recordMember={Maybe.orSome<Member | null>(null)(
 													val.member,
 												)}

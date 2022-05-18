@@ -74,6 +74,15 @@ const routeProps = {
 	},
 } as RouteComponentProps<{ id: string }>;
 
+const testSigninReturn1 = {
+	error: MemberCreateError.NONE,
+	member: testUser,
+	notificationCount: 0,
+	taskCount: 0,
+	linkableAccounts: [],
+	requirementTags: [],
+};
+
 describe('EventViewer', () => {
 	let portalElement: HTMLDivElement;
 
@@ -128,9 +137,7 @@ describe('EventViewer', () => {
 					<EventViewer
 						account={testAccount}
 						authorizeUser={() => void 0}
-						fullMemberDetails={{
-							error: MemberCreateError.INVALID_SESSION_ID,
-						}}
+						fullMemberDetails={testSigninReturn1}
 						member={testUser}
 						prepareURL={() => void 0}
 						registry={testRegistry}
@@ -188,9 +195,7 @@ describe('EventViewer', () => {
 					<EventViewer
 						account={testAccount}
 						authorizeUser={() => void 0}
-						fullMemberDetails={{
-							error: MemberCreateError.INVALID_SESSION_ID,
-						}}
+						fullMemberDetails={testSigninReturn1}
 						member={testUser}
 						prepareURL={() => void 0}
 						registry={testRegistry}

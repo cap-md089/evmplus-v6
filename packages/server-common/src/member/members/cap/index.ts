@@ -291,6 +291,50 @@ export const loadExtraCAPMemberInformation = (schema: Schema) => (
 			),
 		}));
 
+const eventTagsSql = (schema: Schema): string => /* sql */ `\
+SELECT
+	E.doc ->> '$.requirementTag' as Tag
+FROM
+	${schema.getName()}.NHQ_Member as M
+LEFT JOIN
+	${schema.getName()}.Attendance as A
+ON
+	A.capID = M.CAPID
+LEFT JOIN
+	${schema.getName()}.Events as E
+ON
+	E.id = A.eventID
+AND
+	E.accountID = A.accountID
+WHERE
+	M.CAPID = ?
+AND
+	A.doc ->> '$.status' = 'CommittedAttended'
+AND
+	A.accountID = ?
+GROUP BY
+	Tag;`;
+
+export const memberEventTags = (backend: Backends<[RawMySQLBackend]>) => (accountID: string) => (
+	memberReference: CAPNHQMemberReference,
+): ServerEither<string[]> =>
+	asyncRight(
+		backend.getSchema().getSession(),
+		errorGenerator('Could not get current member requirement tags'),
+	)
+		.map(session =>
+			session
+				.sql(eventTagsSql(backend.getSchema()))
+				.bind([memberReference.id, accountID])
+				.execute(),
+		)
+		.map(result =>
+			result
+				.fetchAll()
+				.map(([value]: [string]) => value)
+				.filter(value => !!value && value !== 'null'),
+		);
+
 export interface CAPMemberBackend {
 	deleteProspectiveMember: (member: RawCAPProspectiveMemberObject) => ServerEither<void>;
 	createProspectiveMember: (
@@ -311,6 +355,9 @@ export interface CAPMemberBackend {
 	getBirthday: (member: CAPMember) => ServerEither<DateTime>;
 	getPromotionRequirements: (member: CAPNHQMemberObject) => ServerEither<CadetPromotionStatus>;
 	getOrgInfo: (member: CAPNHQMemberObject) => ServerEither<api.events.events.SquadronPOC>;
+	getMemberEventTags: (
+		accountID: string,
+	) => (memberReference: CAPNHQMemberReference) => ServerEither<string[]>;
 }
 
 export const getCAPMemberBackend = (req: BasicAccountRequest): CAPMemberBackend =>
@@ -350,6 +397,7 @@ export const getRequestFreeCAPMemberBackend = (
 		stringifyMemberReference,
 	),
 	getOrgInfo: memoize(getOrgInfo(prevBackends), ({ orgid }) => orgid),
+	getMemberEventTags: memberEventTags(prevBackends),
 });
 
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
@@ -363,4 +411,5 @@ export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 	getBirthday: () => notImplementedError('getBirthday'),
 	getPromotionRequirements: () => notImplementedError('getPromotionRequirements'),
 	getOrgInfo: () => notImplementedError('getOrgInfo'),
+	getMemberEventTags: () => () => notImplementedError('getMemberEventTags'),
 });

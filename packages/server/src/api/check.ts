@@ -38,16 +38,21 @@ import {
 	Right,
 	ServerError,
 	SigninReturn,
+	toReference,
 	User,
 } from 'common-lib';
 import * as debug from 'debug';
 import {
 	Backends,
+	combineBackends,
+	BasicAccountRequest,
+	GenBackend,
 	MemberBackend,
 	ServerEither,
 	withBackends,
+	CAP,
 	PAM,
-	getCombinedPAMBackend,
+	getCombinedMemberBackend,
 } from 'server-common';
 import { Endpoint } from '..';
 import wrapper, { Wrapped } from '../lib/wrapper';
@@ -55,7 +60,7 @@ import wrapper, { Wrapped } from '../lib/wrapper';
 const logFunc = debug('server:api:check');
 
 export const func: Endpoint<
-	Backends<[PAM.PAMBackend, MemberBackend]>,
+	Backends<[PAM.PAMBackend, CAP.CAPMemberBackend, MemberBackend]>,
 	api.Check
 > = backend => req => {
 	logFunc('Starting check request: %o', req.member);
@@ -83,7 +88,10 @@ export const func: Endpoint<
 				),
 				errorGenerator('Could not get admin account IDs for member'),
 			),
-		]).map(([notificationCount, taskCount, linkableAccounts]) => ({
+			user.type === 'CAPNHQMember'
+				? backend.getMemberEventTags(req.account.id)(toReference(user))
+				: asyncRight([], errorGenerator('What?')),
+		]).map(([notificationCount, taskCount, linkableAccounts, requirementTags]) => ({
 			response: {
 				error: MemberCreateError.NONE,
 				member: isRioux(user)
@@ -92,6 +100,7 @@ export const func: Endpoint<
 				notificationCount,
 				taskCount,
 				linkableAccounts: linkableAccounts.filter(({ id }) => id !== req.account.id),
+				requirementTags,
 			},
 			cookies: {
 				sessionID: {
@@ -103,4 +112,10 @@ export const func: Endpoint<
 	)(Maybe.And([req.member, req.session]));
 };
 
-export default withBackends(func, getCombinedPAMBackend());
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, PAM.PAMBackend]
+	>(getCombinedMemberBackend(), PAM.getPAMBackend),
+);

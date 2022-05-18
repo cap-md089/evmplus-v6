@@ -32,6 +32,7 @@ import {
 	Permissions,
 	RawResolvedEventObject,
 	RegistryValues,
+	SuccessfulSigninReturn,
 	toReference,
 } from 'common-lib';
 import * as React from 'react';
@@ -58,6 +59,7 @@ type FormState = NewAttendanceRecord & { usePartTime: boolean };
 
 export interface AttendanceFormProps extends FetchAPIProps {
 	account: AccountObject;
+	fullMember: SuccessfulSigninReturn;
 	member: ClientUser;
 	event: RawResolvedEventObject;
 	registry: RegistryValues;
@@ -247,6 +249,17 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 				}}
 			>
 				{this.props.updated ? <TextBox>Attendance information updated</TextBox> : null}
+
+				{this.props.fullMember.requirementTags.includes(
+					this.props.event.requirementTag ?? '',
+				) ? (
+					<TextBox>
+						<span style={{ color: 'red' }}>
+							You have already completed the academic requirements that attending this
+							event fulfills
+						</span>
+					</TextBox>
+				) : null}
 
 				<Label>Comments</Label>
 				<BigTextBox name="comments" />
