@@ -46,7 +46,7 @@ import {
 	PAM,
 	RegistryBackend,
 	ServerEither,
-	SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 	TimeBackend,
 	withBackends,
 } from 'server-common';
@@ -56,7 +56,7 @@ import wrapper from '../../../../lib/wrapper';
 const generateEmail = (memberInfo: Member) => (accountInfo: SafeUserAccountInformation) => (
 	email: string,
 ): EmailSetup => () => ({
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	to: [email],
 	subject: 'Username request',
 	htmlBody: `${getFullMemberName(memberInfo)}, your login is ${accountInfo.username}.<br />

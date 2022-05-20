@@ -89,7 +89,7 @@ export {
 	getEmailBackend,
 	getEmailMessageBody,
 	getEmptyEmailBackend,
-	SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 } from './sendEmail';
 export * from './servertypes';
 export { getTaskBackend, TaskBackend } from './Task';

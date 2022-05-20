@@ -32,6 +32,7 @@ import {
 import { notImplementedError } from './backends';
 
 export const SUPPORT_BCC_ADDRESS = 'eventsupport@md.cap.gov';
+export const SYSTEM_BCC_ADDRESS = 'eventmanagersystememails@md.cap.gov';
 
 aws.config.update({ region: 'us-east-1' });
 

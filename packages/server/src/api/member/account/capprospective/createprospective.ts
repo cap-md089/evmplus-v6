@@ -61,7 +61,7 @@ import {
 	PAM,
 	RandomBackend,
 	RegistryBackend,
-	SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -76,7 +76,7 @@ const generateLinkEmail = (token: string) => (member: RawCAPProspectiveMemberObj
 	to: string,
 ) => ({ url }: EmailParameters): EmailToSend => ({
 	to: [to],
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	subject: 'Finish Event Manager Account Creation',
 	htmlBody: `
 <h2>You're almost there ${getFullMemberName(member)}!</h2>
@@ -104,7 +104,7 @@ const generateRandomPasswordEmail = ([username, password]: [
 	url,
 }: EmailParameters): EmailToSend => ({
 	to: [to],
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	subject: 'Finish Event Manager Account Registration',
 	htmlBody: `
 <h4>Your account has been created, ${getFullMemberName(member)}!</h4>
