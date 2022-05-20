@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -23,29 +23,23 @@ import {
 	always,
 	api,
 	applyCustomAttendanceFields,
-	// asyncEither,
 	AsyncEither,
 	asyncRight,
 	AttendanceRecord,
 	canSignSomeoneElseUpForEvent,
 	canSignUpForEvent,
-	// destroy,
 	Either,
 	errorGenerator,
 	EventObject,
-	get,
 	getFullMemberName,
 	getMemberEmail,
-	// getMemberEmail,
 	hasBasicAttendanceManagementPermission,
 	isValidMemberReference,
 	Maybe,
 	MaybeObj,
 	Member,
 	NewAttendanceRecord,
-	// RawResolvedEventObject,
 	RawTeamObject,
-	// RegistryValues,
 	ServerError,
 	SessionType,
 	toReference,
@@ -69,7 +63,6 @@ import {
 	RawMySQLBackend,
 	RegistryBackend,
 	ServerEither,
-	SYSTEM_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -142,16 +135,19 @@ const addAttendance: Endpoint<
 						hasBasicAttendanceManagementPermission(req.member)(event)(teamMaybe),
 					),
 				)
-				// .tap(writeEmail(backend)(registry)(req.member)(event)),
 				.flatMap<AttendanceRecord>(rec =>
 					backend
 						.getMember(req.account)(rec.memberID)
-						.map(get('contact'))
-						.map(getMemberEmail)
-						.map(email => Maybe.And([email, event.emailBody]))
+						.map(member =>
+							Maybe.And([
+								Maybe.some(member),
+								getMemberEmail(member.contact),
+								event.emailBody,
+							]),
+						)
 						.map(
-							Maybe.map(([email, emailBody]) =>
-								sendEmailToMember(backend)(req.account)(req.member)(event)(email)(
+							Maybe.map(([member, email, emailBody]) =>
+								sendEmailToMember(backend)(req.account)(member)(event)(email)(
 									emailBody,
 								),
 							),
@@ -161,13 +157,6 @@ const addAttendance: Endpoint<
 				),
 		)
 		.map(wrapper);
-
-// 	const emailMaybe = getMemberEmail(member.contact);
-
-// 	if (Maybe.isSome(emailMaybe) && Maybe.isSome(emailBody)) {
-// 		return backend
-// 			.sendEmail(registry)(getEmail(member)(emailMaybe.value)(event)(emailBody.value))
-// 			.map(destroy);
 
 export const func: Endpoint<
 	Backends<
@@ -211,10 +200,11 @@ const replaceEmailContent = (member: Member) => (event: EventObject) => (url: st
 		.replace(/%%EVENT_NAME%%/, event.name)
 		.replace(/%%START_DATE%%/, new Date(event.startDateTime).toDateString())
 		.replace(/%%EVENT_LINK%%/, `${url}/eventviewer/${event.id}`);
+
 const generateEmail = (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
 	body: string;
 }): EmailSetup => ({ url }) => ({
-	bccAddresses: [SYSTEM_BCC_ADDRESS],
+	bccAddresses: [],
 	to: [email],
 	subject: 'Event Signup Notice',
 	textBody: replaceEmailContent(member)(event)(url)(emailBody.body),
