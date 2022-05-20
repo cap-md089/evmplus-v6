@@ -440,6 +440,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 																}${getClassNameFromEvent(
 																	val.event,
 																)}`}
+																title={val.event.name}
 															>
 																{val.event.name}
 															</div>
