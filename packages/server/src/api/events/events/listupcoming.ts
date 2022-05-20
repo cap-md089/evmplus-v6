@@ -48,7 +48,7 @@ import {
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
-const upcomingQuery = 'showUpcoming != false AND pickupDateTime > :endDateTime';
+const upcomingQuery = '(showUpcoming = true OR type = "Linked") AND pickupDateTime > :endDateTime';
 
 export const func: Endpoint<
 	Backends<[TimeBackend, AccountBackend, EventsBackend, RegistryBackend]>,
@@ -61,7 +61,7 @@ export const func: Endpoint<
 				.queryEvents(upcomingQuery)(req.account)({
 					endDateTime: backend.now(),
 				})
-				.sort('endDateTime ASC')
+				.sort('pickupDateTime ASC')
 				.limit(registry.Website.ShowUpcomingEventCount),
 		)
 		.map(generateResults)
