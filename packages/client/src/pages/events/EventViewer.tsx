@@ -1222,10 +1222,12 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 											.map(getEmails(member))
 											.join(', ')}
 									</Dialogue>
-									<h5>
-										Entries marked with an asterisk (*) are indicated as not
-										attending/attended
-									</h5>
+									{attendees.length === 0 ? null : (
+										<h5>
+											Entries marked with an asterisk (*) are indicated as not
+											attending/attended
+										</h5>
+									)}
 									<DropDownList<api.events.events.EventViewerAttendanceRecord>
 										titles={renderName(member)(event)}
 										values={attendees}
