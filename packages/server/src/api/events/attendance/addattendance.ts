@@ -69,7 +69,7 @@ import {
 	RawMySQLBackend,
 	RegistryBackend,
 	ServerEither,
-	// SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -214,7 +214,7 @@ const replaceEmailContent = (member: Member) => (event: EventObject) => (url: st
 const generateEmail = (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
 	body: string;
 }): EmailSetup => ({ url }) => ({
-	bccAddresses: [],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	to: [email],
 	subject: 'Event Signup Notice',
 	textBody: replaceEmailContent(member)(event)(url)(emailBody.body),

@@ -48,7 +48,7 @@ import {
 	MemberBackend,
 	PAM,
 	RegistryBackend,
-	SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 	TimeBackend,
 	withBackends,
 } from 'server-common';
@@ -59,7 +59,7 @@ const setupEmail = (member: Member) => (email: string) => (token: string): Email
 	url,
 }) => ({
 	to: [email],
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	subject: `Password reset for ${getFullMemberName(member)}`,
 	htmlBody: `We have deteced that a password reset was requested for you, ${getFullMemberName(
 		member,

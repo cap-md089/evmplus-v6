@@ -44,7 +44,7 @@ import {
 	MemberBackend,
 	PAM,
 	RegistryBackend,
-	SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 	TimeBackend,
 	withBackends,
 } from 'server-common';
@@ -97,7 +97,7 @@ export const getProperEmailAndSendType = (backends: Backends<[MemberBackend, PAM
 const getEmail = (member: Member) => (email: string) => (token: string): EmailSetup => ({
 	url,
 }) => ({
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	to: [email],
 	subject: 'Event Manager Account Creation',
 	textBody: `You're almost there!

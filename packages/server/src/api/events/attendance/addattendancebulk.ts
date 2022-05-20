@@ -63,7 +63,7 @@ import {
 	PAM,
 	RawMySQLBackend,
 	RegistryBackend,
-	SUPPORT_BCC_ADDRESS,
+	SYSTEM_BCC_ADDRESS,
 	TeamsBackend,
 	TimeBackend,
 	withBackends,
@@ -149,7 +149,7 @@ export const func: Endpoint<
 const getEmail = (member: Member) => (email: string) => (
 	event: RawResolvedEventObject,
 ) => (emailBody: { body: string }): EmailSetup => ({ url }) => ({
-	bccAddresses: [SUPPORT_BCC_ADDRESS],
+	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	to: [email],
 	subject: 'Event Signup Notice',
 	textBody: emailBody.body.replace(/%%MEMBER_NAME%%/, getFullMemberName(member)),
