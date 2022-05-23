@@ -31,7 +31,6 @@ import {
 	collectGeneratorAsync,
 	errorGenerator,
 	EventObject,
-	get,
 	getFullMemberName,
 	getMemberEmail,
 	hasBasicAttendanceManagementPermission,
@@ -124,7 +123,7 @@ export const func: Endpoint<
 				backend.getRegistry(req.account),
 			])
 
-				.flatMap<RawEventObject>(([[event, teamMaybe], registry]) =>
+				.flatMap<RawEventObject>(([[event, teamMaybe]]) =>
 					asyncRight(
 						collectGeneratorAsync(
 							asyncIterMap((rec: Required<NewAttendanceRecord>) =>
@@ -134,17 +133,21 @@ export const func: Endpoint<
 											teamMaybe,
 										),
 									)(rec)
-									.flatMap<AttendanceRecord>(rec =>
+									.flatMap<AttendanceRecord>(rec2 =>
 										backend
-											.getMember(req.account)(rec.memberID)
-											.map(get('contact'))
-											.map(getMemberEmail)
-											.map(email => Maybe.And([email, event.emailBody]))
+											.getMember(req.account)(rec2.memberID)
+											.map(member =>
+												Maybe.And([
+													Maybe.some(member),
+													getMemberEmail(member.contact),
+													event.emailBody,
+												]),
+											)
 											.map(
-												Maybe.map(([email, emailBody]) =>
-													sendEmailToMember(backend)(req.account)(
-														req.member,
-													)(event)(email)(emailBody),
+												Maybe.map(([member, email, emailBody]) =>
+													sendEmailToMember(backend)(req.account)(member)(
+														event,
+													)(email)(emailBody),
 												),
 											)
 											.flatMap(
@@ -152,7 +155,7 @@ export const func: Endpoint<
 													asyncRight(void 0, errorGenerator('huh?')),
 												),
 											)
-											.map(always(rec)),
+											.map(always(rec2)),
 									),
 							)(req.body.members),
 						),
