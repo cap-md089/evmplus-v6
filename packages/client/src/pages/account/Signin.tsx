@@ -125,6 +125,16 @@ export default class Signin extends Page<PageProps<{ returnurl?: string }>, Sign
 				<Link to="/privacy-policy">this page</Link>.
 				<br />
 				<br />
+				See the{' '}
+				<a
+					href="https://github.com/cap-md089/evmplus-guides/wiki/Establish-Account"
+					target="_blank"
+				>
+					Operator Guide
+				</a>{' '}
+				for help with account access.
+				<br />
+				<br />
 				Don&#39;t have an account with us? <Link to="/create-account">Create one here</Link>
 				<br />
 				Forget your username? <Link to="/usernamerequest">Request it here</Link>
