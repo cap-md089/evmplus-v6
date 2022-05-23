@@ -18,13 +18,14 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
-import { CLIConfiguration } from 'common-lib';
+import { asyncRight, CLIConfiguration, errorGenerator } from 'common-lib';
 import {
 	AccountBackend,
 	AuditsBackend,
 	Backends,
 	CAP,
 	combineBackends,
+	EmailBackend,
 	EventsBackend,
 	FileBackend,
 	getRequestFreeAccountsBackend,
@@ -69,8 +70,9 @@ export const backendGenerator = (
 	combineBackends<
 		Schema,
 		[
-			TimeBackend,
+			EmailBackend,
 			RawMySQLBackend,
+			TimeBackend,
 			RegistryBackend,
 			AccountBackend,
 			TeamsBackend,
@@ -83,8 +85,9 @@ export const backendGenerator = (
 			PAM.PAMBackend,
 		]
 	>(
-		getTimeBackend,
+		(): EmailBackend => ({ sendEmail: () => () => asyncRight(void 0, errorGenerator('')) }),
 		requestlessMySQLBackend,
+		getTimeBackend,
 		getRequestFreeRegistryBackend,
 		getRequestFreeAccountsBackend,
 		getRequestFreeTeamsBackend,
