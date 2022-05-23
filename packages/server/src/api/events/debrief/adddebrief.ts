@@ -31,9 +31,13 @@ import {
 	Backends,
 	BasicAccountRequest,
 	combineBackends,
+	EmailBackend,
 	EventsBackend,
 	getCombinedEventsBackend,
+	getCombinedMemberBackend,
+	getEmailBackend,
 	getTimeBackend,
+	MemberBackend,
 	PAM,
 	TimeBackend,
 	withBackends,
@@ -42,7 +46,7 @@ import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 export const func: Endpoint<
-	Backends<[TimeBackend, EventsBackend]>,
+	Backends<[EmailBackend, MemberBackend, TimeBackend, EventsBackend]>,
 	api.events.debrief.Add
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
@@ -77,7 +81,9 @@ export const func: Endpoint<
 
 export default withBackends(
 	func,
-	combineBackends<BasicAccountRequest, [TimeBackend, EventsBackend]>(
+	combineBackends<BasicAccountRequest, [EmailBackend, MemberBackend, TimeBackend, EventsBackend]>(
+		getEmailBackend,
+		getCombinedMemberBackend(),
 		getTimeBackend,
 		getCombinedEventsBackend(),
 	),
