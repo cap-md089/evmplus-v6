@@ -18,6 +18,7 @@
  */
 
 import { Schema } from '@mysql/xdevapi';
+import { asyncRight, errorGenerator } from 'common-lib';
 import {
 	combineBackends,
 	EventsBackend,
@@ -43,6 +44,7 @@ import {
 	Backends,
 	GoogleBackend,
 	getEmptyGoogleBackend,
+	EmailBackend,
 } from 'server-common';
 
 export type DiscordBackends = Backends<
@@ -65,8 +67,9 @@ export type DiscordBackends = Backends<
 export const getDiscordBackend = combineBackends<
 	Schema,
 	[
-		TimeBackend,
+		EmailBackend,
 		RawMySQLBackend,
+		TimeBackend,
 		RegistryBackend,
 		AccountBackend,
 		TeamsBackend,
@@ -79,8 +82,9 @@ export const getDiscordBackend = combineBackends<
 		PAM.PAMBackend,
 	]
 >(
-	getTimeBackend,
+	(): EmailBackend => ({ sendEmail: () => () => asyncRight(void 0, errorGenerator('')) }),
 	requestlessMySQLBackend,
+	getTimeBackend,
 	getRequestFreeRegistryBackend,
 	getRequestFreeAccountsBackend,
 	getRequestFreeTeamsBackend,
