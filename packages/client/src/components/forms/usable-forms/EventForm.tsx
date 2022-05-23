@@ -633,6 +633,15 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 				>
 					<TextBox>An asterisk (*) denotes a required field</TextBox>
 					<TextBox>A tilde (~) deontes Google Calendar publishing</TextBox>
+					<TextBox>
+						Help is available
+						<a
+							href="https://github.com/cap-md089/evmplus-guides/wiki/Operator-Guide:-Point-of-Contact"
+							target="_blank"
+						>
+							at this link
+						</a>
+					</TextBox>
 
 					<Title>Main information</Title>
 
