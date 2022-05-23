@@ -24,14 +24,19 @@ import {
 	areMembersTheSame,
 	AsyncEither,
 	AsyncIter,
+	asyncIterFilter,
+	asyncIterFlatMap,
 	asyncIterHandler,
 	asyncIterMap,
 	asyncIterTap,
 	asyncLeft,
 	asyncRight,
+	AttendanceRecord,
 	collectGeneratorAsync,
 	destroy,
 	DisplayInternalPointOfContact,
+	Either,
+	EitherObj,
 	errorGenerator,
 	EventAuditEvents,
 	EventObject,
@@ -44,12 +49,14 @@ import {
 	InternalPointOfContact,
 	Maybe,
 	MaybeObj,
+	Member,
 	MemberReference,
 	memoize,
 	NewEventObject,
 	NotificationCauseType,
 	NotificationDataType,
 	NotificationTargetType,
+	pipe,
 	PointOfContact,
 	PointOfContactType,
 	RawEventObject,
@@ -57,11 +64,12 @@ import {
 	RawRegularEventObject,
 	RawResolvedEventObject,
 	RawResolvedLinkedEvent,
+	Right,
 	ServerError,
 	toAsyncIterableIterator,
 	toReference,
 } from 'common-lib';
-import { AuditsBackend } from '.';
+import { AuditsBackend, EmailBackend, MemberBackend, RegistryBackend, SYSTEM_BCC_ADDRESS } from '.';
 import { AccountBackend, BasicAccountRequest, getAccount } from './Account';
 import { getAttendanceForEvent } from './Attendance';
 import { areDeepEqual } from './Audits';
@@ -356,7 +364,9 @@ export const saveLinkedEventFunc = (backend: Backends<[GoogleBackend]>) => (sche
 		.flatMap(ensureResolvedEvent(schema));
 
 export const saveRegularEventFunc = (
-	backend: Backends<[TimeBackend, GoogleBackend, AuditsBackend]>,
+	backend: Backends<
+		[TimeBackend, GoogleBackend, AuditsBackend, MemberBackend, EmailBackend, RegistryBackend]
+	>,
 ) => (schema: Schema) => (account: AccountObject) => (updater: MemberReference) => (
 	oldEvent: FromDatabase<RawRegularEventObject>,
 ) => (event: RawRegularEventObject): ServerEither<FromDatabase<RawResolvedEventObject>> =>
@@ -418,7 +428,12 @@ export const saveRegularEventFunc = (
 			uniform: event.uniform,
 			type: EventType.REGULAR,
 		}))
-		.tap(notifyEventPOCs(schema)(account)(oldEvent))
+		.tap(() => notifyEventPOCs(schema)(account)(oldEvent)(event))
+		.tap(() =>
+			oldEvent.status !== EventStatus.CANCELLED && event.status === EventStatus.CANCELLED
+				? sendCancelEmail(backend)(schema)(account)(event)(updater)
+				: asyncRight(void 0, errorGenerator('should not reach this')),
+		)
 		.flatMap(
 			saveToCollectionA(schema.getCollection<FromDatabase<RawRegularEventObject>>('Events')),
 		)
@@ -426,9 +441,13 @@ export const saveRegularEventFunc = (
 		.tap(updateLinkedEvents(schema))
 		.tap(newEvent => backend.generateChangeAudit(account)(updater)([oldEvent, newEvent]));
 
-export const saveEvent = (backends: Backends<[TimeBackend, GoogleBackend, AuditsBackend]>) => (
-	schema: Schema,
-) => (account: AccountObject) => (updater: MemberReference) => <T extends RawResolvedEventObject>(
+export const saveEvent = (
+	backends: Backends<
+		[TimeBackend, GoogleBackend, AuditsBackend, MemberBackend, EmailBackend, RegistryBackend]
+	>,
+) => (schema: Schema) => (account: AccountObject) => (updater: MemberReference) => <
+	T extends RawResolvedEventObject
+>(
 	oldEvent: FromDatabase<T>,
 ) => (event: T): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	event.type === EventType.LINKED && oldEvent.type === EventType.LINKED
@@ -663,6 +682,72 @@ const notifyEventPOCs = (schema: Schema) => (account: AccountObject) => (
 	]);
 };
 
+const sendCancelEmail = (backend: Backends<[EmailBackend, MemberBackend, RegistryBackend]>) => (
+	schema: Schema,
+) => (account: AccountObject) => (event: RawRegularEventObject) => (updater: MemberReference) =>
+	AsyncEither.All([
+		getAttendanceForEvent(schema)(event),
+		backend
+			.getMemberName(account)(updater)
+			.map(name => [
+				/* getEmailText */ (url: string) => `${name} has changed the status of event ${
+					event.name
+				} on ${new Date(event.startDateTime).toDateString()} \
+to CANCELLED.  <a href="${url}/eventviewer/${
+					event.id
+				}">Go here</a> to review details of the cancelled event.`,
+				/* getEmailHtml */ (url: string) => `${name} has changed the status of event ${
+					event.name
+				} on ${new Date(event.startDateTime).toDateString()} \
+to CANCELLED.  <a href="${url}/eventviewer/${
+					event.id
+				}">Go here</a> to review details of the cancelled event.`,
+			]),
+	]).flatMap(([attendance, [getEmailText, getEmailHtml]]) =>
+		AsyncEither.All([
+			asyncRight(
+				pipe(
+					asyncIterMap((record: AttendanceRecord) =>
+						backend.getMember(account)(record.memberID),
+					),
+					asyncIterFilter<EitherObj<ServerError, Member>, Right<Member>>(Either.isRight),
+					asyncIterMap((eith: Right<Member>): string[] =>
+						[
+							eith.value.contact.CADETPARENTEMAIL.PRIMARY,
+							eith.value.contact.CADETPARENTEMAIL.SECONDARY,
+							eith.value.contact.CADETPARENTEMAIL.EMERGENCY,
+							eith.value.contact.EMAIL.PRIMARY,
+							eith.value.contact.EMAIL.SECONDARY,
+							eith.value.contact.EMAIL.EMERGENCY,
+						].filter((v): v is string => !!v),
+					),
+					asyncIterFlatMap(v => v),
+					collectGeneratorAsync,
+				)(attendance),
+				errorGenerator('Could not get attendance emails'),
+			),
+			asyncRight(
+				event.pointsOfContact
+					.filter(
+						(v): v is InternalPointOfContact => v.type === PointOfContactType.INTERNAL,
+					)
+					.map(get('email')),
+				errorGenerator('Could not get Point of Contact emails'),
+			),
+		]).flatMap(([attendanceEmails, pocEmails]) =>
+			backend
+				.getRegistry(account)
+				.map(backend.sendEmail)
+				.flatApply(({ url }) => ({
+					to: [],
+					bccAddresses: [...attendanceEmails, ...pocEmails, SYSTEM_BCC_ADDRESS],
+					subject: 'Event Cancellation Notice',
+					textBody: getEmailText(url),
+					htmlBody: getEmailHtml(url),
+				})),
+		),
+	);
+
 // #region Backends
 export interface EventsBackend {
 	getEvent: (
@@ -716,12 +801,24 @@ export interface EventsBackend {
 
 export const getEventsBackend = (
 	req: BasicAccountRequest,
-	prevBackend: Backends<[TimeBackend, GoogleBackend, AuditsBackend]>,
+	prevBackend: Backends<
+		[EmailBackend, MemberBackend, TimeBackend, GoogleBackend, AuditsBackend, RegistryBackend]
+	>,
 ): EventsBackend => getRequestFreeEventsBackend(req.mysqlx, { ...prevBackend, ...req.backend });
 
 export const getRequestFreeEventsBackend = (
 	mysqlx: Schema,
-	prevBackend: Backends<[TimeBackend, GoogleBackend, AuditsBackend, AccountBackend]>,
+	prevBackend: Backends<
+		[
+			EmailBackend,
+			MemberBackend,
+			TimeBackend,
+			GoogleBackend,
+			AuditsBackend,
+			AccountBackend,
+			RegistryBackend,
+		]
+	>,
 ): EventsBackend => {
 	const backend: EventsBackend = {
 		getEvent: memoize((account: AccountObject) => memoize(getEvent(mysqlx)(account))),

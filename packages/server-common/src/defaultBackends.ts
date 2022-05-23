@@ -18,7 +18,7 @@
  */
 
 import * as mysql from '@mysql/xdevapi';
-import { always, BasicMySQLRequest } from 'common-lib';
+import { always, asyncRight, BasicMySQLRequest, errorGenerator } from 'common-lib';
 import {
 	AuditsBackend,
 	getAuditsBackend,
@@ -47,6 +47,7 @@ import { getPAMBackend, PAMBackend } from './member/pam';
 import { getMemberBackend, MemberBackend, getRequestFreeMemberBackend } from './Members';
 import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRegistryBackend, RegistryBackend, getRequestFreeRegistryBackend } from './Registry';
+import { EmailBackend, getEmailBackend } from './sendEmail';
 import { getTaskBackend, TaskBackend } from './Task';
 import { getTeamsBackend, TeamsBackend, getRequestFreeTeamsBackend } from './Team';
 
@@ -99,13 +100,39 @@ export const getCombinedPAMBackend = (): ((
 export const getCombinedEventsBackend = (): ((
 	req: BasicMySQLRequest,
 ) => Backends<
-	[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, GoogleBackend, EventsBackend]
+	[
+		EmailBackend,
+		CAP.CAPMemberBackend,
+		TeamsBackend,
+		MemberBackend,
+		TimeBackend,
+		RegistryBackend,
+		AccountBackend,
+		AuditsBackend,
+		GoogleBackend,
+		EventsBackend,
+	]
 >) =>
 	combineBackends<
 		BasicMySQLRequest,
-		[TimeBackend, RegistryBackend, AccountBackend, AuditsBackend, GoogleBackend, EventsBackend]
+		[
+			EmailBackend,
+			CAP.CAPMemberBackend,
+			TimeBackend,
+			TeamsBackend,
+			MemberBackend,
+			RegistryBackend,
+			AccountBackend,
+			AuditsBackend,
+			GoogleBackend,
+			EventsBackend,
+		]
 	>(
+		getEmailBackend,
+		CAP.getCAPMemberBackend,
 		getTimeBackend,
+		getTeamsBackend,
+		getMemberBackend,
 		getRegistryBackend,
 		getAccountBackend,
 		getCombinedAuditsBackend(),
@@ -191,6 +218,7 @@ export const getDefaultTestBackend = <
 ) => Backends<
 	[
 		T,
+		EmailBackend,
 		RawMySQLBackend,
 		TimeBackend,
 		RegistryBackend,
@@ -208,6 +236,7 @@ export const getDefaultTestBackend = <
 		mysql.Schema,
 		[
 			T,
+			EmailBackend,
 			RawMySQLBackend,
 			TimeBackend,
 			RegistryBackend,
@@ -222,6 +251,7 @@ export const getDefaultTestBackend = <
 		]
 	>(
 		always(opts?.overrides) as () => T,
+		(): EmailBackend => ({ sendEmail: () => () => asyncRight(void 0, errorGenerator('')) }),
 		requestlessMySQLBackend,
 		getTimeBackend,
 		getRequestFreeRegistryBackend,
