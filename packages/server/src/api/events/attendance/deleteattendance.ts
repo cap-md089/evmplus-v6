@@ -48,7 +48,7 @@ import wrapper from '../../../lib/wrapper';
 
 export const getMember = (req: ServerAPIRequestParameter<api.events.attendance.Delete>) => (
 	body: APIEndpointBody<api.events.attendance.Delete>,
-) => (event: RawResolvedEventObject) =>
+) => (event: RawResolvedEventObject): MemberReference =>
 	canFullyManageEvent(req.member)(event)
 		? Maybe.orSome<MemberReference>(toReference(req.member))(Maybe.fromValue(body.member))
 		: toReference(req.member);
@@ -80,7 +80,7 @@ export const func: Endpoint<
 			.flatMap(backend.ensureResolvedEvent)
 			.flatMap(event =>
 				backend
-					.getMemberAttendanceRecordForEvent(event)(req.member)
+					.getMemberAttendanceRecordForEvent(event)(req.body.member)
 					.filter(Maybe.isSome, {
 						type: 'OTHER',
 						code: 404,

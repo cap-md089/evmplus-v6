@@ -83,7 +83,7 @@ export const maybeGetTeam = (
 	event: RawResolvedEventObject,
 	req: ServerAPIRequestParameter<api.events.attendance.ModifyAttendance>,
 	backend: Backend,
-) =>
+): ServerEither<MaybeObj<RawTeamObject>> =>
 	event.teamID === null || event.teamID === undefined
 		? asyncRight(Maybe.none(), errorGenerator('Could not get team membership information'))
 		: backend.getTeam(req.account)(event.teamID).map(Maybe.some);
