@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -17,7 +17,14 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Maybe, MaybeObj, Either, EitherObj, AttendanceStatus } from 'common-lib';
+import {
+	Maybe,
+	MaybeObj,
+	Either,
+	EitherObj,
+	AttendanceStatus,
+	RawResolvedEventObject,
+} from 'common-lib';
 import * as React from 'react';
 import Page, { PageProps } from '../Page';
 import fetchApi from '../../lib/apis';
@@ -41,6 +48,7 @@ interface ScanAddErrorState {
 interface ScanAddUIState {
 	message: MaybeObj<EitherObj<string, string>>;
 	capid: number | null;
+	event: RawResolvedEventObject | null;
 }
 
 type ScanAddState = ScanAddUIState & (ScanAddLoadedState | ScanAddLoadingState | ScanAddErrorState);
@@ -50,6 +58,7 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 		message: Maybe.none(),
 		capid: null,
 		state: 'LOADING',
+		event: null,
 	};
 
 	private inputRef = React.createRef<HTMLInputElement>();
@@ -70,6 +79,11 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 			{ eventID: parseInt(this.props.routeProps.match.params.id, 10) },
 		);
 
+		const thisEvent = await fetchApi.events.events.get(
+			{ id: this.props.routeProps.match.params.id },
+			{},
+		);
+
 		if (Either.isLeft(result) && result.value.code !== 403) {
 			this.setState(prev => ({
 				...prev,
@@ -77,11 +91,19 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 				state: 'ERROR',
 				error: result.value.message,
 			}));
-		} else {
+		} else if (Either.isLeft(thisEvent) && thisEvent.value.code !== 403) {
+			this.setState(prev => ({
+				...prev,
+
+				state: 'ERROR',
+				error: thisEvent.value.message,
+			}));
+		} else if (Either.isRight(thisEvent)) {
 			this.setState(prev => ({
 				...prev,
 
 				state: 'LOADED',
+				event: thisEvent.value,
 			}));
 		}
 	}
@@ -104,6 +126,29 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 				{Maybe.isSome(this.state.message) ? (
 					<div className="banner">{this.state.message.value.value}</div>
 				) : null}
+				<h1>{this.state.event?.name}</h1>
+				<h2>{this.state.event?.subtitle}</h2>
+				<h3>At: {this.state.event?.location}</h3>
+				<h3>
+					Starting:{' '}
+					{!!this.state.event
+						? new Date(this.state.event.startDateTime).toDateString()
+						: ''}{' '}
+					at&nbsp;
+					{!!this.state.event
+						? new Date(this.state.event.startDateTime).toLocaleTimeString()
+						: ''}
+				</h3>
+				<h3>
+					Ending:{' '}
+					{!!this.state.event
+						? new Date(this.state.event.endDateTime).toDateString()
+						: ''}{' '}
+					at&nbsp;
+					{!!this.state.event
+						? new Date(this.state.event.endDateTime).toLocaleTimeString()
+						: ''}
+				</h3>
 				<SimpleForm<{ capid: number | null }>
 					values={this.state}
 					onChange={({ capid }) => this.setState({ capid })}
