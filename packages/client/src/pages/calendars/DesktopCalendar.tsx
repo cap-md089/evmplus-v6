@@ -101,32 +101,32 @@ export const getClassNameFromEvent = (obj: RawResolvedEventObject): string => {
 	}
 };
 
-const getDayString = (inDay: number): string => {
-	let day = '';
-	switch (inDay) {
-		case 0:
-			day = 'Sunday';
-			break;
-		case 1:
-			day = 'Monday';
-			break;
-		case 2:
-			day = 'Tuesday';
-			break;
-		case 3:
-			day = 'Wednesday';
-			break;
-		case 4:
-			day = 'Thursday';
-			break;
-		case 5:
-			day = 'Friday';
-			break;
-		case 6:
-			day = 'Saturday';
-	}
-	return day;
-};
+// const getDayString = (inDay: number): string => {
+// 	let day = '';
+// 	switch (inDay) {
+// 		case 0:
+// 			day = 'Sunday';
+// 			break;
+// 		case 1:
+// 			day = 'Monday';
+// 			break;
+// 		case 2:
+// 			day = 'Tuesday';
+// 			break;
+// 		case 3:
+// 			day = 'Wednesday';
+// 			break;
+// 		case 4:
+// 			day = 'Thursday';
+// 			break;
+// 		case 5:
+// 			day = 'Friday';
+// 			break;
+// 		case 6:
+// 			day = 'Saturday';
+// 	}
+// 	return day;
+// };
 
 export default class DesktopCalendar extends Page<CalendarProps> {
 	public state: {} = {};
@@ -146,15 +146,15 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
 		// js Date 1st of month local tz
-		const thisMonth = new Date(year, month);
+		const thisMonth = new Date(`${month}/1/${year}`);
 		// luxon 1st of month local tz
 		const thisMonthLuxon = DateTime.fromMillis(+thisMonth);
 		// js Date last millisecond of previous month local tz
-		const lastMonth = +thisMonth - 1;
+		const lastMonth = new Date(+thisMonth - 1);
 		// luxon
 		const lastMonthLuxon = DateTime.fromMillis(+lastMonth);
 		// js Date copy to ensure that follow-on statement does not corrupt thisMonth
-		const monthBuffer = thisMonth;
+		const monthBuffer = new Date(thisMonth);
 		// js Date first day of next month
 		const nextMonth = new Date(monthBuffer.setMonth(monthBuffer.getMonth() + 1));
 		// luxon
@@ -197,26 +197,26 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 		let prevDate = calDisp.getDate();
 		for (i = 0; i < numberWeeks; i++) {
 			for (j = 0; j < 7; j++) {
-				console.log(
-					'i, j, calDisp: ' +
-						i.toString() +
-						', ' +
-						j.toString() +
-						', ' +
-						getDayString(calDisp.getDay()).substr(0, 2) +
-						' ' +
-						(calDisp.getMonth() + 1).toString() +
-						'/' +
-						calDisp.getDate().toString() +
-						'/' +
-						calDisp.getFullYear().toString() +
-						' ' +
-						calDisp.getHours().toString() +
-						':' +
-						calDisp.getMinutes().toString() +
-						':' +
-						calDisp.getSeconds().toString(),
-				);
+				// console.log(
+				// 	'i, j, calDisp: ' +
+				// 		i.toString() +
+				// 		', ' +
+				// 		j.toString() +
+				// 		', ' +
+				// 		getDayString(calDisp.getDay()).substr(0, 2) +
+				// 		' ' +
+				// 		(calDisp.getMonth() + 1).toString() +
+				// 		'/' +
+				// 		calDisp.getDate().toString() +
+				// 		'/' +
+				// 		calDisp.getFullYear().toString() +
+				// 		' ' +
+				// 		calDisp.getHours().toString() +
+				// 		':' +
+				// 		calDisp.getMinutes().toString() +
+				// 		':' +
+				// 		calDisp.getSeconds().toString(),
+				// );
 				calendar[i][j] = {
 					day: calDisp.getDate(),
 					month: calDisp.getMonth(),

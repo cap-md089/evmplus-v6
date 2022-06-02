@@ -47,15 +47,15 @@ export default class MobileCalendar extends Page<CalendarProps> {
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
 		// js Date 1st of month local tz
-		const thisMonth = new Date(year, month);
+		const thisMonth = new Date(`${month}/1/${year}`);
 		// luxon 1st of month local tz
 		const thisMonthLuxon = DateTime.fromMillis(+thisMonth);
 		// js Date last millisecond of previous month local tz
-		const lastMonth = +thisMonth - 1;
+		const lastMonth = new Date(+thisMonth - 1);
 		// luxon
 		const lastMonthLuxon = DateTime.fromMillis(+lastMonth);
 		// js Date copy to ensure that follow-on statement does not corrupt thisMonth
-		const monthBuffer = thisMonth;
+		const monthBuffer = new Date(thisMonth);
 		// js Date first day of next month
 		const nextMonth = new Date(monthBuffer.setMonth(monthBuffer.getMonth() + 1));
 		// luxon
