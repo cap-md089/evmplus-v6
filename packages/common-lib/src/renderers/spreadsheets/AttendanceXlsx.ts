@@ -30,6 +30,7 @@ import {
 	Member,
 	RawResolvedEventObject,
 } from '../../typings/types';
+import { GradeOrderMap } from '../../consts/gradeOrder';
 
 const EventStatusDisplay = {
 	[EventStatus.DRAFT]: 'Draft',
@@ -105,6 +106,12 @@ const GetBestPhones = (inMember: Member): string => {
 		return '';
 	}
 };
+
+const GetRank = (inMember: Member): string => inMember.memberRank;
+const GetName = (inMember: Member): string => inMember.nameLast + ', ' + inMember.nameFirst;
+
+const GetGradeOrder = (inMember: Member): number =>
+	GradeOrderMap.find(member => member.Grade === inMember.memberRank)?.GradeOrder ?? 0;
 
 const GetBestEmails = (inMember: Member): string => {
 	let numbersData = '';
@@ -260,7 +267,9 @@ export const AttendanceXL = (
 	let row: Array<string | number> = [
 		'Timestamp',
 		'CAPID',
-		'Grade/Name',
+		'Grade',
+		'Grade Order',
+		'Name',
 		'Arrival Time',
 		'Departure Time',
 		'Status',
@@ -281,6 +290,8 @@ export const AttendanceXL = (
 	retVal.push(row);
 
 	const orEmptyString = Maybe.orSome('');
+
+	const orZero = Maybe.orSome(0);
 
 	const getCommanderName = pipe(
 		Maybe.flatMap<SquadronPOC, string>(get('commanderName')),
@@ -305,7 +316,9 @@ export const AttendanceXL = (
 		row = [
 			attendee.record.timestamp,
 			`${attendee.record.memberID.id} `,
-			attendee.record.memberName,
+			orEmptyString(Maybe.map(GetRank)(attendee.member)),
+			orZero(Maybe.map(GetGradeOrder)(attendee.member)),
+			orEmptyString(Maybe.map(GetName)(attendee.member)),
 			attendee.record.shiftTime.arrivalTime,
 			attendee.record.shiftTime.departureTime,
 			DisplayAttendanceStatus[attendee.record.status],
@@ -364,10 +377,10 @@ export const FormatAttendanceXL = (
 		rowCount = 0;
 		(sheet[`A${j}`] as XLSX.CellObject).t = 'd';
 		(sheet[`A${j}`] as XLSX.CellObject).z = dateFormat;
-		(sheet[`E${j}`] as XLSX.CellObject).t = 'd';
-		(sheet[`E${j}`] as XLSX.CellObject).z = dateFormat;
 		(sheet[`F${j}`] as XLSX.CellObject).t = 'd';
 		(sheet[`F${j}`] as XLSX.CellObject).z = dateFormat;
+		(sheet[`G${j}`] as XLSX.CellObject).t = 'd';
+		(sheet[`G${j}`] as XLSX.CellObject).z = dateFormat;
 
 		for (let i = 0; i < customAttendanceFieldValues.length; i++) {
 			const type = customAttendanceFieldValues[i].type;

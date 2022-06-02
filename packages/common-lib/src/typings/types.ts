@@ -4328,6 +4328,22 @@ export interface CadetHFZRequirements {
 }
 
 /**
+ * Used to sort members in the appropriate grade order
+ */
+
+export interface GradeOrder {
+	/**
+	 * Member Grade
+	 */
+	Grade: string;
+
+	/**
+	 * Grade Order
+	 */
+	GradeOrder: number;
+}
+
+/**
  * Represents the MFA tokens that are stored for a user
  */
 
