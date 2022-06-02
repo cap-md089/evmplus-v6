@@ -90,7 +90,7 @@ type SecretGenerator = (options: {
 //#region Sessions
 
 const SESSION_AGES = {
-	[SessionType.REGULAR]: 10 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
+	[SessionType.REGULAR]: 15 * 60 * 1000 * (process.env.NODE_ENV === 'development' ? 100 : 1),
 };
 
 const SESSION_ID_BYTE_COUNT = 64;
