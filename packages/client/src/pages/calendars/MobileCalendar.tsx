@@ -22,7 +22,7 @@ import { DateTime } from 'luxon';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MONTHS } from '../../components/form-inputs/DateTimeInput';
-import { CalendarProps, getMonth } from '../Calendar';
+import { CalendarProps } from '../Calendar';
 import Page from '../Page';
 import { getClassNameFromEvent } from './DesktopCalendar';
 import './MobileCalendar.css';
@@ -35,27 +35,43 @@ export default class MobileCalendar extends Page<CalendarProps> {
 	public render(): JSX.Element {
 		const events = this.props.events;
 
+		// get either year from request or local current year
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
-				? new Date().getUTCFullYear()
+				? new Date().getFullYear()
 				: parseInt(this.props.routeProps.match.params.year, 10);
+		// get either month from request or local current month
 		const month =
 			typeof this.props.routeProps.match.params.month === 'undefined'
-				? new Date().getUTCMonth() + 1
+				? new Date().getMonth() + 1
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
-		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
-		const thisMonth = getMonth(month, year);
-		const nextMonth = getMonth(month + 1, year);
+		// js Date 1st of month local tz
+		const thisMonth = new Date(year, month);
+		// luxon 1st of month local tz
+		const thisMonthLuxon = DateTime.fromMillis(+thisMonth);
+		// js Date last millisecond of previous month local tz
+		const lastMonth = +thisMonth - 1;
+		// luxon
+		const lastMonthLuxon = DateTime.fromMillis(+lastMonth);
+		// js Date copy to ensure that follow-on statement does not corrupt thisMonth
+		const monthBuffer = thisMonth;
+		// js Date first day of next month
+		const nextMonth = new Date(monthBuffer.setMonth(monthBuffer.getMonth() + 1));
+		// luxon
+		const nextMonthLuxon = DateTime.fromMillis(+nextMonth);
 
-		const days = Array(thisMonth.daysInMonth) as RawResolvedEventObject[][];
+		const days = Array(thisMonthLuxon.daysInMonth) as RawResolvedEventObject[][];
 		for (let i = 0; i < days.length; i++) {
 			days[i] = [];
 		}
 
 		events.forEach(event => {
 			// only display events which have days within this calendar month
-			if (event.meetDateTime > +nextMonth || event.pickupDateTime < +thisMonth) {
+			if (
+				new Date(event.meetDateTime) >= nextMonth ||
+				new Date(event.pickupDateTime) < thisMonth
+			) {
 				return;
 			}
 			// get Date object of first day of event
@@ -71,7 +87,7 @@ export default class MobileCalendar extends Page<CalendarProps> {
 			const endDate =
 				eventEnd.getMonth() === new Date(year, month - 1).getMonth()
 					? eventEnd.getDate()
-					: thisMonth.daysInMonth;
+					: thisMonthLuxon.daysInMonth;
 
 			// load zero-based array of display days
 			for (let i = startDate - 1; i < endDate; i++) {
@@ -132,22 +148,22 @@ export default class MobileCalendar extends Page<CalendarProps> {
 				) : null}
 				<div className="calendar-title">
 					<Link
-						to={`/calendar/${lastMonth.month}/${lastMonth.year}`}
+						to={`/calendar/${lastMonthLuxon.month}/${lastMonthLuxon.year}`}
 						className="left-link"
 					>
-						{MONTHS[lastMonth.month - 1]}
+						{MONTHS[lastMonthLuxon.month - 1]}
 					</Link>
 					{MONTHS[month - 1]} {year}
 					<Link
-						to={`/calendar/${nextMonth.month}/${nextMonth.year}`}
+						to={`/calendar/${nextMonthLuxon.month}/${nextMonthLuxon.year}`}
 						className="right-link"
 					>
-						{MONTHS[nextMonth.month - 1]}
+						{MONTHS[nextMonthLuxon.month - 1]}
 					</Link>
 				</div>
 				<ul className="day-list">
 					{days
-						.map(this.renderEventListForDay(thisMonth))
+						.map(this.renderEventListForDay(thisMonthLuxon))
 						.filter(eventList => !!eventList)}
 				</ul>
 			</div>

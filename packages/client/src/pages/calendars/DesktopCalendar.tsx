@@ -27,7 +27,7 @@ import { DateTime } from 'luxon';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { MONTHS } from '../../components/form-inputs/DateTimeInput';
-import { CalendarProps, getMonth, getPositionIndices } from '../Calendar';
+import { CalendarProps, getPositionIndices } from '../Calendar';
 import Page from '../Page';
 import './DesktopCalendar.css';
 
@@ -137,20 +137,28 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 		// year of calendar display
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
-				? new Date().getUTCFullYear()
+				? new Date().getFullYear()
 				: parseInt(this.props.routeProps.match.params.year, 10);
 		// month of calendar display
 		const month =
 			typeof this.props.routeProps.match.params.month === 'undefined'
-				? new Date().getUTCMonth() + 1
+				? new Date().getMonth() + 1
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
-		// month previous to display month (minus one millisecond from start of month)
-		const lastMonth = DateTime.fromMillis(+getMonth(month, year) - 1);
-		// first millisecond of display month
-		const thisMonth = getMonth(month, year);
-		// first millisecond of month after display month
-		const nextMonth = getMonth(month + 1, year);
+		// js Date 1st of month local tz
+		const thisMonth = new Date(year, month);
+		// luxon 1st of month local tz
+		const thisMonthLuxon = DateTime.fromMillis(+thisMonth);
+		// js Date last millisecond of previous month local tz
+		const lastMonth = +thisMonth - 1;
+		// luxon
+		const lastMonthLuxon = DateTime.fromMillis(+lastMonth);
+		// js Date copy to ensure that follow-on statement does not corrupt thisMonth
+		const monthBuffer = thisMonth;
+		// js Date first day of next month
+		const nextMonth = new Date(monthBuffer.setMonth(monthBuffer.getMonth() + 1));
+		// luxon
+		const nextMonthLuxon = DateTime.fromMillis(+nextMonth);
 
 		const calendar: CalendarData = [];
 
@@ -373,17 +381,17 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				<table>
 					<caption>
 						<Link
-							to={`/calendar/${lastMonth.month}/${lastMonth.year}`}
+							to={`/calendar/${lastMonthLuxon.month}/${lastMonthLuxon.year}`}
 							className="left-link"
 						>
-							{MONTHS[lastMonth.month - 1]}
+							{MONTHS[lastMonthLuxon.month - 1]}
 						</Link>
 						{MONTHS[month - 1]} {year}
 						<Link
-							to={`/calendar/${nextMonth.month}/${nextMonth.year}`}
+							to={`/calendar/${nextMonthLuxon.month}/${nextMonthLuxon.year}`}
 							className="right-link"
 						>
-							{MONTHS[nextMonth.month - 1]}
+							{MONTHS[nextMonthLuxon.month - 1]}
 						</Link>
 					</caption>
 					<tbody>
@@ -402,7 +410,7 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 									<td
 										key={l}
 										className={
-											item.month === thisMonth.get('month') - 1
+											item.month === thisMonthLuxon.get('month') - 1
 												? 'calendar-inmonth'
 												: 'calendar-outmonth'
 										}
