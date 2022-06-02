@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux
+ * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
  * This file is part of EvMPlus.org.
  *
@@ -128,27 +128,38 @@ export default class Calendar extends Page<
 
 		const year =
 			typeof this.props.routeProps.match.params.year === 'undefined'
-				? new Date().getUTCFullYear()
+				? new Date().getFullYear()
 				: parseInt(this.props.routeProps.match.params.year, 10);
 		const month =
 			typeof this.props.routeProps.match.params.month === 'undefined'
-				? new Date().getUTCMonth() + 1
+				? new Date().getMonth() + 1
 				: parseInt(this.props.routeProps.match.params.month, 10);
 
-		// create js Date object with intended month
-		const displayDate = new Date(year, month - 1);
 		// "day of month" first day
-		const dayOfMonthFirst = new Date(displayDate.getTime());
-		// "day of month" last day
-		const dayOfMonthLast = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
+		const dayOfMonthFirst = new Date(`${month}/1/${year}`);
+		// const dayOfMonthLast = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
 		// "day of calendar" start day, start with current month
-		const dayOfCalendarStart = new Date(year, dayOfMonthFirst.getMonth(), 1);
-		// doc start day, modify to be the Sunday before the first day of the display month
-		dayOfCalendarStart.setDate(-(dayOfCalendarStart.getDay() - 1));
-		// "day of calendar" end day, start with last day of current month
-		const dayOfCalendarEnd = new Date(year, dayOfMonthFirst.getMonth() + 1, 0, 23, 59);
-		// doc end day, modify to be the Saturday after the last day of the display month
-		dayOfCalendarEnd.setDate(dayOfMonthLast.getDate() + (6 - dayOfMonthLast.getDay()));
+		let dayOfCalendarStart = dayOfMonthFirst;
+		// determine day of week
+		let dayOfWeekMonth = dayOfCalendarStart.getDay();
+		while (dayOfWeekMonth > 0) {
+			dayOfCalendarStart = new Date(+dayOfCalendarStart - 24 * 60 * 60 * 1000);
+			dayOfWeekMonth = dayOfCalendarStart.getDay();
+		}
+
+		// js Date copy to ensure that follow-on statement does not corrupt thisMonth
+		const monthBuffer = new Date(dayOfMonthFirst);
+		// js Date first day of next month
+		const nextMonth = new Date(monthBuffer.setMonth(monthBuffer.getMonth() + 1));
+		// "day of month" last day
+		const dayOfMonthLast = new Date(+nextMonth - 1);
+
+		let dayOfCalendarEnd = dayOfMonthLast;
+		dayOfWeekMonth = dayOfCalendarEnd.getDay();
+		while (dayOfWeekMonth < 6) {
+			dayOfCalendarEnd = new Date(+dayOfCalendarEnd + 24 * 60 * 60 * 1000);
+			dayOfWeekMonth = dayOfCalendarEnd.getDay();
+		}
 
 		const resEither = await fetchApi.events.events.getRange(
 			{
