@@ -83,9 +83,12 @@ export default class TeamList extends Page<PageProps, ChangeLogState> {
 
 		return (
 			<div>
-				{this.state.changelog.map((logitem, i) => (
+				{this.state.changelog.map((logitem, i) => [
+					i !== 0 ? <hr /> : null,
 					<div key={i}>
-						<h3>{new Date(logitem.noteDateTime).toDateString()}</h3>
+						<h2>
+							{logitem.noteTitle} on {new Date(logitem.noteDateTime).toDateString()}
+						</h2>
 						<p>
 							{logitem.noteText ? (
 								<MarkdownRenderer markdown={logitem.noteText} />
@@ -93,8 +96,8 @@ export default class TeamList extends Page<PageProps, ChangeLogState> {
 								<i>Log item has no description</i>
 							)}
 						</p>
-					</div>
-				))}
+					</div>,
+				])}
 			</div>
 		);
 	}
