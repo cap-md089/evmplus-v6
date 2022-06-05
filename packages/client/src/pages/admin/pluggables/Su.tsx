@@ -106,7 +106,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 						<br />
 						<br />
 						<DialogueButtonForm<ChangeLogItem>
-							buttonText="Add release note"
+							buttonText="Add release note/change log"
 							buttonClass="underline-button"
 							buttonType="none"
 							displayButtons={DialogueButtons.OK_CANCEL}
@@ -117,9 +117,23 @@ export default class SuWidget extends Page<PageProps, SuState> {
 								entryDateTime: Date.now(),
 								entryCAPID: !!this.props.member ? +this.props.member.id : 0,
 								noteDateTime: Date.now(),
+								noteTitle: 'Enter title',
 								noteText: 'Enter changelog item here',
 							}}
 						>
+							<TextBox name="null">
+								<span
+									style={{
+										lineHeight: '1px',
+									}}
+								>
+									Add your title in the text box. This will be an H1 title with
+									the date.
+								</span>
+							</TextBox>
+
+							<TextInput name="noteTitle" />
+
 							<TextBox name="null">
 								<span
 									style={{
@@ -172,6 +186,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 		entryDateTime,
 		entryCAPID,
 		noteDateTime,
+		noteTitle,
 		noteText,
 	}: ChangeLogItem): Promise<void> => {
 		const mem = this.props.member;
@@ -185,6 +200,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 				entryDateTime,
 				entryCAPID,
 				noteDateTime,
+				noteTitle,
 				noteText,
 			},
 		);

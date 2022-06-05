@@ -3210,6 +3210,10 @@ export interface ChangeLogItem {
 	 */
 	noteDateTime: number;
 	/**
+	 * the title of the changelog item
+	 */
+	noteTitle: string;
+	/**
 	 * the textual description of the system change
 	 */
 	noteText: string;
