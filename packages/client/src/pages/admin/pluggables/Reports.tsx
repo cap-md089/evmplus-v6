@@ -358,7 +358,7 @@ export const ReportsWidget = withFetchApi(
 				now.getHours().toString().padStart(2, '0') +
 				now.getMinutes().toString().padStart(2, '0');
 
-			XLSX.writeFile(wb, `SQR 60-20 ${this.props.account.id}-${formatdate}.xlsx`);
+			XLSX.writeFile(wb, `SQR 60-1 ${this.props.account.id}-${formatdate}.xlsx`);
 		};
 	},
 );
