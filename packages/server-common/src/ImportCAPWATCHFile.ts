@@ -202,6 +202,34 @@ const modules: Array<{
 		module: orgMeeting,
 		file: 'OrganizationMeetings.txt'
 	}*/,
+	/* {
+		module: plGroups,
+		file: 'PL_Groups.txt',
+	},
+	{
+		module: plLookup,
+		file: 'PL_Lookup.txt',
+	},
+	{
+		module: plMemberPathCredit,
+		file: 'PL_MemberPathCredit,
+	},
+	{
+		module: plMemberTaskCredit,
+		file: 'PL_MemberTaskCredit,
+	},
+	{
+		module: plPaths,
+		file: 'PL_Paths.txt',
+	},
+	{
+		module: plTaskGroupAssignments,
+		file: 'PL_TaskGroupAssignments.txt',
+	},
+	{
+		module: plTasks,
+		file: 'PL_Tasks.txt',
+	}*/
 ];
 
 export interface CAPWATCHModuleResult {
