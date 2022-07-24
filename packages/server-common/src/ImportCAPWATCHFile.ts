@@ -334,7 +334,7 @@ export default async function* (
 
 		const records = await new Promise<any[]>(res => {
 			parser.on('end', () => {
-				console.log('Parsing', rows.length, 'records');
+				console.log('Parsing', rows.length, 'records -- one dot = 15 records');
 				res(rows);
 			});
 
