@@ -37,6 +37,15 @@ import memberParse from './capwatch-modules/member';
 import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
 import orgContact from './capwatch-modules/orgcontact';
+import plGroups from './capwatch-modules/pl/groups';
+import plLookup from './capwatch-modules/pl/lookup';
+import plMemberPathCredit from './capwatch-modules/pl/memberPathCredit';
+import plMemberTaskCredit from './capwatch-modules/pl/memberTaskCredit';
+import plPaths from './capwatch-modules/pl/paths';
+import plTaskGroupAssignments from './capwatch-modules/pl/taskGroupAssignments';
+import plTasks from './capwatch-modules/pl/tasks';
+import seniorAwards from './capwatch-modules/seniorawards';
+import seniorLevel from './capwatch-modules/seniorlevel';
 import { CAP } from './member/members';
 import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
@@ -165,15 +174,15 @@ const modules: Array<{
 		module: cadetHFZInformationParse,
 		file: 'CadetHFZInformation.txt',
 	},
-	/*	{
+	{
 		module: seniorAwards,
-		file: 'SeniorAwards.txt'
+		file: 'SeniorAwards.txt',
 	},
 	{
 		module: seniorLevel,
-		file: 'SeniorLevel.txt'
+		file: 'SeniorLevel.txt',
 	},
-	{
+	/*  {
 		module: mbrAddresses,
 		file: 'MbrAddresses.txt'
 	},
@@ -202,6 +211,34 @@ const modules: Array<{
 		module: orgMeeting,
 		file: 'OrganizationMeetings.txt'
 	}*/,
+	{
+		module: plGroups,
+		file: 'PL_Groups.txt',
+	},
+	{
+		module: plLookup,
+		file: 'PL_Lookup.txt',
+	},
+	{
+		module: plMemberPathCredit,
+		file: 'PL_MemberPathCredit.txt',
+	},
+	{
+		module: plMemberTaskCredit,
+		file: 'PL_MemberTaskCredit.txt',
+	},
+	{
+		module: plPaths,
+		file: 'PL_Paths.txt',
+	},
+	{
+		module: plTaskGroupAssignments,
+		file: 'PL_TaskGroupAssignments.txt',
+	},
+	{
+		module: plTasks,
+		file: 'PL_Tasks.txt',
+	},
 ];
 
 export interface CAPWATCHModuleResult {

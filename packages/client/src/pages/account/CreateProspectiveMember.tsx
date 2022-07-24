@@ -19,7 +19,6 @@
 
 import {
 	CAPMemberContact,
-	CAPMemberContactInstance,
 	CAPProspectiveMemberPasswordCreation,
 	CAPProspectiveMemberPasswordCreationType,
 	getMemberEmail,
@@ -27,6 +26,7 @@ import {
 	MaybeObj,
 	NewCAPProspectiveMember,
 } from 'common-lib';
+import { CAPMemberContactInstance } from 'common-lib/src/typings/nhq';
 import React, { FunctionComponent } from 'react';
 import EnumRadioButton from '../../components/form-inputs/EnumRadioButton';
 import { InputProps } from '../../components/form-inputs/Input';
