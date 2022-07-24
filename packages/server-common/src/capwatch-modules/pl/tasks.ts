@@ -50,6 +50,16 @@ const plTasks: CAPWATCHModule<NHQ.PL.Tasks> = async function* (
 			await schema.createCollection('NHQ_PL_Tasks');
 		}
 
+		try {
+			await collection.remove('true').execute();
+		} catch (e) {
+			console.warn(e);
+			return yield {
+				type: 'Result',
+				error: CAPWATCHError.CLEAR,
+			};
+		}
+
 		let currentRecord = 0;
 
 		const promises = [];

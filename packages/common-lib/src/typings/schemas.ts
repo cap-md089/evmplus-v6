@@ -53,6 +53,13 @@ export interface TableNameMap {
 	NHQ_OFlight: NHQ.OFlight;
 	NHQ_OrgContact: NHQ.OrgContact;
 	NHQ_Organization: NHQ.Organization;
+	NHQ_PL_Groups: NHQ.PL.Groups;
+	NHQ_PL_Lookup: NHQ.PL.Lookup;
+	NHQ_PL_MemberPathCredit: NHQ.PL.MemberPathCredit;
+	NHQ_PL_MemberTaskCredit: NHQ.PL.MemberTaskCredit;
+	NHQ_PL_Paths: NHQ.PL.Paths;
+	NHQ_PL_TaskGroupAssignments: NHQ.PL.TaskGroupAssignments;
+	NHQ_PL_Tasks: NHQ.PL.Tasks;
 	Notifications: RawNotificationObject<NotificationCause, NotificationTarget>;
 	PasswordResetTokens: PasswordResetTokenInformation;
 	ProspectiveMembers: StoredProspectiveMemberObject;
