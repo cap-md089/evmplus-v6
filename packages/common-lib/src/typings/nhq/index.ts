@@ -363,4 +363,24 @@ export interface MbrAchievements {
 	ORGID: number;
 }
 
+export interface SeniorAwards {
+	CAPID: number;
+	Award: string;
+	AwardNo: number;
+	Completed: string;
+	UsrID: string;
+	DateMod: string;
+}
+
+export interface SeniorLevel {
+	CAPID: number;
+	Lvl: string;
+	Completed: string;
+	UsrID: string;
+	DateMod: string;
+	FirstUsr: string;
+	DateCreated: string;
+	RecID: number;
+}
+
 export * as PL from './pl';

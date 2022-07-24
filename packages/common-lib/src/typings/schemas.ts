@@ -53,6 +53,8 @@ export interface TableNameMap {
 	NHQ_OFlight: NHQ.OFlight;
 	NHQ_OrgContact: NHQ.OrgContact;
 	NHQ_Organization: NHQ.Organization;
+	NHQ_SeniorAwards: NHQ.SeniorAwards;
+	NHQ_SeniorLevel: NHQ.SeniorLevel;
 	NHQ_PL_Groups: NHQ.PL.Groups;
 	NHQ_PL_Lookup: NHQ.PL.Lookup;
 	NHQ_PL_MemberPathCredit: NHQ.PL.MemberPathCredit;
