@@ -81,6 +81,11 @@ export interface CAPWATCHFileUpdateResult {
 	currentRecord: number;
 }
 
+export interface CAPWATCHFileLogResult {
+	type: 'Log';
+	currentRecord: number;
+}
+
 export interface CAPWATCHFilePermissionsResult {
 	type: 'PermsError';
 	memberName: string;
@@ -123,7 +128,10 @@ export type CAPWATCHModule<T> = (
 	capidMap: { [CAPID: number]: number },
 	files: string[],
 ) => AsyncIterableIterator<
-	CAPWATCHFileUpdateResult | CAPWATCHFileResult | CAPWATCHFilePermissionsResult
+	| CAPWATCHFileUpdateResult
+	| CAPWATCHFileLogResult
+	| CAPWATCHFileResult
+	| CAPWATCHFilePermissionsResult
 >;
 
 const modules: Array<{
@@ -261,6 +269,7 @@ export interface CAPWATCHFileMemberImportError {
 
 export type CAPWATCHUpdateOrResult =
 	| CAPWATCHModuleResult
+	| CAPWATCHFileLogResult
 	| CAPWATCHFileUpdate
 	| CAPWATCHFileMemberImportError;
 
@@ -367,6 +376,10 @@ export default async function* (
 				await session.rollback();
 
 				return yield result;
+			} else if (result.type === 'Log') {
+				yield {
+					...result,
+				};
 			} else {
 				yield {
 					...result,

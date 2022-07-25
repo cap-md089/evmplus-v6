@@ -18,7 +18,7 @@ export interface Groups {
 	PathID: number;
 	GroupName: string;
 	NumberOfRequiredTasks: number;
-	AwardsExtraCredit: number;
+	AwardsExtraCredit: boolean;
 }
 
 export interface Paths {

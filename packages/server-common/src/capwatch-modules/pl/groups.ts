@@ -66,7 +66,7 @@ const plGroups: CAPWATCHModule<NHQ.PL.Groups> = async function* (
 
 		for (const group of fileData) {
 			const values = {
-				AwardsExtraCredit: parseInt(group.AwardsExtraCredit, 10),
+				AwardsExtraCredit: group.AwardsExtraCredit === 'True',
 				NumberOfRequiredTasks: parseInt(group.NumberOfRequiredTasks, 10),
 				GroupName: group.GroupName,
 				PathID: parseInt(group.PathID, 10),
@@ -83,6 +83,10 @@ const plGroups: CAPWATCHModule<NHQ.PL.Groups> = async function* (
 					currentRecord,
 				};
 			}
+			// yield {
+			// 	type: 'Log',
+			// 	currentRecord: parseInt(group.GroupID, 10),
+			// }
 		}
 
 		await Promise.all(promises);

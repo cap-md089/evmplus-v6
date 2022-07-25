@@ -58,6 +58,11 @@ void (async () => {
 			case 'Update':
 				process.stdout.write('.');
 				break;
+			case 'Log':
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				process.stdout.write(i.currentRecord.toString());
+				process.stdout.write(',');
+				break;
 			default:
 				console.log(i);
 		}
