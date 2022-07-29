@@ -175,6 +175,8 @@ services:
               source: .
               target: /usr/evm-plus
 
+            - ./capwatch_downloads:/srv/downloads
+
             - uploads:/srv/uploads
         tty: true
         stdin_open: true
