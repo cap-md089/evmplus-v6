@@ -182,14 +182,6 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 
 		return (
 			<>
-				<p>
-					Duty responsibilities are indicated by a letter in front of the Cadet:
-					<ul>
-						<li>"o" for duty assignments involving Operations, </li>
-						<li>"s" for duty assignments involving Support, and</li>
-						<li>"c" for duty assignments involving CAC</li>
-					</ul>
-				</p>
 				<div>
 					{flights.map((flight, index) => (
 						<FlightRow
@@ -215,6 +207,20 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 						{this.state.saved ? <span style={saveMessage}>Saved!</span> : null}
 					</div>
 				</div>
+				<p>
+					Duty responsibilities are indicated by letters in front of the Cadet:
+					<ul>
+						<li>"cc" for duty assignment as Cadet Commander</li>
+						<li>"do" for duty assignment as Cadet Deputy Commander for Operations</li>
+						<li>"1st" for duty assignment as Cadet First Sergeant</li>
+						<li>"fc" for duty assignment as Cadet Flight Commander</li>
+						<li>"fs" for duty assignment as Cadet Flight Sergeant</li>
+						<li>"el" for duty assignment as Cadet Element Leader</li>
+						<li>"ds" for duty assignment as Cadet Deputy for Support</li>
+						<li>"s" for duty assignments involving Support</li>
+						<li>"c" for duty assignments on a Cadet Advisory Council</li>
+					</ul>
+				</p>
 			</>
 		);
 	}
