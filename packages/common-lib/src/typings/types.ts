@@ -2250,6 +2250,7 @@ export type CAPMember = CAPProspectiveMemberObject | CAPNHQMemberObject;
  */
 export type MemberReference = CAPMemberReference;
 export type Member = CAPMember;
+export type AllMember = CAPMember;
 export type User = Member & UserObject;
 export type ClientUser = Member & ClientUserObject;
 

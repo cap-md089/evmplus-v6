@@ -24,7 +24,14 @@
 
 import { MaybeObj } from '../../../lib/Maybe';
 import { APIEither } from '../../api';
-import { AbsenteeInformation, Member, MemberType, NHQ, PasswordSetResult } from '../../types';
+import {
+	AbsenteeInformation,
+	AllMember,
+	Member,
+	MemberType,
+	NHQ,
+	PasswordSetResult,
+} from '../../types';
 
 export * as account from './account';
 export * as attendance from './attendance';
@@ -70,12 +77,29 @@ export interface PasswordReset {
 }
 
 /**
- * Gets information for all the members in the unit
+ * Gets information for all the active members in the unit
  */
 export interface Members {
 	(params: { type?: MemberType }, body: {}): APIEither<Member[]>;
 
 	url: '/api/member/list/:type?';
+
+	method: 'get';
+
+	requiresMember: 'required';
+
+	needsToken: false;
+
+	useValidator: false;
+}
+
+/**
+ * Gets information for all active and inactive members in the unit
+ */
+export interface AllMembers {
+	(params: { type?: MemberType }, body: {}): APIEither<AllMember[]>;
+
+	url: '/api/member/listall/:type?';
 
 	method: 'get';
 

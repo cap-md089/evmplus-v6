@@ -18,6 +18,7 @@
  */
 
 import {
+	AllMember,
 	api,
 	areMembersTheSame,
 	Either,
@@ -86,6 +87,7 @@ interface AttendanceHistoryMemberListLoading {
 interface AttendanceHistoryMemberListLoaded {
 	state: 'LOADED';
 
+	allMembers: AllMember[];
 	members: Member[];
 }
 
@@ -298,7 +300,7 @@ export default class AttendanceHistory extends Page<
 					this.state.state === 'LOADED' ? (
 						<MemberSelectorButton
 							disabled={this.state.state !== 'LOADED'}
-							memberList={this.state.members}
+							memberList={this.state.allMembers}
 							onMemberSelect={this.handleMemberSelect}
 							buttonType="primaryButton"
 							title="Select a member to view attendance"
