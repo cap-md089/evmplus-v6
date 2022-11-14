@@ -148,6 +148,7 @@ const CustomAttendanceFieldTypeDisplay = {
 	[CustomAttendanceFieldEntryType.DATE]: 'Date',
 	[CustomAttendanceFieldEntryType.CHECKBOX]: 'Checkbox',
 	[CustomAttendanceFieldEntryType.FILE]: 'File',
+	[CustomAttendanceFieldEntryType.QUAL]: 'OPS Qual',
 };
 
 export const EventXL = (event: RawResolvedEventObject): Array<Array<string | number>> => {
@@ -194,7 +195,10 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 		let fieldPreFill: string;
 
 		for (const customField of event.customAttendanceFields) {
-			if (customField.type !== CustomAttendanceFieldEntryType.FILE) {
+			if (
+				customField.type !== CustomAttendanceFieldEntryType.FILE &&
+				customField.type !== CustomAttendanceFieldEntryType.QUAL
+			) {
 				fieldPreFill =
 					typeof customField.preFill === 'boolean'
 						? customField.preFill
@@ -203,6 +207,8 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 						: typeof customField.preFill === 'number'
 						? customField.preFill.toString()
 						: customField.preFill;
+			} else if (customField.type !== CustomAttendanceFieldEntryType.QUAL) {
+				fieldPreFill = 'Qual Data'; // need to populate with live data before the event and stored data after the event?
 			} else {
 				fieldPreFill = 'N/A';
 			}

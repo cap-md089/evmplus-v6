@@ -49,6 +49,8 @@ const renderCustomAttendanceField = (
 		<span>{attendanceFieldItem.value}</span>
 	) : attendanceFieldItem.type === CustomAttendanceFieldEntryType.DATE ? (
 		<span>{new Date(attendanceFieldItem.value).toISOString()}</span>
+	) : attendanceFieldItem.type === CustomAttendanceFieldEntryType.QUAL ? (
+		<span>{attendanceFieldItem.value}</span> // need to pull database for member qual here
 	) : (
 		<i>This field currently is not supported</i>
 	);

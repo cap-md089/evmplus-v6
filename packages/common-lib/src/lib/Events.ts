@@ -204,6 +204,8 @@ export const defaultCustomAttendanceFieldValue = (
 		? { type: field.type, value: field.preFill }
 		: field.type === CustomAttendanceFieldEntryType.FILE
 		? { type: field.type, value: [] }
+		: field.type === CustomAttendanceFieldEntryType.QUAL
+		? { type: field.type, value: field.preFill }
 		: { type: field.type, value: field.preFill }),
 });
 
