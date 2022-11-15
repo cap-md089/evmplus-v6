@@ -80,15 +80,20 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 		let lineFlag = '';
 		let councilFlag = '';
 		myMember.dutyPositions.forEach(element => {
-			if (
-				element.duty === 'Cadet Commander' ||
-				element.duty === 'Cadet Deputy Commander for Operations' ||
-				element.duty === 'Cadet Element Leader' ||
-				element.duty === 'Cadet First Sergeant' ||
-				element.duty === 'Cadet Flight Commander' ||
-				element.duty === 'Cadet Flight Sergeant'
-			) {
-				lineFlag = 'o';
+			if (element.duty === 'Cadet Commander') {
+				lineFlag = '[cc]';
+			} else if (element.duty === 'Cadet Deputy Commander for Operations') {
+				lineFlag = '[do]';
+			} else if (element.duty === 'Cadet First Sergeant') {
+				lineFlag = '[1st]';
+			} else if (element.duty === 'Cadet Flight Commander') {
+				lineFlag = '[fc]';
+			} else if (element.duty === 'Cadet Flight Sergeant') {
+				lineFlag = '[fs]';
+			} else if (element.duty === 'Cadet Element Leader') {
+				lineFlag = '[el]';
+			} else if (element.duty === 'Cadet Deputy Commander for Support') {
+				supportFlag = '[ds]';
 			} else if (
 				element.duty === 'Cadet Activities NCO' ||
 				element.duty === 'Cadet Activities Officer' ||
@@ -98,7 +103,6 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 				element.duty === 'Cadet Aerospace Education Officer' ||
 				element.duty === 'Cadet Communications NCO' ||
 				element.duty === 'Cadet Communications Officer' ||
-				element.duty === 'Cadet Deputy Commander for Support' ||
 				element.duty === 'Cadet Drug Demand Reduction NCO' ||
 				element.duty === 'Cadet Emergency Services NCO' ||
 				element.duty === 'Cadet Emergency Services Officer' ||
@@ -119,7 +123,7 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 				element.duty === 'Cadet Supply NCO' ||
 				element.duty === 'Cadet Supply Officer'
 			) {
-				supportFlag = 's';
+				supportFlag = '[s]';
 			} else if (
 				element.duty === 'Cadet RCAC Assistant' ||
 				element.duty === 'Cadet RCAC Representative' ||
@@ -129,7 +133,7 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 				element.duty === 'Cadet WCAC Representative' ||
 				element.duty === 'Cadet WCAC Vice Chair'
 			) {
-				councilFlag = 'c';
+				councilFlag = '[c]';
 			}
 		});
 		return supportFlag + lineFlag + councilFlag !== ''
