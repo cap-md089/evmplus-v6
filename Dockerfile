@@ -20,7 +20,7 @@
 #
 # This container is what is used by most of the node containers
 #
-FROM node:16-buster AS base
+FROM node:16.14-buster AS base
 
 # Install the imagemagick library for favicons
 RUN apt update && \
