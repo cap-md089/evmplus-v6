@@ -19,20 +19,16 @@
 
 import {
 	api,
+	AsyncEither,
 	asyncIterFilter,
-	asyncIterMap,
-	asyncIterTap,
 	asyncLeft,
-	CAPNHQMemberObject,
-	Either,
-	EitherObj,
+	collectGeneratorAsync,
 	get,
 	hasOneDutyPosition,
 	hasPermission,
 	Maybe,
 	Permissions,
-	Right,
-	ServerError,
+	RawCAPSquadronAccountObject,
 	SessionType,
 } from 'common-lib';
 import {
@@ -45,7 +41,6 @@ import {
 } from 'server-common';
 import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
-import saveServerError from '../../../lib/saveServerError';
 
 const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Cadet Flight Commander',
@@ -56,50 +51,30 @@ const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Deputy Commander For Cadets',
 ]);
 
-const getPromotionRequirementsForAccount: Endpoint<
+const getPromotionRequirementsForAccount: (
+	sq: RawCAPSquadronAccountObject,
+) => Endpoint<
 	Backends<[TeamsBackend, CAP.CAPMemberBackend]>,
 	api.member.promotionrequirements.RequirementsForCadetsInAccount
-> = backend => req =>
-	backend
-		.getNHQMembersInAccount(backend)(req.account)
-		.filter(Maybe.isSome, {
-			type: 'OTHER',
-			code: 400,
-			message: 'Account does not have CAP NHQ members',
-		})
-		.map(get('value'))
-		.map(asyncIterFilter(member => !member.seniorMember))
-		.map(
-			asyncIterMap<
-				CAPNHQMemberObject,
-				EitherObj<ServerError, api.member.promotionrequirements.PromotionRequirementsItem>
-			>(member =>
-				backend.getPromotionRequirements(member).map(requirements => ({
-					member,
-					requirements,
-				})),
-			),
-		)
-		.map(
-			asyncIterTap(rec =>
-				Either.isRight(rec)
-					? void 0
-					: rec.value.type === 'CRASH'
-					? saveServerError(rec.value.error, req)
-					: void 0,
-			),
-		)
-		.map(
-			asyncIterFilter<
-				EitherObj<ServerError, api.member.promotionrequirements.PromotionRequirementsItem>,
-				Right<api.member.promotionrequirements.PromotionRequirementsItem>
-			>(Either.isRight),
-		)
-		.map(
-			asyncIterMap<
-				Right<api.member.promotionrequirements.PromotionRequirementsItem>,
-				api.member.promotionrequirements.PromotionRequirementsItem
-			>(get('value')),
+> = sq => backend => req =>
+	AsyncEither.All([
+		backend
+			.getNHQMembersInAccount(backend)(req.account)
+			.filter(Maybe.isSome, {
+				type: 'OTHER',
+				code: 400,
+				message: 'Account does not have CAP NHQ members',
+			})
+			.map(get('value'))
+			.map(asyncIterFilter(member => !member.seniorMember))
+			.map(collectGeneratorAsync),
+		backend.getAccountPromotionRequirements(sq),
+	])
+		.map(([members, promotions]) =>
+			members.map(member => ({
+				member,
+				requirements: promotions[member.id] ?? CAP.emptyCadetPromotionStatus,
+			})),
 		)
 		.map(wrapper);
 
@@ -108,13 +83,20 @@ export const func: Endpoint<
 	api.member.promotionrequirements.RequirementsForCadetsInAccount
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req =>
-		hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(req.member) ||
-		hasAllowedDutyPosition(req.member)
-			? getPromotionRequirementsForAccount(backend)(req)
+		req.account.type === 'CAPSquadron'
+			? hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(
+					req.member,
+			  ) || hasAllowedDutyPosition(req.member)
+				? getPromotionRequirementsForAccount(req.account)(backend)(req)
+				: asyncLeft({
+						type: 'OTHER',
+						code: 403,
+						message: 'Member does not have permissions to perform the requested action',
+				  })
 			: asyncLeft({
 					type: 'OTHER',
-					code: 403,
-					message: 'Member does not have permissions to perform the requested action',
+					code: 400,
+					message: 'This operation is only supported for squadrons',
 			  }),
 	);
 
