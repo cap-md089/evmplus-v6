@@ -528,12 +528,12 @@ export const downloadCAPWATCHFile = (
 	alter table NHQ_OFlight add column CAPID int GENERATED ALWAYS AS (doc ->> '$.CAPID') stored not null;
  */
 
-const getPromotionRequirementsSql = (schema: Schema, orgids: number[]): string => `\
+const getPromotionRequirementsSql = (orgids: number[]): string => `\
 WITH
-	CAPIDS AS (SELECT CAPID FROM ${schema.getName()}.NHQ_Member WHERE ORGID IN ${bindForArray(
-	orgids,
-)} AND doc ->> '$.Type' = 'CADET'),
-	LEADTASKS AS (SELECT TaskID FROM ${schema.getName()}.NHQ_PL_Tasks WHERE
+	CAPIDS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
+		orgids,
+	)} AND doc ->> '$.Type' = 'CADET'),
+	LEADTASKS AS (SELECT TaskID FROM NHQ_PL_Tasks WHERE
 				doc ->> '$.TaskName' LIKE 'Gen Ira C Eaker - %' OR
 				doc ->> '$.TaskName' LIKE 'Gen Carl A Spaatz - %' OR
 				doc ->> '$.TaskName' LIKE 'Wright Brothers - %' OR
@@ -541,46 +541,46 @@ WITH
 				doc ->> '$.TaskName' LIKE 'Billy Mitchell - %' OR
 				doc ->> '$.TaskName' LIKE 'Achievement %' OR
 				doc ->> '$.TaskName' = 'Accelerated Promotion Waiver'),
-	AEROTASKS AS (SELECT TaskID FROM ${schema.getName()}.NHQ_PL_Tasks WHERE doc ->> '$.TaskName' IN (
+	AEROTASKS AS (SELECT TaskID FROM NHQ_PL_Tasks WHERE doc ->> '$.TaskName' IN (
 				'Journey of Flight Test 1','Journey of Flight Test 2','Journey of Flight Test 3','Journey of Flight Test 4','Journey of Flight Test 5','Journey of Flight Test 6',
 				'Aerospace Dimensions 1','Aerospace Dimensions 2','Aerospace Dimensions 3','Aerospace Dimensions 4','Aerospace Dimensions 5','Aerospace Dimensions 6','Aerospace Dimensions 7')),
-	SDATASKS AS (SELECT TaskID FROM ${schema.getName()}.NHQ_PL_Tasks WHERE doc ->> '$.TaskName' LIKE 'SDA Technical Writing Assignment'),
-	PROMOTIONS AS (SELECT PathID FROM ${schema.getName()}.NHQ_PL_Paths WHERE PathID >= 31 AND PathID <= 51),
-	LEADRESULTS AS (SELECT MTC.CAPID, MTC.doc ->> '$.Completed' AS 'Completed', T.doc ->> '$.TaskName' AS 'Task', MTC.doc ->> '$.AdditionalOptions' FROM ${schema.getName()}.NHQ_PL_MemberTaskCredit MTC
-		INNER JOIN ${schema.getName()}.NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
+	SDATASKS AS (SELECT TaskID FROM NHQ_PL_Tasks WHERE doc ->> '$.TaskName' LIKE 'SDA Technical Writing Assignment'),
+	PROMOTIONS AS (SELECT PathID FROM NHQ_PL_Paths WHERE PathID >= 31 AND PathID <= 51),
+	LEADRESULTS AS (SELECT MTC.CAPID, MTC.doc ->> '$.Completed' AS 'Completed', T.doc ->> '$.TaskName' AS 'Task', MTC.doc ->> '$.AdditionalOptions' FROM NHQ_PL_MemberTaskCredit MTC
+		INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
 		WHERE
 			MTC.CAPID IN (SELECT CAPID FROM CAPIDS) AND
 			MTC.TaskID IN (SELECT TaskID FROM LEADTASKS) AND
-				MTC.TaskID NOT IN (SELECT TGA.TaskID FROM ${schema.getName()}.NHQ_PL_TaskGroupAssignments TGA
-						INNER JOIN ${schema.getName()}.NHQ_PL_Groups G ON TGA.GroupID = G.GroupID
-						INNER JOIN ${schema.getName()}.NHQ_PL_Paths P ON G.PathID = P.PathID
-						INNER JOIN ${schema.getName()}.NHQ_PL_MemberPathCredit MPC ON P.PathID = MPC.PathID
+				MTC.TaskID NOT IN (SELECT TGA.TaskID FROM NHQ_PL_TaskGroupAssignments TGA
+						INNER JOIN NHQ_PL_Groups G ON TGA.GroupID = G.GroupID
+						INNER JOIN NHQ_PL_Paths P ON G.PathID = P.PathID
+						INNER JOIN NHQ_PL_MemberPathCredit MPC ON P.PathID = MPC.PathID
 						WHERE MPC.CAPID = MTC.CAPID)),
-	AERORESULTS AS (SELECT MTCO.CAPID, MTCO.doc ->> '$.Completed', T.doc ->> '$.TaskName', MTCO.doc ->> '$.AdditionalOptions' FROM ${schema.getName()}.NHQ_PL_MemberTaskCredit MTCO
-		INNER JOIN ${schema.getName()}.NHQ_PL_Tasks T ON MTCO.TaskID = T.TaskID
+	AERORESULTS AS (SELECT MTCO.CAPID, MTCO.doc ->> '$.Completed', T.doc ->> '$.TaskName', MTCO.doc ->> '$.AdditionalOptions' FROM NHQ_PL_MemberTaskCredit MTCO
+		INNER JOIN NHQ_PL_Tasks T ON MTCO.TaskID = T.TaskID
 		WHERE
 			MTCO.CAPID IN (SELECT CAPID FROM CAPIDS) AND
 			MTCO.MemberTaskCreditID IN (
-				SELECT MTC.MemberTaskCreditID FROM ${schema.getName()}.NHQ_PL_MemberTaskCredit MTC
-						INNER JOIN ${schema.getName()}.NHQ_PL_Tasks T on MTC.TaskID = T.TaskID
+				SELECT MTC.MemberTaskCreditID FROM NHQ_PL_MemberTaskCredit MTC
+						INNER JOIN NHQ_PL_Tasks T on MTC.TaskID = T.TaskID
 						WHERE
 							MTC.CAPID = MTCO.CAPID AND
-								STR_TO_DATE(MTC.doc ->> '$.Completed', '%m/%d/%Y') > (SELECT MAX(STR_TO_DATE(MPC.doc ->> '$.Completed', '%m/%d/%Y')) FROM ${schema.getName()}.NHQ_PL_MemberPathCredit MPC
+								STR_TO_DATE(MTC.doc ->> '$.Completed', '%m/%d/%Y') > (SELECT MAX(STR_TO_DATE(MPC.doc ->> '$.Completed', '%m/%d/%Y')) FROM NHQ_PL_MemberPathCredit MPC
 								WHERE
 									MPC.CAPID = MTC.CAPID AND
 									MPC.PathID IN (SELECT PathID FROM PROMOTIONS)) AND
 							MTC.TaskID IN (SELECT TaskID FROM AEROTASKS))
 					),
-  SDARESULTS AS (SELECT MTCO.CAPID, MTCO.doc ->> '$.Completed', T.doc ->> '$.TaskName', MTCO.doc ->> '$.AdditionalOptions' FROM ${schema.getName()}.NHQ_PL_MemberTaskCredit MTCO
-    INNER JOIN ${schema.getName()}.NHQ_PL_Tasks T ON MTCO.TaskID = T.TaskID
+  SDARESULTS AS (SELECT MTCO.CAPID, MTCO.doc ->> '$.Completed', T.doc ->> '$.TaskName', MTCO.doc ->> '$.AdditionalOptions' FROM NHQ_PL_MemberTaskCredit MTCO
+    INNER JOIN NHQ_PL_Tasks T ON MTCO.TaskID = T.TaskID
     WHERE
       MTCO.CAPID IN (SELECT CAPID FROM CAPIDS) AND
       MTCO.MemberTaskCreditID IN (
-        SELECT MTC.MemberTaskCreditID FROM ${schema.getName()}.NHQ_PL_MemberTaskCredit MTC
-          INNER JOIN ${schema.getName()}.NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
+        SELECT MTC.MemberTaskCreditID FROM NHQ_PL_MemberTaskCredit MTC
+          INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
           WHERE
             MTC.CAPID = MTCO.CAPID AND
-              STR_TO_DATE(MTC.doc ->> '$.Completed', '%m/%d/%Y') > (SELECT MAX(STR_TO_DATE(MPC.doc ->> '$.Completed', '%m/%d/%Y')) FROM ${schema.getName()}.NHQ_PL_MemberPathCredit MPC
+              STR_TO_DATE(MTC.doc ->> '$.Completed', '%m/%d/%Y') > (SELECT MAX(STR_TO_DATE(MPC.doc ->> '$.Completed', '%m/%d/%Y')) FROM NHQ_PL_MemberPathCredit MPC
               WHERE
                 MPC.CAPID = MTC.CAPID AND
                 MPC.PathID IN (SELECT PathID FROM PROMOTIONS)) AND
@@ -588,43 +588,43 @@ WITH
         )
 (SELECT * FROM LEADRESULTS) UNION (SELECT * FROM AERORESULTS) UNION (SELECT * FROM SDARESULTS) ORDER BY CAPID;`;
 
-const getAchvsSql = (schema: Schema, orgids: number[]): string => `\
+const getAchvsSql = (orgids: number[]): string => `\
 WITH
-	MEMBERS AS (SELECT CAPID FROM ${schema.getName()}.NHQ_Member WHERE ORGID IN ${bindForArray(
-	orgids,
-)} AND doc ->> '$.Type' = "CADET"),
-	HIGHESTACHVAPR AS (SELECT CA.CAPID, 0, JSON_OBJECT('CadetAchvID', CA.CadetAchvID, 'Status', doc ->> '$.Status') FROM ${schema.getName()}.NHQ_CadetAchvAprs CA
+	MEMBERS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
+		orgids,
+	)} AND doc ->> '$.Type' = "CADET"),
+	HIGHESTACHVAPR AS (SELECT CA.CAPID, 0, JSON_OBJECT('CadetAchvID', CA.CadetAchvID, 'Status', doc ->> '$.Status') FROM NHQ_CadetAchvAprs CA
 		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM ${schema.getName()}.NHQ_CadetAchvAprs GROUP BY CAPID)),
-	HIGHESTACHVUTIL AS (SELECT CA.CAPID, 1, doc, CA.CadetAchvID FROM ${schema.getName()}.NHQ_CadetAchv CA
+		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchvAprs GROUP BY CAPID)),
+	HIGHESTACHVUTIL AS (SELECT CA.CAPID, 1, doc, CA.CadetAchvID FROM NHQ_CadetAchv CA
 		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM ${schema.getName()}.NHQ_CadetAchv GROUP BY CAPID)),
+		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchv GROUP BY CAPID)),
 	HIGHESTACHV AS (SELECT CAPID, 1, doc FROM HIGHESTACHVUTIL),
-	HIGHESTAPRACHVAPR AS (SELECT CA.CAPID, 2, doc FROM ${schema.getName()}.NHQ_CadetAchvAprs CA
+	HIGHESTAPRACHVAPR AS (SELECT CA.CAPID, 2, doc FROM NHQ_CadetAchvAprs CA
 		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM ${schema.getName()}.NHQ_CadetAchvAprs WHERE doc ->> '$.Status' = "APR" GROUP BY CAPID)),
-	HIGHESTPNDACHVAPR AS (SELECT CA.CAPID, 3, doc FROM ${schema.getName()}.NHQ_CadetAchvAprs CA
+		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchvAprs WHERE doc ->> '$.Status' = "APR" GROUP BY CAPID)),
+	HIGHESTPNDACHVAPR AS (SELECT CA.CAPID, 3, doc FROM NHQ_CadetAchvAprs CA
 		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM ${schema.getName()}.NHQ_CadetAchvAprs WHERE doc ->> '$.Status' = "PND" GROUP BY CAPID)),
-	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 4, 5), doc -> '$.Completed' FROM ${schema.getName()}.NHQ_CadetActivities A
+		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchvAprs WHERE doc ->> '$.Status' = "PND" GROUP BY CAPID)),
+	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 4, 5), doc -> '$.Completed' FROM NHQ_CadetActivities A
 		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
 		WHERE doc ->> '$.Type' IN ("ENCAMP", "RCLS")),
-	HFZ AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM ${schema.getName()}.NHQ_CadetHFZInformation HFZ
+	HFZ AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
 		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
-		INNER JOIN (SELECT HFZI.HFZID FROM ${schema.getName()}.NHQ_CadetHFZInformation HFZI
+		INNER JOIN (SELECT HFZI.HFZID FROM NHQ_CadetHFZInformation HFZI
 			INNER JOIN HIGHESTACHVUTIL A ON HFZI.CAPID = A.CAPID
 			WHERE IF(
 				A.CadetAchvID < 4,
 				TRUE,
 				IF(
-					(SELECT COUNT(doc) FROM ${schema.getName()}.NHQ_CadetHFZInformation WHERE CAPID = HFZI.CAPID AND doc ->> '$.IsPassed' = 'true') > 0,
+					(SELECT COUNT(doc) FROM NHQ_CadetHFZInformation WHERE CAPID = HFZI.CAPID AND doc ->> '$.IsPassed' = 'true') > 0,
 					HFZI.doc ->> '$.IsPassed' = 'true',
 					TRUE
 				)
 			)
 			ORDER BY HFZID DESC
 			LIMIT 1) HFZI2 ON HFZI2.HFZID = HFZ.HFZID),
-	GES AS (SELECT A.CAPID, 7, A.doc FROM ${schema.getName()}.NHQ_MbrAchievements A
+	GES AS (SELECT A.CAPID, 7, A.doc FROM NHQ_MbrAchievements A
 		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
     WHERE A.AchvID = 53),
 	OFLIGHT AS (SELECT O.CAPID, 8, doc FROM NHQ_OFlight O
@@ -995,13 +995,13 @@ export const getUnitPromotionRequirements = (schema: Schema) => (
 			AsyncEither.All([
 				asyncRight<ServerError, Cursor<[number, string, string, string]>>(
 					session
-						.sql(getPromotionRequirementsSql(schema, account.orgIDs))
+						.sql(getPromotionRequirementsSql(account.orgIDs))
 						.bind(account.orgIDs)
 						.execute(),
 					errorGenerator('Could not load PL data'),
 				),
 				asyncRight<ServerError, Cursor<[number, number, string]>>(
-					session.sql(getAchvsSql(schema, account.orgIDs)).bind(account.orgIDs).execute(),
+					session.sql(getAchvsSql(account.orgIDs)).bind(account.orgIDs).execute(),
 					errorGenerator('Could not load cadet achievement data'),
 				),
 			]),
