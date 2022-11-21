@@ -650,6 +650,7 @@ const promotionResultReducers: Array<{
 		completion: string,
 		task: string,
 		additionalOptions: string,
+		capid: number,
 	) => CadetPromotionStatus;
 }> = [
 	{
@@ -834,13 +835,14 @@ const promotionResultReducers: Array<{
 
 const reducePromotionResults = (
 	[status, state]: [CadetPromotionStatus, AchvResultsReducersState],
-	[_, completion, task, addtlOpts]: [number, string, string, string],
+	[capid, completion, task, addtlOpts]: [number, string, string, string],
 ): [CadetPromotionStatus, AchvResultsReducersState] => [
 	(promotionResultReducers.find(({ matches }) => matches.test(task))?.update ?? identity)(
 		status,
 		completion,
 		task,
 		addtlOpts,
+		capid,
 	),
 	state,
 ];
