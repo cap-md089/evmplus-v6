@@ -19,13 +19,22 @@
 
 import { EventStatus } from '../typings/types';
 
-export const Uniforms = [
+export const SMUniforms = [
 	'Dress Blue A',
 	'Dress Blue B',
 	'Airman Battle Uniform (ABU)',
 	'PT Gear',
-	'Polo Shirts (Senior Members)',
-	'Blue Utilities (Senior Members)',
+	'Polo Shirts',
+	'Blue Utilities',
+	'Civilian Attire',
+	'Flight Suit',
+	'Not Applicable',
+];
+export const CUniforms = [
+	'Dress Blue A',
+	'Dress Blue B',
+	'Airman Battle Uniform (ABU)',
+	'PT Gear',
 	'Civilian Attire',
 	'Flight Suit',
 	'Not Applicable',

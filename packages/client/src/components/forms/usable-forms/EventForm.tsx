@@ -252,7 +252,8 @@ export interface NewEventFormValues {
 	pointsOfContact: Array<InternalPointOfContactEdit | ExternalPointOfContact>;
 	customAttendanceFields: CustomAttendanceField[];
 	signUpPartTime: boolean;
-	uniform: SimpleMultCheckboxReturn;
+	smuniform: SimpleMultCheckboxReturn;
+	cuniform: SimpleMultCheckboxReturn;
 	mealsDescription: OtherMultCheckboxReturn;
 	lodgingArrangments: OtherMultCheckboxReturn;
 	activity: OtherMultCheckboxReturn;
@@ -331,7 +332,8 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 				: event.limitSignupsToTeam,
 		transportationDescription: event.transportationDescription,
 		transportationProvided: event.transportationProvided,
-		uniform: event.uniform,
+		smuniform: event.smuniform,
+		cuniform: event.cuniform,
 		privateAttendance: event.privateAttendance,
 		emailBody: event.useEmailBody ? Maybe.some(event.emailBody) : Maybe.none(),
 	}))(
@@ -368,7 +370,8 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	pickupLocation: '',
 	transportationProvided: false,
 	transportationDescription: '',
-	uniform: emptySimpleFromLabels(labels.Uniforms),
+	smuniform: emptySimpleFromLabels(labels.SMUniforms),
+	cuniform: emptySimpleFromLabels(labels.CUniforms),
 	desiredNumberOfParticipants: 8,
 	useRegistration: false,
 	registration: {
@@ -469,7 +472,8 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	teamID: event.teamID ?? null,
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
-	uniform: event.uniform,
+	smuniform: event.smuniform,
+	cuniform: event.cuniform,
 	limitSignupsToTeam: event.limitSignupsToTeam ?? null,
 	privateAttendance: event.privateAttendance,
 	useEmailBody: Maybe.isSome(event.emailBody),
@@ -486,7 +490,8 @@ const eventValidator: FormValidator<NewEventFormValues> = {
 	startDateTime: (start, values) => start >= values.meetDateTime,
 	endDateTime: (end, values) => end >= values.startDateTime,
 	pickupDateTime: (pickup, values) => pickup >= values.endDateTime,
-	uniform: isOneOfSelected,
+	smuniform: isOneOfSelected,
+	cuniform: isOneOfSelected,
 	requiredEquipment: equipment =>
 		equipment.map(s => !!s).reduce((prev, curr) => prev && curr, true),
 };
@@ -739,10 +744,17 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>Logistics Information</Title>
 
-					<Label>Uniform*~</Label>
+					<Label>Senior Member Uniform*~</Label>
 					<SimpleMultCheckbox
-						name="uniform"
-						labels={labels.Uniforms}
+						name="smuniform"
+						labels={labels.SMUniforms}
+						errorMessage="Uniform selection is required"
+					/>
+
+					<Label>Cadet Uniform*~</Label>
+					<SimpleMultCheckbox
+						name="cuniform"
+						labels={labels.CUniforms}
 						errorMessage="Uniform selection is required"
 					/>
 
