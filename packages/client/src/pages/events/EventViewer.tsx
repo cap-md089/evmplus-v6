@@ -1731,8 +1731,13 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 		let wsName = 'EventInfo';
 		const wsDataEvent = spreadsheets.EventXL(this.state.eventInformation.event);
 		let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let sheet = spreadsheets.FormatEventXL(evtID, ws, process.env.REACT_APP_HOST_NAME!);
+		let sheet = spreadsheets.FormatEventXL(
+			evtID,
+			ws,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			process.env.REACT_APP_HOST_NAME!,
+			this.state.eventInformation.event.customAttendanceFields,
+		);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 		wsName = 'Attendance';
