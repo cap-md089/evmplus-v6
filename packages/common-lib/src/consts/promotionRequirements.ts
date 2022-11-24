@@ -293,7 +293,7 @@ export const CadetPromotionRequirementsMap: readonly CadetPromotionRequirements[
 		Drill: 'Drill 8',
 		DrillItemsPass: 7,
 		DrillItemsTotal: 10,
-		Aerospace: 'None',
+		Aerospace: 'Aero Dim',
 		CharDev: true,
 		Encampment: false,
 		RCLS: false,

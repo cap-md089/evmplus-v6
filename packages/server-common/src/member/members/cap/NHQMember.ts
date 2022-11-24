@@ -530,113 +530,81 @@ export const downloadCAPWATCHFile = (
 
 const getPromotionRequirementsSql = (orgids: number[]): string => `\
 WITH
-	CAPIDS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
+	MEMBERS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
 		orgids,
 	)} AND doc ->> '$.Type' = 'CADET'),
-	LEADTASKS AS (SELECT TaskID FROM NHQ_PL_Tasks WHERE
-				doc ->> '$.TaskName' LIKE 'Gen Ira C Eaker - %' OR
-				doc ->> '$.TaskName' LIKE 'Gen Carl A Spaatz - %' OR
-				doc ->> '$.TaskName' LIKE 'Wright Brothers - %' OR
-				doc ->> '$.TaskName' LIKE 'Amelia Earhart - %' OR
-				doc ->> '$.TaskName' LIKE 'Billy Mitchell - %' OR
-				doc ->> '$.TaskName' LIKE 'Achievement %' OR
-				doc ->> '$.TaskName' = 'Accelerated Promotion Waiver'),
-	AEROTASKS AS (SELECT TaskID FROM NHQ_PL_Tasks WHERE doc ->> '$.TaskName' IN (
-				'Journey of Flight Test 1','Journey of Flight Test 2','Journey of Flight Test 3','Journey of Flight Test 4','Journey of Flight Test 5','Journey of Flight Test 6',
-				'Aerospace Dimensions 1','Aerospace Dimensions 2','Aerospace Dimensions 3','Aerospace Dimensions 4','Aerospace Dimensions 5','Aerospace Dimensions 6','Aerospace Dimensions 7')),
-	SDATASKS AS (SELECT TaskID FROM NHQ_PL_Tasks WHERE doc ->> '$.TaskName' LIKE 'SDA Technical Writing Assignment'),
-	PROMOTIONS AS (SELECT PathID FROM NHQ_PL_Paths WHERE PathID >= 31 AND PathID <= 51),
-	LEADRESULTS AS (SELECT MTC.CAPID, MTC.doc ->> '$.Completed' AS 'Completed', T.doc ->> '$.TaskName' AS 'Task', MTC.doc ->> '$.AdditionalOptions' FROM NHQ_PL_MemberTaskCredit MTC
-		INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
-		WHERE
-			MTC.CAPID IN (SELECT CAPID FROM CAPIDS) AND
-			MTC.TaskID IN (SELECT TaskID FROM LEADTASKS) AND
-				MTC.TaskID NOT IN (SELECT TGA.TaskID FROM NHQ_PL_TaskGroupAssignments TGA
-						INNER JOIN NHQ_PL_Groups G ON TGA.GroupID = G.GroupID
-						INNER JOIN NHQ_PL_Paths P ON G.PathID = P.PathID
-						INNER JOIN NHQ_PL_MemberPathCredit MPC ON P.PathID = MPC.PathID
-						WHERE MPC.CAPID = MTC.CAPID)),
-	AERORESULTS AS (SELECT MTCO.CAPID, MTCO.doc ->> '$.Completed', T.doc ->> '$.TaskName', MTCO.doc ->> '$.AdditionalOptions' FROM NHQ_PL_MemberTaskCredit MTCO
-		INNER JOIN NHQ_PL_Tasks T ON MTCO.TaskID = T.TaskID
-		WHERE
-			MTCO.CAPID IN (SELECT CAPID FROM CAPIDS) AND
-			MTCO.MemberTaskCreditID IN (
-				SELECT MTC.MemberTaskCreditID FROM NHQ_PL_MemberTaskCredit MTC
-						INNER JOIN NHQ_PL_Tasks T on MTC.TaskID = T.TaskID
-						WHERE
-							MTC.CAPID = MTCO.CAPID AND
-								STR_TO_DATE(MTC.doc ->> '$.Completed', '%m/%d/%Y') > (SELECT MAX(STR_TO_DATE(MPC.doc ->> '$.Completed', '%m/%d/%Y')) FROM NHQ_PL_MemberPathCredit MPC
-								WHERE
-									MPC.CAPID = MTC.CAPID AND
-									MPC.PathID IN (SELECT PathID FROM PROMOTIONS)) AND
-							MTC.TaskID IN (SELECT TaskID FROM AEROTASKS))
-					),
-  SDARESULTS AS (SELECT MTCO.CAPID, MTCO.doc ->> '$.Completed', T.doc ->> '$.TaskName', MTCO.doc ->> '$.AdditionalOptions' FROM NHQ_PL_MemberTaskCredit MTCO
-    INNER JOIN NHQ_PL_Tasks T ON MTCO.TaskID = T.TaskID
-    WHERE
-      MTCO.CAPID IN (SELECT CAPID FROM CAPIDS) AND
-      MTCO.MemberTaskCreditID IN (
-        SELECT MTC.MemberTaskCreditID FROM NHQ_PL_MemberTaskCredit MTC
-          INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
-          WHERE
-            MTC.CAPID = MTCO.CAPID AND
-              STR_TO_DATE(MTC.doc ->> '$.Completed', '%m/%d/%Y') > (SELECT MAX(STR_TO_DATE(MPC.doc ->> '$.Completed', '%m/%d/%Y')) FROM NHQ_PL_MemberPathCredit MPC
-              WHERE
-                MPC.CAPID = MTC.CAPID AND
-                MPC.PathID IN (SELECT PathID FROM PROMOTIONS)) AND
-            MTC.TaskID IN (SELECT TaskID FROM SDATASKS))
-        )
-(SELECT * FROM LEADRESULTS) UNION (SELECT * FROM AERORESULTS) UNION (SELECT * FROM SDARESULTS) ORDER BY CAPID;`;
+	AEROSDA AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions,
+			IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) AS PathID
+			FROM NHQ_PL_MemberTaskCredit MTC
+			INNER JOIN MEMBERS M ON M.CAPID = MTC.CAPID
+			INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
+			WHERE IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) >= 31
+					AND IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) <= 51),
+	OTHERTASKS AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions, G.PathID
+			FROM NHQ_PL_MemberTaskCredit MTC
+			INNER JOIN MEMBERS M ON M.CAPID = MTC.CAPID
+			INNER JOIN NHQ_PL_TaskGroupAssignments TGA ON MTC.TaskID = TGA.TaskID
+			INNER JOIN NHQ_PL_Groups G ON TGA.GroupID = G.GroupID
+			INNER JOIN NHQ_PL_Tasks T ON T.TaskID = MTC.TaskID
+			WHERE (PathID >= 31 AND PathID <= 51) AND
+				(MTC.TaskID < 324 OR
+				(MTC.TaskID > 324 AND MTC.TaskID < 334) OR
+				(MTC.TaskID > 339 AND MTC.TaskID < 375) OR
+				(MTC.TaskID > 375 AND MTC.TaskID < 384) OR
+				(MTC.TaskID > 391 AND MTC.TaskID < 394) OR
+				MTC.TaskID > 399)),
+	MEMBERTASKS AS (SELECT CAPID, TaskName, TaskID, Completed, PathID, AdditionalOptions FROM AEROSDA
+				UNION SELECT CAPID, TaskName, TaskID, Completed, PathID, AdditionalOptions FROM OTHERTASKS),
+	CURRENTTASKS AS (SELECT MT.CAPID, TaskName, TaskID, Completed, MT.PathID, AdditionalOptions
+					FROM MEMBERTASKS MT
+					LEFT JOIN NHQ_PL_MemberPathCredit MPC ON (MT.CAPID = MPC.CAPID AND MT.PathID = MPC.PathID)
+					WHERE MPC.CAPID IS NULL)
+SELECT CAPID, Completed, TaskName, AdditionalOptions FROM CURRENTTASKS`;
 
 const getAchvsSql = (orgids: number[]): string => `\
 WITH
 	MEMBERS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
 		orgids,
 	)} AND doc ->> '$.Type' = "CADET"),
-	HIGHESTACHVAPR AS (SELECT CA.CAPID, 0, JSON_OBJECT('CadetAchvID', CA.CadetAchvID, 'Status', doc ->> '$.Status') FROM NHQ_CadetAchvAprs CA
-		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchvAprs GROUP BY CAPID)),
-	HIGHESTACHVUTIL AS (SELECT CA.CAPID, 1, doc, CA.CadetAchvID FROM NHQ_CadetAchv CA
-		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchv GROUP BY CAPID)),
-	HIGHESTACHV AS (SELECT CAPID, 1, doc FROM HIGHESTACHVUTIL),
-	HIGHESTAPRACHVAPR AS (SELECT CA.CAPID, 2, doc FROM NHQ_CadetAchvAprs CA
-		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchvAprs WHERE doc ->> '$.Status' = "APR" GROUP BY CAPID)),
-	HIGHESTPNDACHVAPR AS (SELECT CA.CAPID, 3, doc FROM NHQ_CadetAchvAprs CA
-		INNER JOIN MEMBERS M ON M.CAPID = CA.CAPID
-		WHERE (CA.CAPID, CadetAchvID) IN (SELECT CAPID, MAX(CadetAchvID) FROM NHQ_CadetAchvAprs WHERE doc ->> '$.Status' = "PND" GROUP BY CAPID)),
-	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 4, 5), doc -> '$.Completed' FROM NHQ_CadetActivities A
+	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 0, 1), doc -> '$.Completed' FROM NHQ_CadetActivities A
 		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
 		WHERE doc ->> '$.Type' IN ("ENCAMP", "RCLS")),
-	HFZ AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
-		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
-		INNER JOIN (SELECT HFZI.HFZID FROM NHQ_CadetHFZInformation HFZI
-			INNER JOIN HIGHESTACHVUTIL A ON HFZI.CAPID = A.CAPID
-			WHERE IF(
-				A.CadetAchvID < 4,
-				TRUE,
-				IF(
-					(SELECT COUNT(doc) FROM NHQ_CadetHFZInformation WHERE CAPID = HFZI.CAPID AND doc ->> '$.IsPassed' = 'true') > 0,
-					HFZI.doc ->> '$.IsPassed' = 'true',
-					TRUE
-				)
-			)
-			ORDER BY HFZID DESC
-			LIMIT 1) HFZI2 ON HFZI2.HFZID = HFZ.HFZID),
-	GES AS (SELECT A.CAPID, 7, A.doc FROM NHQ_MbrAchievements A
+	GES AS (SELECT A.CAPID, 2, A.doc FROM NHQ_MbrAchievements A
 		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
-    WHERE A.AchvID = 53),
-	OFLIGHT AS (SELECT O.CAPID, 8, doc FROM NHQ_OFlight O
-		INNER JOIN MEMBERS M ON M.CAPID = O.CAPID)
-(SELECT * FROM HIGHESTACHVAPR) UNION
-(SELECT * FROM HIGHESTACHV) UNION
-(SELECT * FROM HIGHESTAPRACHVAPR) UNION
-(SELECT * FROM HIGHESTPNDACHVAPR) UNION
+		WHERE A.AchvID = 53),
+	OFLIGHT AS (SELECT O.CAPID, 3, doc FROM NHQ_OFlight O
+		INNER JOIN MEMBERS M ON M.CAPID = O.CAPID),
+	MAXPATHCREDIT AS (SELECT MPC.CAPID, 4, MPC.doc FROM NHQ_PL_MemberPathCredit MPC
+		INNER JOIN MEMBERS M ON M.CAPID = MPC.CAPID
+		WHERE MPC.doc ->> '$.MemberPathCreditID' IN (SELECT * FROM (SELECT doc ->> '$.MemberPathCreditID' FROM NHQ_PL_MemberPathCredit MPCI
+			WHERE PathID >= 31 AND PathID <= 51 AND MPCI.CAPID = MPC.CAPID
+			ORDER BY PathID DESC
+			LIMIT 1) temp_tab)),
+	LASTAPRV AS (SELECT MPC.CAPID, 5, MPC.doc FROM NHQ_PL_MemberPathCredit MPC
+		INNER JOIN MEMBERS M ON M.CAPID = MPC.CAPID
+		WHERE MPC.doc ->> '$.MemberPathCreditID' IN (SELECT * FROM (SELECT doc ->> '$.MemberPathCreditID' FROM NHQ_PL_MemberPathCredit MPCI
+			WHERE PathID >= 31 AND PathID <= 51 AND MPCI.CAPID = MPC.CAPID AND doc ->> '$.StatusID' = 8
+			ORDER BY PathID DESC
+			LIMIT 1) temp_tab)),
+	LASTHFZ AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
+		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
+		WHERE HFZ.HFZID IN (SELECT * FROM (SELECT HFZID FROM NHQ_CadetHFZInformation HFZI
+			WHERE HFZI.CAPID = HFZ.CAPID
+			ORDER BY doc ->> '$.DateTaken' DESC
+			LIMIT 1) temp_tab)),
+	LASTHFZPASS AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
+		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
+		WHERE HFZ.HFZID IN (SELECT * FROM (SELECT HFZID FROM NHQ_CadetHFZInformation HFZI
+			WHERE HFZI.CAPID = HFZ.CAPID AND HFZI.doc ->> '$.IsPassed' = 'true'
+			ORDER BY doc ->> '$.DateTaken' DESC
+			LIMIT 1) temp_tab))
 (SELECT * FROM ACTIVITIES) UNION
-(SELECT * FROM HFZ) UNION
 (SELECT * FROM GES) UNION
-(SELECT * FROM OFLIGHT);`;
+(SELECT * FROM OFLIGHT) UNION
+(SELECT * FROM MAXPATHCREDIT) UNION
+(SELECT * FROM LASTAPRV) UNION
+(SELECT * FROM LASTHFZ) UNION
+(SELECT * FROM LASTHFZPASS);`;
 
 interface AchvResultsReducersState {
 	maxApproval: { Status: CadetAprvStatus; CadetAchvID: number } | null;
@@ -655,12 +623,18 @@ const promotionResultReducers: Array<{
 }> = [
 	{
 		matches: /Cadet Interactive Leadership Module \d+$/,
-		update: (status, completion, _, addtlOpts) => {
+		update: (status, completion, task, addtlOpts, capid) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 
 			if (!scoreResult) {
-				return status;
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						LeadLabDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
 			}
 
 			return {
@@ -675,12 +649,18 @@ const promotionResultReducers: Array<{
 	},
 	{
 		matches: /Drill and Ceremonies/,
-		update: (status, completion, _, addtlOpts) => {
+		update: (status, completion, task, addtlOpts, capid) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 
 			if (!scoreResult) {
-				return status;
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						DrillDate: convertNHQDate(completion).toISOString(),
+					},
+				};
 			}
 
 			return {
@@ -695,12 +675,18 @@ const promotionResultReducers: Array<{
 	},
 	{
 		matches: /Learn to Lead/,
-		update: (status, completion, _, addtlOpts) => {
+		update: (status, completion, task, addtlOpts, capid) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 
 			if (!scoreResult) {
-				return status;
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						LeadLabDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
 			}
 
 			return {
@@ -742,7 +728,13 @@ const promotionResultReducers: Array<{
 			const aeMod = task.match(/Aerospace Dimensions (\d)/);
 
 			if (!scoreResult || !aeMod) {
-				return status;
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						AEDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
 			}
 
 			return {
@@ -765,7 +757,13 @@ const promotionResultReducers: Array<{
 			const aeTest = task.match(/Journey of Flight Test (\d)/);
 
 			if (!scoreResult || !aeTest) {
-				return status;
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						AEDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
 			}
 
 			return {
@@ -781,14 +779,20 @@ const promotionResultReducers: Array<{
 	},
 	{
 		matches: /SDA Technical Writing Assignment/,
-		update: (status, completion, task, addtlOpts) => {
+		update: (status, completion, _, addtlOpts) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const twa = addtlOpts.match(/ - (.*)$/);
 
 			if (!scoreResult || !twa) {
-				return status;
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						TechnicalWritingAssignmentDate: convertNHQDate(completion).toISOString(),
+					},
+				};
 			}
 
 			return {
@@ -836,16 +840,10 @@ const promotionResultReducers: Array<{
 const reducePromotionResults = (
 	[status, state]: [CadetPromotionStatus, AchvResultsReducersState],
 	[capid, completion, task, addtlOpts]: [number, string, string, string],
-): [CadetPromotionStatus, AchvResultsReducersState] => [
-	(promotionResultReducers.find(({ matches }) => matches.test(task))?.update ?? identity)(
-		status,
-		completion,
-		task,
-		addtlOpts,
-		capid,
-	),
-	state,
-];
+): [CadetPromotionStatus, AchvResultsReducersState] => {
+	const func = promotionResultReducers.find(({ matches }) => matches.test(task));
+	return [(func?.update ?? identity)(status, completion, task, addtlOpts, capid), state];
+};
 
 const achvResultsReducers: Array<
 	(
@@ -853,94 +851,6 @@ const achvResultsReducers: Array<
 		res: any,
 	) => [CadetPromotionStatus, AchvResultsReducersState]
 > = [
-	(
-		// maxApproval
-		[status, state],
-		res,
-	) => {
-		console.log(res);
-		return [
-			{
-				...status,
-				MaxAprvStatus: (res as { Status: CadetAprvStatus }).Status,
-			},
-			{
-				...state,
-				maxApproval: res as AchvResultsReducersState['maxApproval'],
-			},
-		];
-	},
-	(
-		// maxAchv
-		[status, state],
-		res,
-	) => [{ ...status, CurrentCadetAchv: res as NHQ.CadetAchv }, state],
-	(
-		// maxApprovedApproval
-		[status, state],
-		res,
-	) => {
-		const maxApprovedApproval = res as NHQ.CadetAchvAprs;
-
-		console.log(
-			maxApprovedApproval.CAPID,
-			state.maxApproval?.CadetAchvID,
-			maxApprovedApproval.CadetAchvID,
-			maxApprovedApproval.CadetAchvID === 0
-				? 1
-				: state.maxApproval?.CadetAchvID === maxApprovedApproval.CadetAchvID
-				? maxApprovedApproval.CadetAchvID + 1
-				: maxApprovedApproval.CadetAchvID,
-		);
-
-		return [
-			{
-				...status,
-				CurrentCadetGradeID: maxApprovedApproval.CadetAchvID,
-				LastAprvDate: Maybe.some(+new Date(maxApprovedApproval.DateMod)),
-				NextCadetGradeID:
-					state.maxApproval === null
-						? 1
-						: state.maxApproval.CadetAchvID === maxApprovedApproval.CadetAchvID
-						? state.maxApproval.CadetAchvID + 1
-						: maxApprovedApproval.CadetAchvID === 0
-						? 1
-						: state.maxApproval.CadetAchvID,
-				NextCadetAchvID:
-					maxApprovedApproval.CadetAchvID === 0
-						? 1
-						: state.maxApproval?.CadetAchvID === maxApprovedApproval.CadetAchvID
-						? maxApprovedApproval.CadetAchvID + 1
-						: maxApprovedApproval.CadetAchvID,
-			},
-			{ ...state, maxApprovedApproval },
-		];
-	},
-	(
-		// maxPendingApproval
-		[status, state],
-		res,
-	) => {
-		const maxPendingApproval = res as NHQ.CadetAchvAprs;
-
-		return [
-			{
-				...status,
-				NextCadetGradeID:
-					state.maxApproval === null
-						? 1
-						: state.maxApproval.CadetAchvID === state.maxApprovedApproval.CadetAchvID
-						? state.maxApproval.CadetAchvID + 1
-						: state.maxApprovedApproval.CadetAchvID === 0 &&
-						  maxPendingApproval.CadetAchvID === 0
-						? 1
-						: maxPendingApproval.CadetAchvID > 0
-						? 23
-						: state.maxApproval.CadetAchvID,
-			},
-			state,
-		];
-	},
 	(
 		// encampment
 		[status, state],
@@ -951,17 +861,6 @@ const achvResultsReducers: Array<
 		[status, state],
 		res,
 	) => [{ ...status, RCLSDate: Maybe.some(+new Date(res)) }, state],
-	(
-		// hfz
-		[status, state],
-		res,
-	) => [
-		{
-			...status,
-			HFZRecord: Maybe.some(res as NHQ.CadetHFZInformation),
-		},
-		state,
-	],
 	(
 		// ges
 		[status, state],
@@ -975,6 +874,60 @@ const achvResultsReducers: Array<
 		{
 			...status,
 			oflights: [...status.oflights, res as NHQ.OFlight],
+		},
+		state,
+	],
+	(
+		// max path credit
+		[status, state],
+		res,
+	) => {
+		const { PathID, StatusID } = res as NHQ.PL.MemberPathCredit;
+
+		const AchvID = PathID - 30;
+		const STATUS_PENDING = 26;
+
+		return [
+			{
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					CadetAchvID: StatusID === STATUS_PENDING ? AchvID - 1 : AchvID,
+				},
+				CurrentCadetGradeID: StatusID === STATUS_PENDING ? AchvID - 1 : AchvID,
+				NextCadetGradeID: StatusID === STATUS_PENDING ? AchvID : AchvID + 1,
+				NextCadetAchvID: StatusID === STATUS_PENDING ? AchvID : AchvID + 1,
+				MaxAprvStatus: StatusID === STATUS_PENDING ? 'PND' : 'INC',
+			},
+			state,
+		];
+	},
+	(
+		// max aprv credit
+		[status, state],
+		res,
+	) => {
+		const { Completed } = res as NHQ.PL.MemberPathCredit;
+
+		return [
+			{
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+				},
+				LastAprvDate: Maybe.some(+convertNHQDate(Completed)),
+			},
+			state,
+		];
+	},
+	(
+		// hfz
+		[status, state],
+		res,
+	) => [
+		{
+			...status,
+			HFZRecord: Maybe.some(res as NHQ.CadetHFZInformation),
 		},
 		state,
 	],
@@ -1008,13 +961,8 @@ export const getUnitPromotionRequirements = (schema: Schema) => (
 				),
 			]),
 		)
-		.map(([plResults, achvResults]) => {
-			const plResultsArr = plResults.fetchAll();
-			const achvResultsArr = achvResults.fetchAll();
-			// console.log(plResultsArr.length, achvResultsArr.length);
-			// console.log(plResultsArr);
-
-			return plResultsArr.reduce(
+		.map(([plResults, achvResults]) =>
+			plResults.fetchAll().reduce(
 				(promotionMap, [CAPID, Completion, Task, addtlOpts]) =>
 					promotionMap[CAPID]
 						? {
@@ -1027,7 +975,7 @@ export const getUnitPromotionRequirements = (schema: Schema) => (
 								]),
 						  }
 						: promotionMap,
-				achvResultsArr.reduce(
+				achvResults.fetchAll().reduce(
 					(promotionMap, [CAPID, achvType, achvResult]) => ({
 						...promotionMap,
 						[CAPID]: achvResultsReducers[achvType](
@@ -1042,8 +990,8 @@ export const getUnitPromotionRequirements = (schema: Schema) => (
 						[CAPID: number]: [CadetPromotionStatus, AchvResultsReducersState];
 					},
 				),
-			);
-		})
+			),
+		)
 		.map(
 			results =>
 				Object.fromEntries(
@@ -1301,8 +1249,8 @@ export const emptyCadetAchvAprPnd: NHQ.CadetAchvAprs = {
 export const emptyCadetPromotionStatus: CadetPromotionStatus = {
 	CurrentCadetAchv: emptyCadetAchv,
 	CurrentCadetGradeID: 0,
-	NextCadetGradeID: 0,
-	NextCadetAchvID: 0,
+	NextCadetGradeID: 1,
+	NextCadetAchvID: 1,
 	MaxAprvStatus: 'INC',
 	LastAprvDate: Maybe.none(),
 	EncampDate: Maybe.none(),
