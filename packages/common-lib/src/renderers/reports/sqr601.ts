@@ -223,16 +223,6 @@ export const sqr601DocumentDefinition = (
 					alighment: 'left',
 				},
 				{
-					// Current achievement
-					text:
-						loopmember.requirements.CurrentCadetAchv.CadetAchvID.toString() +
-						'-' +
-						loopmember.requirements.MaxAprvStatus.substr(0, 1),
-					fontSize: mySmallFontSize,
-					bold: false,
-					alighment: 'left',
-				},
-				{
 					// Lead Lab pass date or N/A if not required
 					text:
 						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
@@ -520,11 +510,10 @@ export const sqr601DocumentDefinition = (
 						13, // Exp
 						36, // Eligible
 						29, // Next
-						17, // Achv
 						36, // Lead Lab
 						36, // AeroEd
 						36, // SDA
-						36, // HFZ
+						40, // HFZ
 						36, // Drill Test
 						17, // Oath
 						36, // Char Dev
@@ -573,12 +562,6 @@ export const sqr601DocumentDefinition = (
 							},
 							{
 								text: 'Next Grade',
-								fontSize: mySmallFontSize,
-								bold: true,
-								alignment: 'left',
-							},
-							{
-								text: 'eSvc Achv',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',

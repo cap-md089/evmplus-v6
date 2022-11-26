@@ -623,7 +623,7 @@ const promotionResultReducers: Array<{
 }> = [
 	{
 		matches: /Cadet Interactive Leadership Module \d+$/,
-		update: (status, completion, task, addtlOpts, capid) => {
+		update: (status, completion, task, addtlOpts) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 
@@ -649,7 +649,7 @@ const promotionResultReducers: Array<{
 	},
 	{
 		matches: /Drill and Ceremonies/,
-		update: (status, completion, task, addtlOpts, capid) => {
+		update: (status, completion, task, addtlOpts) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 
@@ -675,7 +675,7 @@ const promotionResultReducers: Array<{
 	},
 	{
 		matches: /Learn to Lead/,
-		update: (status, completion, task, addtlOpts, capid) => {
+		update: (status, completion, task, addtlOpts) => {
 			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
 			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
 
