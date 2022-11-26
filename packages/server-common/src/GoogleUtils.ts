@@ -44,14 +44,23 @@ export interface GoogleConfiguration {
 	NODE_ENV: string;
 }
 
-// 99999999  these five arrays need to go to a common area between client and server
-export const Uniforms = [
+// 99999999  these six arrays need to go to a common area between client and server
+export const SMUniforms = [
 	'Dress Blue A',
 	'Dress Blue B',
 	'Airman Battle Uniform (ABU)',
 	'PT Gear',
-	'Polo Shirts (Senior Members)',
-	'Blue Utilities (Senior Members)',
+	'Polo Shirts',
+	'Blue Utilities',
+	'Civilian Attire',
+	'Flight Suit',
+	'Not Applicable',
+];
+export const CUniforms = [
+	'Dress Blue A',
+	'Dress Blue B',
+	'Airman Battle Uniform (ABU)',
+	'PT Gear',
 	'Civilian Attire',
 	'Flight Suit',
 	'Not Applicable',
@@ -143,7 +152,10 @@ function buildEventDescription(
 		'<b>Transportation Provided:</b> ' +
 		(inEvent.transportationProvided === true ? 'YES' : 'NO') +
 		'\n';
-	description += '<b>Uniform:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.uniform)) + '\n';
+	description +=
+		'<b>SM Uniform:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.smuniform)) + '\n';
+	description +=
+		'<b>Cadet Uniform:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.cuniform)) + '\n';
 	description +=
 		'<b>Activity:</b> ' + orBlank(presentMultCheckboxReturn(inEvent.activity)) + '\n';
 	const showForms = isOneOfSelected(inEvent.requiredForms);

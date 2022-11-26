@@ -19,11 +19,45 @@
  */
 
 import { Collection, getSession } from '@mysql/xdevapi';
+import {
+	EventType,
+	labels,
+	RawEventObject,
+	RawLinkedEvent,
+	RawRegularEventObject,
+	SimpleMultCheckboxReturn,
+	stripProp,
+} from 'common-lib';
 import 'dotenv/config';
 import { conf, generateResults } from 'server-common';
 
 process.on('unhandledRejection', up => {
 	throw up;
+});
+
+const fixRawRegularEventObject = (ev: RawRegularEventObject): RawRegularEventObject => ({
+	...(stripProp('uniform')(ev) as RawRegularEventObject),
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+	smuniform: (ev as any).uniform,
+	cuniform: {
+		labels: labels.CUniforms,
+		values: [
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[0],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[1],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[2],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[3],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[6],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[7],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[8],
+		],
+	},
 });
 
 void (async () => {
@@ -68,7 +102,16 @@ void (async () => {
 	await session.startTransaction();
 
 	try {
-		await Promise.all([]);
+		await Promise.all([
+			upgradeTable(schema.getCollection<RawEventObject>('Events'), ev =>
+				ev.type === ((2 as unknown) as EventType.LINKED) || ev.type === EventType.LINKED
+					? {
+							...(ev as RawLinkedEvent),
+							type: EventType.LINKED as const,
+					  }
+					: fixRawRegularEventObject(ev as RawRegularEventObject),
+			),
+		]);
 
 		await session.commit();
 	} catch (e) {
