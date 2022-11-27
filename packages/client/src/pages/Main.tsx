@@ -182,11 +182,17 @@ export default class Main extends Page<PageProps, MainState> {
 								<br />
 								<strong>Location</strong>: {this.state.nextEvent.value.meetLocation}
 								<br />
-								<strong>Uniform of the day</strong>:{' '}
+								<strong>SM Uniform</strong>:{' '}
 								{pipe(
-									M.map(uniform => <>{uniform}</>),
-									M.orSome(<i>No uniform specified</i>),
-								)(presentMultCheckboxReturn(this.state.nextEvent.value.uniform))}
+									M.map(smuniform => <>{smuniform}</>),
+									M.orSome(<i>No SM uniform specified</i>),
+								)(presentMultCheckboxReturn(this.state.nextEvent.value.smuniform))}
+								<br />
+								<strong>Cadet Uniform</strong>:{' '}
+								{pipe(
+									M.map(cuniform => <>{cuniform}</>),
+									M.orSome(<i>No cadet uniform specified</i>),
+								)(presentMultCheckboxReturn(this.state.nextEvent.value.cuniform))}
 								<br />
 								<Link
 									to={`/eventviewer/${getURIComponent(

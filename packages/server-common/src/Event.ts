@@ -425,7 +425,8 @@ export const saveRegularEventFunc = (
 			timeModified: backend.now(),
 			transportationDescription: event.transportationDescription,
 			transportationProvided: event.transportationProvided,
-			uniform: event.uniform,
+			smuniform: event.smuniform,
+			cuniform: event.cuniform,
 			type: EventType.REGULAR,
 		}))
 		.tap(() => notifyEventPOCs(schema)(account)(oldEvent)(event))
@@ -529,8 +530,8 @@ export const createEvent = (backend: Backends<[GoogleBackend, TimeBackend, Audit
 			teamID: data.teamID,
 			transportationDescription: data.transportationDescription,
 			transportationProvided: data.transportationProvided,
-			uniform: data.uniform,
-
+			smuniform: data.smuniform,
+			cuniform: data.cuniform,
 			id,
 			accountID: account.id,
 			author: toReference(author),
