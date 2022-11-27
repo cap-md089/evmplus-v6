@@ -24,6 +24,7 @@ import {
 	getExtraMemberInformationForCAPMember,
 	getRequestFreeCAPMemberBackend,
 } from '.';
+import { emptyCadetPromotionStatus } from './NHQMember';
 
 export {
 	CAPMemberBackend,
@@ -31,4 +32,5 @@ export {
 	getRequestFreeCAPMemberBackend,
 	getExtraMemberInformationForCAPMember,
 	downloadCAPWATCHFile,
+	emptyCadetPromotionStatus,
 };

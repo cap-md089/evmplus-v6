@@ -71,6 +71,7 @@ import {
 	getNameForCAPNHQMember,
 	getNHQMember,
 	getNHQMemberAccount,
+	getUnitPromotionRequirements,
 } from './NHQMember';
 import {
 	createCAPProspectiveMember,
@@ -354,6 +355,9 @@ export interface CAPMemberBackend {
 	) => (newMember: CAPNHQMemberReference) => ServerEither<void>;
 	getBirthday: (member: CAPMember) => ServerEither<DateTime>;
 	getPromotionRequirements: (member: CAPNHQMemberObject) => ServerEither<CadetPromotionStatus>;
+	getAccountPromotionRequirements: (
+		account: RawCAPSquadronAccountObject,
+	) => ServerEither<{ [CAPID: number]: CadetPromotionStatus }>;
 	getOrgInfo: (member: CAPNHQMemberObject) => ServerEither<api.events.events.SquadronPOC>;
 	getMemberEventTags: (
 		accountID: string,
@@ -398,6 +402,7 @@ export const getRequestFreeCAPMemberBackend = (
 	),
 	getOrgInfo: memoize(getOrgInfo(prevBackends), ({ orgid }) => orgid),
 	getMemberEventTags: memberEventTags(prevBackends),
+	getAccountPromotionRequirements: getUnitPromotionRequirements(mysqlx),
 });
 
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
@@ -412,4 +417,5 @@ export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 	getPromotionRequirements: () => notImplementedError('getPromotionRequirements'),
 	getOrgInfo: () => notImplementedError('getOrgInfo'),
 	getMemberEventTags: () => () => notImplementedError('getMemberEventTags'),
+	getAccountPromotionRequirements: () => notImplementedError('getAccountPromotionRequirements'),
 });

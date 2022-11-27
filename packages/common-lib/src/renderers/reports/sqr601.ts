@@ -60,9 +60,9 @@ export const sqr601DocumentDefinition = (
 		pipe(
 			get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
 			Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
-			Maybe.map(({ DateTaken }) => DateTaken.substr(0, 10)),
-			Maybe.map(s => +new Date(s) + 182 * 24 * 60 * 60 * 1000),
-			Maybe.map(s => new Date(s).toLocaleDateString('en-US')),
+			Maybe.map(({ DateTaken, IsPassed }) => [DateTaken.substr(0, 10), IsPassed] as const),
+			Maybe.map(([s, f]) => [+new Date(s) + 182 * 24 * 60 * 60 * 1000, f] as const),
+			Maybe.map(([s, f]) => new Date(s).toLocaleDateString('en-US') + (!f ? ' F' : '')),
 			Maybe.orSome(''),
 		)(reqs);
 
@@ -218,16 +218,6 @@ export const sqr601DocumentDefinition = (
 					text:
 						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetGradeID]
 							.Grade,
-					fontSize: mySmallFontSize,
-					bold: false,
-					alighment: 'left',
-				},
-				{
-					// Current achievement
-					text:
-						loopmember.requirements.CurrentCadetAchv.CadetAchvID.toString() +
-						'-' +
-						loopmember.requirements.MaxAprvStatus.substr(0, 1),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alighment: 'left',
@@ -520,11 +510,10 @@ export const sqr601DocumentDefinition = (
 						13, // Exp
 						36, // Eligible
 						29, // Next
-						17, // Achv
 						36, // Lead Lab
 						36, // AeroEd
 						36, // SDA
-						36, // HFZ
+						40, // HFZ
 						36, // Drill Test
 						17, // Oath
 						36, // Char Dev
@@ -573,12 +562,6 @@ export const sqr601DocumentDefinition = (
 							},
 							{
 								text: 'Next Grade',
-								fontSize: mySmallFontSize,
-								bold: true,
-								alignment: 'left',
-							},
-							{
-								text: 'eSvc Achv',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
