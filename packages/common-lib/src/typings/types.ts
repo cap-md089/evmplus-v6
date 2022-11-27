@@ -960,9 +960,13 @@ export interface NewEventObject {
 	 */
 	transportationDescription: string;
 	/**
-	 * The uniforms that can be worn
+	 * The uniforms that can be worn by Senior Members
 	 */
-	uniform: SimpleMultCheckboxReturn;
+	smuniform: SimpleMultCheckboxReturn;
+	/**
+	 * The uniforms that can be worn by Cadets
+	 */
+	cuniform: SimpleMultCheckboxReturn;
 	/**
 	 * How many people we want at the event
 	 */

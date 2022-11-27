@@ -840,11 +840,17 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 								<br />
 							</>
 						) : null}
-						<strong>Uniform:</strong>{' '}
+						<strong>SM Uniform:</strong>{' '}
 						{pipe(
-							Maybe.map(uniform => <>{uniform}</>),
-							Maybe.orSome(<i>No uniform specified</i>),
-						)(presentMultCheckboxReturn(event.uniform))}
+							Maybe.map(smuniform => <>{smuniform}</>),
+							Maybe.orSome(<i>No SM uniform specified</i>),
+						)(presentMultCheckboxReturn(event.smuniform))}
+						<br />
+						<strong>Cadet Uniform:</strong>{' '}
+						{pipe(
+							Maybe.map(cuniform => <>{cuniform}</>),
+							Maybe.orSome(<i>No Cadet uniform specified</i>),
+						)(presentMultCheckboxReturn(event.cuniform))}
 						<br />
 						{event.comments ? (
 							<>

@@ -351,10 +351,18 @@ ${index + 1}) ${value.name}, Phone: ${formatPhone(value.phone)}, Email: ${value.
 			? [
 					{
 						text: [
-							{ text: 'Uniform: ', bold: true, fontSize: myTextFontSize },
+							{ text: 'SM Uniform: ', bold: true, fontSize: myTextFontSize },
 							{
 								text: Maybe.orSome('')(
-									presentMultCheckboxReturn(event.uniform, ', '),
+									presentMultCheckboxReturn(event.smuniform, ', '),
+								),
+								bold: false,
+								fontSize: myTextFontSize,
+							},
+							{ text: 'Cadet Uniform: ', bold: true, fontSize: myTextFontSize },
+							{
+								text: Maybe.orSome('')(
+									presentMultCheckboxReturn(event.cuniform, ', '),
 								),
 								bold: false,
 								fontSize: myTextFontSize,
@@ -368,10 +376,18 @@ ${index + 1}) ${value.name}, Phone: ${formatPhone(value.phone)}, Email: ${value.
 			? [
 					{
 						text: [
-							{ text: 'Uniform: ', bold: true, fontSize: myTextFontSize },
+							{ text: 'SM Uniform: ', bold: true, fontSize: myTextFontSize },
 							{
 								text: Maybe.orSome('')(
-									presentMultCheckboxReturn(event.uniform, ', '),
+									presentMultCheckboxReturn(event.smuniform, ', '),
+								),
+								bold: false,
+								fontSize: myTextFontSize,
+							},
+							{ text: 'Cadet Uniform: ', bold: true, fontSize: myTextFontSize },
+							{
+								text: Maybe.orSome('')(
+									presentMultCheckboxReturn(event.cuniform, ', '),
 								),
 								bold: false,
 								fontSize: myTextFontSize,
