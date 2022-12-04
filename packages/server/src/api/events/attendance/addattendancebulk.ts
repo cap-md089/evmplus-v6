@@ -175,7 +175,7 @@ const replaceEmailContent = (member: Member) => (event: EventObject) => (url: st
 	body
 		.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))
 		.replace(/%%EVENT_NAME%%/, event.name)
-		.replace(/%%START_DATE%%/, new Date(event.startDateTime).toDateString())
+		.replace(/%%START_DATE%%/, new Date(event.startDateTime - 18000000).toDateString())
 		.replace(/%%EVENT_LINK%%/, `${url}/eventviewer/${event.id}`);
 
 const generateEmail = (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
