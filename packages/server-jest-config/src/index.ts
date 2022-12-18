@@ -77,6 +77,7 @@ export const COLLECTIONS_USED: readonly string[] = [
 	'NHQ_CadetHFZInformation',
 	'NHQ_CdtAchvEnum',
 	'NHQ_Commanders',
+	'NHQ_eServices_Session',
 	'NHQ_DutyPosition',
 	'NHQ_MbrAchievements',
 	'NHQ_MbrContact',
