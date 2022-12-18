@@ -44,11 +44,21 @@ const mbrAchievements: CAPWATCHModule<NHQ.MbrAchievements> = async function* (
 
 	let values: NHQ.MbrAchievements;
 
-	try {
-		const mbrAchievementsCollection = schema.getCollection<NHQ.MbrAchievements>(
-			'NHQ_MbrAchievements',
-		);
+	const mbrAchievementsCollection = schema.getCollection<NHQ.MbrAchievements>(
+		'NHQ_MbrAchievements',
+	);
 
+	try {
+		await mbrAchievementsCollection.remove('true').execute();
+	} catch (e) {
+		console.warn(e);
+		return yield {
+			type: 'Result',
+			error: CAPWATCHError.CLEAR,
+		};
+	}
+
+	try {
 		let currentRecord = 0;
 
 		for (const achv of fileData) {
