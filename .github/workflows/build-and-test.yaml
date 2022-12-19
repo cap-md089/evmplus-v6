@@ -23,10 +23,11 @@ jobs:
         with:
           node-version: 16.14
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Build code
         run: |
-          docker-compose -f docker-compose.dev.yml run dev-setup
+          docker-compose -f docker-compose.dev.yml run --entrypoint='/bin/bash -c "lerna bootstrap && lerna run build --ignore client"' dev-setup
           echo "REACT_APP_HOST_NAME=events.md.cap.gov" >> packages/client/.env
           echo "REACT_APP_RECAPTCHA_KEY={{ secrets.RECAPTCHA_PUBLIC_KEY }}" >> packages/client/.env
           echo "SKIP_PREFLIGHT_CHECK=true" >> packages/client/.env
