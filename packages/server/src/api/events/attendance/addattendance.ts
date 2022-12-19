@@ -40,6 +40,7 @@ import {
 	Member,
 	NewAttendanceRecord,
 	RawTeamObject,
+	RegistryValues,
 	ServerError,
 	SessionType,
 	toReference,
@@ -192,23 +193,34 @@ export const func: Endpoint<
 			.flatMap(addAttendance(backend)),
 	);
 
-const replaceEmailContent = (member: Member) => (event: EventObject) => (url: string) => (
-	body: string,
-) =>
+const replaceEmailContent = (registry: RegistryValues) => (member: Member) => (
+	event: EventObject,
+) => (url: string) => (body: string) =>
 	body
 		.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))
 		.replace(/%%EVENT_NAME%%/, event.name)
-		.replace(/%%START_DATE%%/, new Date(event.startDateTime - 18000000).toDateString())
+		.replace(
+			/%%START_DATE%%/,
+			new Intl.DateTimeFormat('en-US', {
+				timeZone: registry.Website.Timezone,
+				weekday: 'short',
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric',
+			}).format(new Date(event.startDateTime)),
+		)
 		.replace(/%%EVENT_LINK%%/, `${url}/eventviewer/${event.id}`);
 
-const generateEmail = (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
-	body: string;
-}): EmailSetup => ({ url }) => ({
+const generateEmail = (registry: RegistryValues) => (member: Member) => (event: EventObject) => (
+	email: string,
+) => (emailBody: { body: string }): EmailSetup => ({ url }) => ({
 	bccAddresses: [],
 	to: [email],
 	subject: 'Event Signup Notice',
-	textBody: replaceEmailContent(member)(event)(url)(emailBody.body),
-	htmlBody: markdown.markdown.toHTML(replaceEmailContent(member)(event)(url)(emailBody.body)),
+	textBody: replaceEmailContent(registry)(member)(event)(url)(emailBody.body),
+	htmlBody: markdown.markdown.toHTML(
+		replaceEmailContent(registry)(member)(event)(url)(emailBody.body),
+	),
 });
 
 const sendEmailToMember = (backend: Backends<[EmailBackend, RegistryBackend]>) => (
@@ -218,8 +230,9 @@ const sendEmailToMember = (backend: Backends<[EmailBackend, RegistryBackend]>) =
 }): ServerEither<void> =>
 	backend
 		.getRegistry(account)
-		.map(backend.sendEmail)
-		.flatApply(generateEmail(member)(event)(email)(emailBody));
+		.flatMap(registry =>
+			backend.sendEmail(registry)(generateEmail(registry)(member)(event)(email)(emailBody)),
+		);
 
 export default withBackends(
 	func,
