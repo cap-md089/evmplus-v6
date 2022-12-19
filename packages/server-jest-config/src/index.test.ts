@@ -16,6 +16,15 @@ describe('Docker TestConnection', () => {
 	beforeAll(dbRef.setup);
 	afterAll(dbRef.teardown);
 
+	it('should be able to setup and close a dbRef', async done => {
+		const dbRefInner = getDbHandle();
+
+		await TestConnection.setup(dbRefInner)();
+		await TestConnection.teardown(dbRefInner)();
+
+		done();
+	});
+
 	it('should be able to connect to the mysql container', async done => {
 		const sessionPromise = getSession(TestConnection.mysqlConnectionString);
 
