@@ -435,9 +435,9 @@ export const downloadCAPWATCHFile = (
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${
-			today.getMonth() + 1
-		}-${today.getDate()}.zip`,
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${(today.getMonth() + 1)
+			.toString()
+			.padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');
@@ -999,7 +999,7 @@ export const getUnitPromotionRequirements = (schema: Schema) => (
 				) as { [CAPID: number]: CadetPromotionStatus },
 		);
 
-const getPromotionRequirementsForMemberSql: string = `\
+const getPromotionRequirementsForMemberSql = `\
 WITH
 	MEMBERS AS (SELECT ? AS CAPID FROM dual),
 	AEROSDA AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions,
@@ -1030,7 +1030,7 @@ WITH
 					WHERE MPC.CAPID IS NULL)
 SELECT CAPID, Completed, TaskName, AdditionalOptions FROM CURRENTTASKS`;
 
-const getAchvsForMemberSql: string = `\
+const getAchvsForMemberSql = `\
 WITH
 	MEMBERS AS (SELECT ? AS CAPID FROM dual),
 	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 0, 1), doc -> '$.Completed' FROM NHQ_CadetActivities A
