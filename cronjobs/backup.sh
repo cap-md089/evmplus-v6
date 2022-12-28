@@ -21,7 +21,7 @@ LICENSE
 
 /usr/local/mysql-shell/bin/mysqlsh -h mysql --password=$(cat /run/secrets/mysql_root_password) --user=root --file /usr/evm-plus/cronjobs/database-dump.js
 
-printf -v date "%(%a_%b_%e_%Y)T"
+printf -v date "%(%Y_%m_%d)T"
 
 pushd /srv/backups/mysqldumps
 
