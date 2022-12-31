@@ -51,6 +51,7 @@ import {
 } from 'rxjs';
 import Button from '../../../components/Button';
 import Dialogue, { DialogueButtons } from '../../../components/dialogues/Dialogue';
+import Checkbox from '../../../components/form-inputs/Checkbox';
 import Loader from '../../../components/Loader';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { TFetchAPI } from '../../../lib/apis';
@@ -77,6 +78,7 @@ interface MemberSearchUIState {
 	lastNameInput: string;
 	unitNameInput: string;
 	dutyNameInput: string;
+	includeAssts: boolean;
 	dialogueOpen: boolean;
 	inputHasBeenEntered: boolean;
 	memberViewed: api.member.MemberSearchResult | null;
@@ -140,6 +142,10 @@ interface MemberSearchClearMembersAction {
 	type: 'CLEAR_MEMBERS';
 }
 
+interface MemberSearchToggleIncludeAssistants {
+	type: 'TOGGLE_INCLUDE_ASSISTANTS';
+}
+
 type MemberSearchActions =
 	| MemberSearchResultsLoadedAction
 	| MemberSearchStartLoadingAction
@@ -150,7 +156,8 @@ type MemberSearchActions =
 	| MemberSearchOpenUIAction
 	| MemberSearchCloseUIAction
 	| MemberSearchSelectMemberAction
-	| MemberSearchClearMembersAction;
+	| MemberSearchClearMembersAction
+	| MemberSearchToggleIncludeAssistants;
 
 const updateFirstName = (payload: string): MemberSearchActions => ({
 	type: 'FIRST_NAME_SEARCH_UPDATE',
@@ -200,6 +207,10 @@ const clearMembers = (): MemberSearchActions => ({
 	type: 'CLEAR_MEMBERS',
 });
 
+const toggleIncludeAssistants = (): MemberSearchToggleIncludeAssistants => ({
+	type: 'TOGGLE_INCLUDE_ASSISTANTS',
+});
+
 export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, MemberSearchActions> {
 	const defaultState: MemberSearchState = {
 		state: 'LOADED',
@@ -208,6 +219,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 		lastNameInput: '',
 		unitNameInput: '',
 		dutyNameInput: '',
+		includeAssts: true,
 		dialogueOpen: false,
 		inputHasBeenEntered: false,
 		memberViewed: null,
@@ -296,6 +308,13 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 					members: [],
 				};
 
+			case 'TOGGLE_INCLUDE_ASSISTANTS':
+				return {
+					...state,
+
+					includeAssts: !state.includeAssts,
+				};
+
 			default:
 				return state;
 		}
@@ -309,6 +328,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 		| MemberSearchLastNameSearchInputAction
 		| MemberSearchUnitNameSearchInputAction
 		| MemberSearchDutyNameSearchInputAction
+		| MemberSearchToggleIncludeAssistants
 	> =>
 		filter<
 			MemberSearchActions,
@@ -316,6 +336,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 			| MemberSearchLastNameSearchInputAction
 			| MemberSearchUnitNameSearchInputAction
 			| MemberSearchDutyNameSearchInputAction
+			| MemberSearchToggleIncludeAssistants
 		>(
 			(
 				action,
@@ -323,7 +344,8 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 				| MemberSearchFirstNameSearchInputAction
 				| MemberSearchLastNameSearchInputAction
 				| MemberSearchUnitNameSearchInputAction
-				| MemberSearchDutyNameSearchInputAction =>
+				| MemberSearchDutyNameSearchInputAction
+				| MemberSearchToggleIncludeAssistants =>
 				(action.type === 'FIRST_NAME_SEARCH_UPDATE' &&
 					state$.value.unitNameInput.length +
 						state$.value.lastNameInput.length +
@@ -347,7 +369,8 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 						state$.value.lastNameInput.length +
 						state$.value.unitNameInput.length +
 						action.payload.length >=
-						3),
+						3) ||
+				action.type === 'TOGGLE_INCLUDE_ASSISTANTS',
 		);
 
 	const loadSearchEpic = (
@@ -367,6 +390,7 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 								firstName: encodeURIComponent(state$.value.firstNameInput || '%'),
 								lastName: encodeURIComponent(state$.value.lastNameInput || '%'),
 								dutyName: encodeURIComponent(state$.value.dutyNameInput || '%'),
+								includeAssts: state$.value.includeAssts ? 'true' : 'false',
 							},
 							{},
 						),
@@ -525,6 +549,20 @@ const MemberSearchDutyNameFilter = React.memo(
 				/>
 			</div>
 		);
+	},
+);
+
+const MemberSearchToggleIncludeAssistants = React.memo(
+	(): ReactElement => {
+		const dispatch = useDispatch();
+
+		const toggleIncludeAssts = useCallback(() => dispatch(toggleIncludeAssistants()), [
+			dispatch,
+		]);
+
+		const includeAssts = useSelector<MemberSearchState, boolean>(state => state.includeAssts);
+
+		return <Checkbox name="primaryOnly" value={includeAssts} onChange={toggleIncludeAssts} />;
 	},
 );
 
@@ -792,6 +830,12 @@ const MemberSearchDataBox = (): ReactElement => (
 						<div className="selector-left-filter">Duty name</div>
 						<div className="selector-right-filter" key="dutyName-div">
 							<MemberSearchDutyNameFilter key="dutyName-box" />
+						</div>
+					</li>
+					<li key="primaryOnly">
+						<div className="selector-left-filter">Include assistants</div>
+						<div className="selector-right-filter" key="primaryOnly-div">
+							<MemberSearchToggleIncludeAssistants key="primaryOnly-box" />
 						</div>
 					</li>
 				</ul>

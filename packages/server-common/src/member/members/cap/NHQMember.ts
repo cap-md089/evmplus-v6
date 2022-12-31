@@ -51,6 +51,7 @@ import {
 	ServerError,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
+	ShortNHQDutyPosition,
 	stripProp,
 } from 'common-lib';
 import { createWriteStream } from 'fs';
@@ -191,29 +192,31 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 						}
 					});
 
-				const dutyPositions: ShortDutyPosition[] = [
-					...orgDutyPositions
+				const dutyPositions = [
+					...(orgDutyPositions
 						.filter(({ CAPID }) => CAPID === member.CAPID)
 						.map(dp => ({
 							duty: dp.Duty,
 							date: +DateTime.fromISO(dp.DateMod),
 							orgid: dp.ORGID,
+							assistant: dp.Asst === 1,
 							type: 'NHQ' as const,
-						})),
-					...orgCadetDutyPositions
+						})) as ShortNHQDutyPosition[]),
+					...(orgCadetDutyPositions
 						.filter(({ CAPID }) => CAPID === member.CAPID)
 						.map(dp => ({
 							duty: dp.Duty,
 							date: +DateTime.fromISO(dp.DateMod),
 							orgid: dp.ORGID,
+							assistant: dp.Asst === 1,
 							type: 'NHQ' as const,
-						})),
-					...extraInfo.temporaryDutyPositions.map(dp => ({
+						})) as ShortNHQDutyPosition[]),
+					...(extraInfo.temporaryDutyPositions.map(dp => ({
 						duty: dp.Duty,
 						date: dp.assigned,
 						expires: dp.validUntil,
 						type: 'CAPUnit' as const,
-					})),
+					})) as ShortCAPUnitDutyPosition[]),
 				];
 
 				return {
@@ -300,6 +303,7 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 				duty: item.Duty,
 				date: +DateTime.fromISO(item.DateMod),
 				orgid: item.ORGID,
+				assistant: item.Asst === 1,
 				type: 'NHQ' as const,
 			})),
 		)

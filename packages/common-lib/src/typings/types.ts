@@ -2053,6 +2053,10 @@ export interface ShortNHQDutyPosition {
 	 */
 	orgid: number;
 	/**
+	 * Whether or not this duty position is an assitant duty position
+	 */
+	assistant: boolean;
+	/**
 	 * Signifies this is an official duty from CAPNHQ
 	 */
 	type: 'NHQ';
