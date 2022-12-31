@@ -54,7 +54,11 @@ import {
 import { Endpoint } from '../..';
 import wrapper from '../../lib/wrapper';
 
-const memberSearchSQL = (schema: Schema, orgids: number[]): string => /* sql */ `SELECT DISTINCT
+const memberSearchSQL = (
+	schema: Schema,
+	orgids: number[],
+	includeAssts: boolean,
+): string => /* sql */ `SELECT DISTINCT
 	M.CAPID
 FROM
 	${schema.getName()}.NHQ_Member as M
@@ -62,8 +66,8 @@ INNER JOIN
 	${schema.getName()}.NHQ_Organization as O
 ON
 	M.ORGID = O.ORGID
-INNER JOIN
-	${schema.getName()}.NHQ_DutyPosition as D 
+LEFT JOIN
+	(SELECT doc, CAPID FROM ${schema.getName()}.NHQ_DutyPosition UNION ALL SELECT doc, CAPID FROM ${schema.getName()}.NHQ_CadetDutyPosition) as D 
 ON
 	M.CAPID = D.CAPID
 WHERE
@@ -75,7 +79,8 @@ AND
 AND
 	LOWER(O.doc ->> '$.Name') LIKE ?
 AND
-	LOWER(D.doc ->> '$.Duty') LIKE ?`;
+	LOWER(D.doc ->> '$.Duty') LIKE ?
+${includeAssts ? ';' : "AND D.doc ->> '$.Asst' = 0;"}`;
 
 const stripPunctuation = (s: string): string => s.replace(/[',.]/g, '');
 
@@ -109,7 +114,13 @@ export const func: Endpoint<
 					.map(schema =>
 						schema
 							.getSession()
-							.sql(memberSearchSQL(schema, safeOrgIds))
+							.sql(
+								memberSearchSQL(
+									schema,
+									safeOrgIds,
+									req.params.includeAssts === 'true',
+								),
+							)
 							.bind([
 								...safeOrgIds,
 								`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
@@ -117,7 +128,7 @@ export const func: Endpoint<
 								`%${stripPunctuation(
 									req.params.unitName ?? '',
 								).toLocaleLowerCase()}%`,
-								`%${(req.params.dutyName ?? '').toLocaleLowerCase()}%`,
+								(req.params.dutyName ?? '').toLocaleLowerCase(),
 							])
 							.execute(),
 					)

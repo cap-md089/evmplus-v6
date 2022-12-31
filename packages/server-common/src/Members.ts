@@ -399,6 +399,9 @@ export interface MemberBackend {
 	) => <T extends MemberReference = MemberReference>(
 		ref: T,
 	) => ServerEither<MemberForReference<T>>;
+	// getMemberFull: <T extends MemberReference = MemberReference>(
+	// 	ref: T,
+	// ) => ServerEither<MemberForReference<T>>;
 	accountHasMemberInAttendance: (
 		member: MemberReference,
 	) => (account: AccountObject) => ServerEither<boolean>;

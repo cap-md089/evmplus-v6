@@ -456,6 +456,7 @@ export const getMemberFromTestData = (
 			duty: dp.Duty,
 			date: +DateTime.fromISO(dp.DateMod),
 			orgid: dp.ORGID,
+			assistant: dp.Asst === 1,
 			type: 'NHQ',
 		}),
 	);

@@ -113,11 +113,17 @@ export interface MemberSearchResult {
  */
 export interface MemberSearch {
 	(
-		params: { unitName?: string; lastName?: string; firstName?: string; dutyName?: string },
+		params: {
+			unitName?: string;
+			lastName?: string;
+			firstName?: string;
+			dutyName?: string;
+			includeAssts?: string;
+		},
 		body: {},
 	): APIEither<MemberSearchResult[]>;
 
-	url: '/api/member/search/:unitName?/:lastName?/:firstName?/:dutyName?';
+	url: '/api/member/search/:unitName?/:lastName?/:firstName?/:dutyName?/:includeAssts?';
 
 	method: 'get';
 
