@@ -66,8 +66,8 @@ INNER JOIN
 	${schema.getName()}.NHQ_Organization as O
 ON
 	M.ORGID = O.ORGID
-INNER JOIN
-	${schema.getName()}.NHQ_DutyPosition as D 
+LEFT JOIN
+	(SELECT doc, CAPID FROM ${schema.getName()}.NHQ_DutyPosition UNION ALL SELECT doc, CAPID FROM ${schema.getName()}.NHQ_CadetDutyPosition) as D 
 ON
 	M.CAPID = D.CAPID
 WHERE
@@ -128,7 +128,7 @@ export const func: Endpoint<
 								`%${stripPunctuation(
 									req.params.unitName ?? '',
 								).toLocaleLowerCase()}%`,
-								`%${(req.params.dutyName ?? '').toLocaleLowerCase()}%`,
+								(req.params.dutyName ?? '').toLocaleLowerCase(),
 							])
 							.execute(),
 					)

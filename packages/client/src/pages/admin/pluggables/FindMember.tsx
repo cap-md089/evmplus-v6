@@ -23,10 +23,12 @@ import {
 	CAPMemberContactPriority,
 	CAPMemberContactType,
 	ClientUser,
+	dutyPositions,
 	Either,
 	EitherObj,
 	getFullMemberName,
 	HTTPError,
+	identity,
 	isRioux,
 	Maybe,
 	NHQ,
@@ -52,6 +54,7 @@ import {
 import Button from '../../../components/Button';
 import Dialogue, { DialogueButtons } from '../../../components/dialogues/Dialogue';
 import Checkbox from '../../../components/form-inputs/Checkbox';
+import LaxAutocomplete from '../../../components/form-inputs/LaxAutocomplete';
 import Loader from '../../../components/Loader';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { TFetchAPI } from '../../../lib/apis';
@@ -539,15 +542,14 @@ const MemberSearchDutyNameFilter = React.memo(
 		const dutyName = useSelector<MemberSearchState, string>(state => state.dutyNameInput);
 
 		return (
-			<div className="input-formbox" key="dutyName-formbox">
-				<input
-					type="text"
-					value={dutyName}
-					onChange={e => setDutyName(e.target.value)}
-					key="dutyName-input"
-					name="dutyName"
-				/>
-			</div>
+			<LaxAutocomplete
+				renderItem={identity}
+				name="position"
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				items={dutyPositions}
+				value={dutyName}
+				onChange={setDutyName}
+			/>
 		);
 	},
 );
@@ -828,6 +830,9 @@ const MemberSearchDataBox = (): ReactElement => (
 					</li>
 					<li key="dutyName">
 						<div className="selector-left-filter">Duty name</div>
+						{/* <Label>Duty Position</Label> */}
+
+						{/* <Select name="position" labels={temporaryDutyPositions} /> */}
 						<div className="selector-right-filter" key="dutyName-div">
 							<MemberSearchDutyNameFilter key="dutyName-box" />
 						</div>
