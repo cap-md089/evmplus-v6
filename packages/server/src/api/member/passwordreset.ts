@@ -31,7 +31,9 @@ export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.member.PasswordReset
 			.addPasswordForUser([req.session.userAccount.username, req.body.password])
 			.flatMap<PasswordSetResult>(() =>
 				req.session.type === SessionType.PASSWORD_RESET
-					? backend.updateSession(req.session).map(always(PasswordSetResult.OK))
+					? backend
+						.updateSession({ ...req.session, type: SessionType.REGULAR })
+						.map(always(PasswordSetResult.OK))
 					: Either.right(PasswordSetResult.OK),
 			)
 			.map(wrapper),
