@@ -17,92 +17,70 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as React from 'react';
-import Page, { PageProps } from '../Page';
 import {
-	Member,
-	FullTeamObject,
 	AsyncEither,
 	Either,
-	effectiveManageEventPermission,
-	Permissions,
-	MaybeObj,
 	Maybe,
+	MaybeObj,
+	Permissions,
+	effectiveManageEventPermission,
 } from 'common-lib';
+import React, { useCallback, useEffect } from 'react';
+import Loader from '../../components/Loader';
 import EventForm, {
-	emptyEventFormValues,
 	NewEventFormValues,
 	convertFormValuesToEvent,
 } from '../../components/forms/usable-forms/EventForm';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import fetchApi from '../../lib/apis';
-import SigninLink from '../../components/SigninLink';
-import Loader from '../../components/Loader';
+import {
+	PageDispatch,
+	addEventPageAction,
+	getPageState,
+	loadPage,
+	usePageDispatch,
+} from '../../state/pageState';
+import {
+	AddEventState,
+	setErrorInfo,
+	setLoadedInformation,
+	startSaving,
+	updateFormValues,
+} from '../../state/pages/addevent';
+import { goToSignin } from '../../state/pages/signin';
+import { PageProps } from '../Page';
 
-interface AddEventUIState {
-	saving: boolean;
-}
+const defaultPageState: AddEventState = {
+	data: { state: 'LOADING' },
+	saving: false,
+};
 
-interface AddEventLoadingState {
-	state: 'LOADING';
-}
+export default ({
+	member,
+	routeProps,
+	registry,
+	updateSideNav,
+	updateBreadCrumbs,
+	account,
+}: PageProps): React.ReactElement | null => {
+	const appDispatch = useAppDispatch();
+	const currentPage = useAppSelector(getPageState);
 
-interface AddEventErrorState {
-	state: 'ERROR';
+	const dispatch = usePageDispatch(addEventPageAction);
 
-	message: string;
-}
-
-interface AddEventLoadedState {
-	state: 'LOADED';
-
-	event: NewEventFormValues;
-	memberList: Member[];
-	teamList: FullTeamObject[];
-}
-
-type AddEventState = (AddEventLoadingState | AddEventErrorState | AddEventLoadedState) &
-	AddEventUIState;
-
-export default class AddEvent extends Page<PageProps, AddEventState> {
-	public state: AddEventState = {
-		state: 'LOADING',
-		saving: false,
-	};
-
-	public async componentDidMount(): Promise<void> {
-		if (!this.props.member) {
-			return;
-		}
-
-		if (effectiveManageEventPermission(this.props.member) === Permissions.ManageEvent.NONE) {
-			return;
-		}
-
+	const loadMemberTeamsInfo = useCallback(async (pageDispatch: PageDispatch): Promise<void> => {
 		const infoEither = await AsyncEither.All([
 			fetchApi.member.memberList({}, {}),
 			fetchApi.team.list({}, {}),
 		]);
 
 		if (Either.isLeft(infoEither)) {
-			return this.setState({
-				state: 'ERROR',
-				message: 'Could not load member or team information',
-				saving: false,
-			});
+			return pageDispatch(setErrorInfo('Could not load member or team information'));
 		}
 
-		const [memberList, teamList] = infoEither.value;
+		pageDispatch(setLoadedInformation(infoEither.value));
 
-		this.setState(prev => ({
-			...prev,
-
-			state: 'LOADED',
-			event: emptyEventFormValues(),
-			memberList,
-			teamList,
-		}));
-
-		this.props.updateSideNav([
+		updateSideNav([
 			{
 				target: 'main-information',
 				text: 'Main information',
@@ -144,7 +122,7 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				type: 'Reference',
 			},
 		]);
-		this.props.updateBreadCrumbs([
+		updateBreadCrumbs([
 			{
 				target: '/',
 				text: 'Home',
@@ -158,78 +136,95 @@ export default class AddEvent extends Page<PageProps, AddEventState> {
 				text: 'Create event',
 			},
 		]);
-		this.updateTitle('Create event');
+		document.title = `${[registry.Website.Name, 'Create event'].join(
+			` ${registry.Website.Separator} `,
+		)}`;
+	}, []);
+
+	useEffect(() => {
+		if (!member) {
+			return goToSignin(appDispatch, routeProps);
+		}
+
+		if (effectiveManageEventPermission(member) === Permissions.ManageEvent.NONE) {
+			return;
+		}
+
+		if (currentPage.page !== 'addevent' || currentPage.state.data.state === 'LOADED') {
+			return;
+		}
+
+		void loadMemberTeamsInfo(dispatch);
+	}, [currentPage.page]);
+
+	const updateEvent = useCallback(
+		formValues => {
+			dispatch(updateFormValues(formValues));
+		},
+		[dispatch],
+	);
+
+	const submitEvent = useCallback(
+		async (maybeEvent: MaybeObj<NewEventFormValues>) => {
+			const maybeFullEvent = Maybe.flatMap(convertFormValuesToEvent)(maybeEvent);
+
+			if (!maybeFullEvent.hasValue) {
+				return;
+			}
+
+			dispatch(startSaving());
+
+			const createResult = await fetchApi.events.events.add({}, maybeFullEvent.value);
+
+			if (Either.isLeft(createResult)) {
+				if (createResult.value.code >= 400 && createResult.value.code < 500) {
+					goToSignin(appDispatch, routeProps);
+				} else {
+					dispatch(setErrorInfo(createResult.value.message));
+				}
+			} else {
+				routeProps.history.push(`/eventviewer/${createResult.value.id}`);
+			}
+		},
+		[dispatch, appDispatch, routeProps],
+	);
+
+	if (currentPage.page !== 'addevent') {
+		appDispatch(loadPage({ page: 'addevent', state: defaultPageState }));
+		return null;
 	}
 
-	public render(): JSX.Element {
-		if (!this.props.member) {
-			return <SigninLink>Please sign in.</SigninLink>;
-		}
-
-		if (effectiveManageEventPermission(this.props.member) === Permissions.ManageEvent.NONE) {
-			return <div>You do not have permission to do that.</div>;
-		}
-
-		if (this.state.state === 'LOADING') {
-			return <Loader />;
-		}
-
-		if (this.state.state === 'ERROR') {
-			return <div>{this.state.message}</div>;
-		}
-
-		return (
-			<EventForm
-				account={this.props.account}
-				member={this.props.member}
-				event={this.state.event}
-				isEventUpdate={false}
-				onEventChange={this.updateNewEvent}
-				onEventFormSubmit={this.handleSubmit}
-				registry={this.props.registry}
-				teamList={this.state.teamList}
-				memberList={this.state.memberList}
-				saving={this.state.saving}
-			/>
-		);
+	if (!member) {
+		return null;
 	}
 
-	private handleSubmit = async (maybeEvent: MaybeObj<NewEventFormValues>): Promise<void> => {
-		if (!this.props.member) {
-			return;
-		}
+	if (effectiveManageEventPermission(member) === Permissions.ManageEvent.NONE) {
+		return <div>You do not have permission to do that</div>;
+	}
 
-		const maybeFullEvent = Maybe.flatMap(convertFormValuesToEvent)(maybeEvent);
+	const state = currentPage.state.data;
+	const saving = currentPage.state.saving;
 
-		this.setState({
-			saving: true,
-		});
+	if (state.state === 'LOADING') {
+		return <Loader />;
+	}
 
-		if (!maybeFullEvent.hasValue) {
-			return;
-		}
+	if (state.state === 'ERROR') {
+		return <div>{state.message}</div>;
+	}
 
-		const createResult = await fetchApi.events.events.add({}, maybeFullEvent.value);
-
-		if (Either.isLeft(createResult)) {
-			this.setState({
-				saving: false,
-				state: 'ERROR',
-				message: 'Could not create event',
-			});
-		} else {
-			this.props.routeProps.history.push(`/eventviewer/${createResult.value.id}`);
-		}
-	};
-
-	private updateNewEvent = (event: NewEventFormValues): void => {
-		if (this.state.state !== 'LOADED') {
-			return;
-		}
-
-		this.setState(prev => ({
-			...prev,
-			event,
-		}));
-	};
-}
+	return (
+		<EventForm
+			account={account}
+			member={member}
+			event={state.event}
+			saving={saving}
+			isEventUpdate={false}
+			onEventChange={updateEvent}
+			onEventFormSubmit={submitEvent}
+			registry={registry}
+			memberList={state.memberList}
+			teamList={state.teamList}
+		/>
+	);
+};

@@ -34,6 +34,7 @@ import {
 	SigninReturn,
 } from 'common-lib';
 import * as React from 'react';
+import { Provider } from 'react-redux';
 import './App.css';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import GlobalNotification from './components/GlobalNotification';
@@ -50,6 +51,7 @@ import {
 } from './globals';
 import fetchApi, { fetchAPIForAccount } from './lib/apis';
 import { getMember } from './lib/Members';
+import { store } from './store';
 
 interface AppUIState {
 	sideNavLinks: SideNavigationItem[];
@@ -207,35 +209,37 @@ export default class App extends React.Component<
 		);
 
 	private renderWithProviders = (el: JSX.Element): JSX.Element => (
-		<FetchAPIProvider value={{ fetchApi, fetchAPIForAccount }}>
-			<MemberDetailsProvider
-				value={{
-					member: this.state.state === 'LOADED' ? this.state.fullMember : null,
-					fullMember:
-						this.state.state === 'LOADED'
-							? this.state.member
-							: {
-									error: MemberCreateError.INVALID_SESSION_ID,
-							  },
-				}}
-			>
-				<MemberListProvider
+		<Provider store={store}>
+			<FetchAPIProvider value={{ fetchApi, fetchAPIForAccount }}>
+				<MemberDetailsProvider
 					value={{
-						state: this.state.memberList,
-						updateList: this.updateMemberList,
+						member: this.state.state === 'LOADED' ? this.state.fullMember : null,
+						fullMember:
+							this.state.state === 'LOADED'
+								? this.state.member
+								: {
+										error: MemberCreateError.INVALID_SESSION_ID,
+								  },
 					}}
 				>
-					<TeamListProvider
+					<MemberListProvider
 						value={{
-							state: this.state.teamList,
-							updateList: this.updateTeamList,
+							state: this.state.memberList,
+							updateList: this.updateMemberList,
 						}}
 					>
-						{el}
-					</TeamListProvider>
-				</MemberListProvider>
-			</MemberDetailsProvider>
-		</FetchAPIProvider>
+						<TeamListProvider
+							value={{
+								state: this.state.teamList,
+								updateList: this.updateTeamList,
+							}}
+						>
+							{el}
+						</TeamListProvider>
+					</MemberListProvider>
+				</MemberDetailsProvider>
+			</FetchAPIProvider>
+		</Provider>
 	);
 
 	private renderPage = (): JSX.Element =>
