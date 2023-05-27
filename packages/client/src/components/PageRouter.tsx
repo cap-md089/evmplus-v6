@@ -34,7 +34,7 @@ import FinishSignup from '../pages/account/FinishSignup';
 import RegisterDiscord from '../pages/account/RegisterDiscord';
 import RequestPasswordResetForm from '../pages/account/RequestPasswordReset';
 import RequestUsernameForm from '../pages/account/RequestUsername';
-import Signin from '../pages/account/Signin';
+import { SigninF } from '../pages/account/Signin';
 import Signup from '../pages/account/Signup';
 import Admin from '../pages/admin/Admin';
 import FlightAssign from '../pages/admin/pages/FlightAssign';
@@ -209,7 +209,7 @@ const pages: Array<{
 	},
 	{
 		url: '/signin',
-		component: Signin,
+		component: SigninF,
 		exact: false,
 	},
 	{
@@ -272,32 +272,35 @@ const pages: Array<{
 	},
 ];
 
-const composeElement = (props: {
-	El: typeof Page | React.FC<PageProps>;
-	account: AccountObject;
-	authorizeUser: (arg: SigninReturn) => void;
-	updateSideNav: (links: SideNavigationItem[]) => void;
-	updateBreadCrumbs: (links: BreadCrumb[]) => void;
-	registry: RegistryValues;
-	member: ClientUser | null;
-	fullMemberDetails: SigninReturn;
-	updateApp: () => void;
-	key: string;
-}) => (routeProps: RouteComponentProps<any>) => (
-	<PageDisplayer
-		key={props.key}
-		updateApp={props.updateApp}
-		El={props.El}
-		account={props.account}
-		authorizeUser={props.authorizeUser}
-		updateSideNav={props.updateSideNav}
-		updateBreadCrumbs={props.updateBreadCrumbs}
-		registry={props.registry}
-		member={props.member}
-		fullMemberDetails={props.fullMemberDetails}
-		routeProps={routeProps}
-	/>
-);
+const composeElement =
+	(props: {
+		El: typeof Page | React.FC<PageProps>;
+		account: AccountObject;
+		authorizeUser: (arg: SigninReturn) => void;
+		updateSideNav: (links: SideNavigationItem[]) => void;
+		updateBreadCrumbs: (links: BreadCrumb[]) => void;
+		registry: RegistryValues;
+		member: ClientUser | null;
+		fullMemberDetails: SigninReturn;
+		updateApp: () => void;
+		key: string;
+	}) =>
+	(routeProps: RouteComponentProps<any>) =>
+		(
+			<PageDisplayer
+				key={props.key}
+				updateApp={props.updateApp}
+				El={props.El}
+				account={props.account}
+				authorizeUser={props.authorizeUser}
+				updateSideNav={props.updateSideNav}
+				updateBreadCrumbs={props.updateBreadCrumbs}
+				registry={props.registry}
+				member={props.member}
+				fullMemberDetails={props.fullMemberDetails}
+				routeProps={routeProps}
+			/>
+		);
 
 interface PageDisplayerProps {
 	El: typeof Page | React.FC<PageProps>;
