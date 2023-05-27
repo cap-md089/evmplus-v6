@@ -17,53 +17,235 @@
  * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import * as React from 'react';
-import Loader from '../../components/Loader';
-import Page, { PageProps } from '../Page';
+import {
+	AsyncEither,
+	Either,
+	Maybe,
+	MaybeObj,
+	Permissions,
+	effectiveManageEventPermissionForEvent,
+} from 'common-lib';
+import React, { ReactElement, useCallback, useEffect } from 'react';
 import EventForm, {
 	NewEventFormValues,
-	convertToFormValues,
 	convertFormValuesToEvent,
 } from '../../components/forms/usable-forms/EventForm';
-import {
-	EventObject,
-	Member,
-	Either,
-	AsyncEither,
-	effectiveManageEventPermissionForEvent,
-	Permissions,
-	FullTeamObject,
-	MaybeObj,
-	Maybe,
-} from 'common-lib';
+import { useAppDispatch, useAppSelector } from '../../hooks';
 import fetchApi from '../../lib/apis';
-import SigninLink from '../../components/SigninLink';
+import {
+	PageDispatch,
+	getPageState,
+	loadPage,
+	modifyEventPageAction,
+	usePageDispatch,
+} from '../../state/pageState';
+import {
+	ModifyEventState,
+	setErrorInfo,
+	setLoadedInformation,
+	startSaving,
+	updateFormValues,
+} from '../../state/pages/modifyevent';
+import { goToSignin } from '../../state/pages/signin';
+import { PageProps } from '../Page';
+import Loader from '../../components/Loader';
 
-interface ModifyEventUIState {
-	saving: boolean;
-}
+const defaultPageState: ModifyEventState = {
+	data: { state: 'LOADING' },
+	saving: false,
+};
 
-interface ModifyEventStateLoading {
-	stage: 'LOADING';
-}
+export default ({
+	member,
+	routeProps,
+	registry,
+	updateSideNav,
+	updateBreadCrumbs,
+	account,
+}: PageProps<{ id: string }>): ReactElement | null => {
+	const appDispatch = useAppDispatch();
+	const currentPage = useAppSelector(getPageState);
 
-interface ModifyEventStateError {
-	stage: 'ERROR';
-	errorMessage: string;
-}
+	const dispatch = usePageDispatch(modifyEventPageAction);
 
-interface ModifyEventStateLoaded {
-	stage: 'LOADED';
-	event: EventObject;
-	eventFormValues: NewEventFormValues;
-	memberList: Member[];
-	teamList: FullTeamObject[];
-}
+	const loadMemberTeamsInfo = useCallback(
+		async (pageDispatch: PageDispatch): Promise<void> => {
+			if (!member) {
+				return;
+			}
 
-type ModifyEventState = (ModifyEventStateLoaded | ModifyEventStateLoading | ModifyEventStateError) &
-	ModifyEventUIState;
+			const infoEither = await AsyncEither.All([
+				fetchApi.events.events.get({ id: routeProps.match.params.id.split('-')[0] }, {}),
+				fetchApi.member.memberList({}, {}),
+				fetchApi.team.list({}, {}),
+			]);
 
-export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyEventState> {
+			if (Either.isLeft(infoEither)) {
+				return pageDispatch(setErrorInfo('Could not load event information'));
+			}
+
+			const event = infoEither.value[0];
+
+			if (
+				effectiveManageEventPermissionForEvent(member)(event) ===
+				Permissions.ManageEvent.NONE
+			) {
+				return pageDispatch(
+					setErrorInfo('You do not have permission to modify this event'),
+				);
+			}
+
+			pageDispatch(setLoadedInformation(infoEither.value));
+
+			updateBreadCrumbs([
+				{
+					target: '/',
+					text: 'Home',
+				},
+				{
+					target: `/eventviewer/${event.id}`,
+					text: `View event "${event.name}"`,
+				},
+				{
+					target: `/eventform/${event.id}`,
+					text: `Modify event "${event.name}"`,
+				},
+			]);
+
+			updateSideNav([
+				{
+					target: 'main-information',
+					text: 'Main information',
+					type: 'Reference',
+				},
+				{
+					target: 'activity-information',
+					text: 'Activity Information',
+					type: 'Reference',
+				},
+				{
+					target: 'logistics-information',
+					text: 'Logistics Information',
+					type: 'Reference',
+				},
+				{
+					target: 'points-of-contact',
+					text: 'Points of Contact',
+					type: 'Reference',
+				},
+				{
+					target: 'custom-attendance-fields',
+					text: 'Custom Attendance Fields',
+					type: 'Reference',
+				},
+				{
+					target: 'file-attachments',
+					text: 'File Attachments',
+					type: 'Reference',
+				},
+				{
+					target: 'extra-information',
+					text: 'Extra Information',
+					type: 'Reference',
+				},
+				{
+					target: 'team-information',
+					text: 'Team Information',
+					type: 'Reference',
+				},
+			]);
+
+			document.title = `${[registry.Website.Name, 'Create event'].join(
+				` ${registry.Website.Separator} `,
+			)}`;
+		},
+		[member],
+	);
+
+	useEffect(() => {
+		if (!member) {
+			return goToSignin(appDispatch, routeProps);
+		}
+
+		if (currentPage.page !== 'modifyevent' || currentPage.state.data.state === 'LOADED') {
+			return;
+		}
+
+		void loadMemberTeamsInfo(dispatch);
+	}, [currentPage.page]);
+
+	const updateEvent = useCallback(
+		formValues => {
+			dispatch(updateFormValues(formValues));
+		},
+		[dispatch],
+	);
+
+	const handleSubmit = useCallback(
+		async (maybeEvent: MaybeObj<NewEventFormValues>): Promise<void> => {
+			const maybeFullEvent = Maybe.flatMap(convertFormValuesToEvent)(maybeEvent);
+
+			if (!maybeFullEvent.hasValue) {
+				return;
+			}
+
+			dispatch(startSaving());
+
+			const createResult = await fetchApi.events.events.set(
+				{ id: routeProps.match.params.id.split('-')[0] },
+				maybeFullEvent.value,
+			);
+
+			if (Either.isLeft(createResult)) {
+				if (createResult.value.code >= 400 && createResult.value.code < 500) {
+					goToSignin(appDispatch, routeProps);
+				} else {
+					dispatch(setErrorInfo(createResult.value.message));
+				}
+			} else {
+				routeProps.history.push(`/eventviewer/${routeProps.match.params.id.split('-')[0]}`);
+			}
+		},
+		[dispatch, appDispatch, routeProps],
+	);
+
+	if (currentPage.page !== 'modifyevent') {
+		appDispatch(loadPage({ page: 'modifyevent', state: defaultPageState }));
+		return null;
+	}
+
+	if (!member) {
+		return null;
+	}
+
+	const state = currentPage.state.data;
+	const saving = currentPage.state.saving;
+
+	if (state.state === 'LOADING') {
+		return <Loader />;
+	}
+
+	if (state.state === 'ERROR') {
+		return <div>{state.message}</div>;
+	}
+
+	return (
+		<EventForm
+			account={account}
+			member={member}
+			event={state.eventFormValues}
+			saving={saving}
+			isEventUpdate={true}
+			onEventChange={updateEvent}
+			onEventFormSubmit={handleSubmit}
+			registry={registry}
+			memberList={state.memberList}
+			teamList={state.teamList}
+		/>
+	);
+};
+
+/* export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyEventState> {
 	public state: ModifyEventState = {
 		stage: 'LOADING',
 
@@ -256,3 +438,4 @@ export default class ModifyEvent extends Page<PageProps<{ id: string }>, ModifyE
 		}
 	};
 }
+*/

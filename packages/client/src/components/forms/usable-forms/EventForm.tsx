@@ -807,7 +807,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 							<br />
 							(Click in the editor box to display existing text)
 						</Label>
-						<TextBox>
+						<TextBox name="body">
 							<textarea ref={this.emailBodyRef} />
 						</TextBox>
 					</FormBlock>
