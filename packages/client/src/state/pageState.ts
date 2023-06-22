@@ -111,7 +111,7 @@ export const pageSlice = createSlice({
 					modifyEventReducer(state.state.state, action.payload);
 				}
 			})
-			.addCase(deletePageState, (state, _) => {
+			.addCase(deletePageState, (state) => {
 				state.state = {
 					page: 'unconnected',
 				}
