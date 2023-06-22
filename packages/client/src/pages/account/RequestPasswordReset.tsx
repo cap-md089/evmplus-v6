@@ -53,6 +53,10 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 		this.submit = this.submit.bind(this);
 	}
 
+	public componentDidMount(): void {
+		this.props.deleteReduxState();
+	}
+		
 	public render = (): JSX.Element => (
 		<SimpleForm<RequestPasswordResetFormValues>
 			values={this.state.form}

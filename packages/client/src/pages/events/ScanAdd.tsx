@@ -74,6 +74,8 @@ export default class ScanAdd extends Page<PageProps<{ id: string }>, ScanAddStat
 			return;
 		}
 
+		this.props.deleteReduxState();
+			
 		const result = await fetchApi.member.session.setScanAdd(
 			{},
 			{ eventID: parseInt(this.props.routeProps.match.params.id, 10) },

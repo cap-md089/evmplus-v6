@@ -32,6 +32,9 @@ export default class NotFound extends Page<PageProps> {
 		]);
 		this.props.updateSideNav([]);
 		this.updateTitle('Not found');
+
+		this.props.deleteReduxState();
+			
 	}
 
 	public render = (): JSX.Element => (

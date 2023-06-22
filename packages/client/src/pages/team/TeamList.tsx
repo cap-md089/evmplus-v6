@@ -62,6 +62,8 @@ export default class TeamList extends Page<PageProps, TeamListState> {
 				text: 'Team list',
 			},
 		]);
+		this.props.deleteReduxState();
+		
 		this.props.updateSideNav([]);
 		this.updateTitle('Team list');
 

@@ -62,6 +62,8 @@ export default class TeamEdit extends Page<PageProps<{ id: string }>, TeamEditSt
 			this.props.routeProps.history.push('/team/view/0');
 		}
 
+		this.props.deleteReduxState();
+		
 		if (this.props.member) {
 			this.props.updateSideNav([]);
 			this.props.updateBreadCrumbs([]);

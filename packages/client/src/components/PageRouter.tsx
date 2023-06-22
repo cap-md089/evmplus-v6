@@ -66,6 +66,9 @@ import { BreadCrumb } from './BreadCrumbs';
 import ErrorHandler from './ErrorHandler';
 import Loader from './Loader';
 import { SideNavigationItem } from './page-elements/SideNavigation';
+import { connect } from 'react-redux';
+import { deletePageState } from '../state/pageState';
+import { AnyAction } from 'redux';
 
 const pages: Array<{
 	url: string;
@@ -284,6 +287,7 @@ const composeElement =
 		fullMemberDetails: SigninReturn;
 		updateApp: () => void;
 		key: string;
+		deleteReduxState: () => void;
 	}) =>
 	(routeProps: RouteComponentProps<any>) =>
 		(
@@ -299,6 +303,7 @@ const composeElement =
 				member={props.member}
 				fullMemberDetails={props.fullMemberDetails}
 				routeProps={routeProps}
+				deleteReduxState={props.deleteReduxState}
 			/>
 		);
 
@@ -313,6 +318,7 @@ interface PageDisplayerProps {
 	fullMemberDetails: SigninReturn;
 	routeProps: RouteComponentProps<any>;
 	updateApp: () => void;
+	deleteReduxState: () => void;
 }
 
 class PageDisplayer extends React.Component<PageDisplayerProps> {
@@ -355,6 +361,7 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 					key="mainpage"
 					registry={this.props.registry}
 					prepareURL={this.prepareURL}
+					deleteReduxState={this.props.deleteReduxState}
 				/>
 			</ErrorHandler>
 		);
@@ -374,6 +381,7 @@ interface PageRouterProps extends RouteComponentProps<any> {
 	registry: RegistryValues;
 	fullMemberDetails: SigninReturn;
 	updateApp: () => void;
+	dispatch: (action: AnyAction) => void;
 }
 
 interface PageRouterState {
@@ -469,6 +477,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 								fullMemberDetails: this.props.fullMemberDetails,
 								updateApp: this.props.updateApp,
 								key: value.url,
+								deleteReduxState: () => this.props.dispatch(deletePageState)
 							})}
 						/>
 					))}
@@ -477,4 +486,4 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 		);
 }
 
-export default withRouter(PageRouter);
+export default connect()(withRouter(PageRouter));

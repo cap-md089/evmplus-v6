@@ -48,6 +48,10 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 		tryingFinish: false,
 	};
 
+	public componentDidMount(): void {
+		this.props.deleteReduxState();
+	}
+		
 	public render = (): JSX.Element => (
 		<SimpleForm<FormValues>
 			disableOnInvalid={true}

@@ -68,6 +68,8 @@ export default class Main extends Page<PageProps, MainState> {
 	};
 
 	public async componentDidMount(): Promise<void> {
+		this.props.deleteReduxState();
+		
 		const links: SideNavigationItem[] = [
 			{
 				target: '/team',

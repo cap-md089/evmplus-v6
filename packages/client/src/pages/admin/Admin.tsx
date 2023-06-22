@@ -147,6 +147,8 @@ export default class Admin extends Page<PageProps, AdminState> {
 			]);
 			this.updateTitle('Administration');
 		}
+		this.props.deleteReduxState();
+		
 	}
 
 	public render(): JSX.Element {

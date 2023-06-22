@@ -84,6 +84,8 @@ export default class TeamView extends Page<PageProps<{ id: string }>, TeamViewSt
 	public async componentDidMount(): Promise<void> {
 		let team: APIEndpointReturnValue<api.team.GetTeam>;
 
+		this.props.deleteReduxState();
+		
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',

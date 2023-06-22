@@ -228,6 +228,8 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 	public async componentDidMount(): Promise<void> {
 		const id = this.props.routeProps.match.params.id;
 
+		this.props.deleteReduxState();
+		
 		this.props.updateBreadCrumbs([
 			{
 				target: '/',

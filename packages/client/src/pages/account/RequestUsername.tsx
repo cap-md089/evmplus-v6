@@ -53,6 +53,10 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 		this.submit = this.submit.bind(this);
 	}
 
+	public componentDidMount(): void {
+		this.props.deleteReduxState();
+	}
+		
 	public render = (): JSX.Element => (
 		<SimpleForm<RequestUsernameFormValues>
 			values={this.state.form}
