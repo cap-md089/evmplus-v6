@@ -31,6 +31,8 @@ export interface SigninPageSuperState {
 export const signinPageAction = createAction<PayloadAction>('pagestate/signinpageaction');
 export const prepareEmergencySignin = createAction('pagestate/prepareemergencysignin');
 
+export const deletePageState = createAction('pagestate/deletepagestate');
+
 export type PageState =
 	| UnconnectedPageState
 	| AddEventPageSuperState
@@ -108,6 +110,12 @@ export const pageSlice = createSlice({
 				if (state.state.page === 'modifyevent') {
 					modifyEventReducer(state.state.state, action.payload);
 				}
+			})
+			.addCase(deletePageState, (state, _) => {
+				state.state = {
+					page: 'unconnected',
+				}
+				state.nextState = null;
 			});
 	},
 });
