@@ -131,6 +131,7 @@ describe('EventViewer', () => {
 						updateApp={() => void 0}
 						updateBreadCrumbs={() => void 0}
 						updateSideNav={() => void 0}
+						deleteReduxState={() => void 0}
 					/>
 				</FetchAPIProvider>
 			</MemoryRouter>,
