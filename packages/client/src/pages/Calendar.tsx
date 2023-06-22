@@ -122,6 +122,8 @@ export default class Calendar extends Page<
 			},
 		]);
 
+		this.props.deleteReduxState();
+		
 		this.updateTitle('Calendar');
 
 		this.props.updateSideNav([]);

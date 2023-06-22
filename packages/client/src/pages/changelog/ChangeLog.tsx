@@ -51,6 +51,8 @@ export default class TeamList extends Page<PageProps, ChangeLogState> {
 				text: 'Home',
 			},
 		]);
+		this.props.deleteReduxState();
+		
 		this.props.updateSideNav([]);
 		this.updateTitle('Change log');
 

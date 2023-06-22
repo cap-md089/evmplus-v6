@@ -52,6 +52,9 @@ export default class RegisterDiscord extends Page<
 				),
 			),
 		});
+
+		this.props.deleteReduxState();
+
 	}
 
 	public render(): JSX.Element {

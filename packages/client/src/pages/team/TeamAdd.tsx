@@ -93,6 +93,8 @@ export default class TeamAdd extends Page<PageProps, TeamAddState> {
 			return;
 		}
 
+		this.props.deleteReduxState();
+		
 		const memberEither = await fetchApi.member.memberList({}, {});
 
 		if (Either.isLeft(memberEither)) {

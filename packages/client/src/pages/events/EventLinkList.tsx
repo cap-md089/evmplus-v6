@@ -171,6 +171,8 @@ export default class EventLinkList extends Page<PageProps, EventLinkListState> {
 			},
 		]);
 
+		this.props.deleteReduxState();
+		
 		this.props.updateSideNav([]);
 
 		this.updateTitle('Event list');

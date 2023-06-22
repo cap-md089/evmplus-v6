@@ -361,6 +361,7 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 					key="mainpage"
 					registry={this.props.registry}
 					prepareURL={this.prepareURL}
+					deleteReduxState={this.props.deleteReduxState}
 				/>
 			</ErrorHandler>
 		);

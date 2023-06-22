@@ -307,6 +307,8 @@ export class AttendanceMultiAdd extends Page<AttendanceMultiAddProps, MultiAddSt
 			return;
 		}
 
+		this.props.deleteReduxState();
+		
 		const eventID = parseInt(this.props.routeProps.match.params.id.split('-')[0], 10);
 
 		// eslint-disable-next-line

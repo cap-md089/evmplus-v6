@@ -55,6 +55,10 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 		success: false,
 	};
 
+	public componentDidMount(): void {
+		this.props.deleteReduxState();
+	}
+		
 	public constructor(props: PageProps) {
 		super(props);
 

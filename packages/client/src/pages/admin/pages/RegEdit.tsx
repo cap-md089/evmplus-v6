@@ -145,6 +145,8 @@ export default class RegEdit extends Page<PageProps, RegEditState> {
 	};
 
 	public componentDidMount(): void {
+		this.props.deleteReduxState();
+		
 		this.props.updateSideNav([
 			{
 				target: 'contact',

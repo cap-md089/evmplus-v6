@@ -55,6 +55,10 @@ export default class FinishPasswordResetForm extends Page<
 		this.submit = this.submit.bind(this);
 	}
 
+	public componentDidMount(): void {
+		this.props.deleteReduxState();
+	}
+		
 	public render = (): JSX.Element => (
 		<SimpleForm<FinishPasswordResetFormValues>
 			values={this.state.form}

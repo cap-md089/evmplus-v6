@@ -37,6 +37,7 @@ export interface PageProps<R = {}> {
 	updateSideNav: (links: SideNavigationItem[], force?: boolean) => void;
 	updateBreadCrumbs: (links: BreadCrumb[]) => void;
 	updateApp: () => void;
+	deleteReduxState: () => void;
 
 	/**
 	 * IGNORE, DO NOT USE

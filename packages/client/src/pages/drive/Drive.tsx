@@ -139,6 +139,8 @@ export class Drive extends Page<DriveProps, DriveState> {
 			),
 		]);
 
+		this.props.deleteReduxState();
+		
 		if (Either.isLeft(resultEither)) {
 			// TODO: Add error
 		} else {

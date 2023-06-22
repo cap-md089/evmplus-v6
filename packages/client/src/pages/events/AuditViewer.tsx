@@ -87,6 +87,8 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 			),
 		]);
 
+		this.props.deleteReduxState();
+		
 		if (Either.isLeft(informationEither)) {
 			this.setState(prev => ({
 				...prev,

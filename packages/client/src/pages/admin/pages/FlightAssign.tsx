@@ -102,6 +102,8 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			return;
 		}
 
+		this.props.deleteReduxState();
+		
 		this.updateTitle('Administration', 'Flight Assignment');
 		this.props.updateSideNav([
 			...this.props.registry.RankAndFile.Flights.map((flight, i) => ({

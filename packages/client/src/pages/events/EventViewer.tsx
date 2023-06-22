@@ -275,6 +275,8 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 			{},
 		);
 
+		this.props.deleteReduxState();
+		
 		if (Either.isLeft(eventInformation)) {
 			this.setState(prev => ({
 				...prev,
