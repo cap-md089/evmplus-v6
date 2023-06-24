@@ -52,6 +52,7 @@ import {
 import fetchApi, { fetchAPIForAccount } from './lib/apis';
 import { getMember } from './lib/Members';
 import { store } from './store';
+import { deletePageState } from './state/pageState';
 
 interface AppUIState {
 	sideNavLinks: SideNavigationItem[];
@@ -258,11 +259,16 @@ export default class App extends React.Component<
 				authorizeUser={this.authorizeUser}
 				registry={this.state.Registry}
 				key="pagerouter"
+				deleteReduxState={this.deleteReduxState}
 			/>
 		);
 
 	private updateSideNav = (sideNavLinks: SideNavigationItem[]): void => {
 		this.setState({ sideNavLinks });
+	};
+
+	private deleteReduxState = (): void => {
+		store.dispatch(deletePageState());
 	};
 
 	private updateBreadCrumbs = (breadCrumbs: BreadCrumb[]): void => {
