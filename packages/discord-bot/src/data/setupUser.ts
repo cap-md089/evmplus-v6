@@ -90,6 +90,7 @@ export const CadetSupportStaffRoles = [
 	'Cadet Historian NCO',
 	'Cadet IT Officer NCO',
 	'Cadet Leadership NCO',
+	'Cadet Leadership Education NCO',
 	'Cadet Operations NCO',
 	'Cadet Public Affairs NCO',
 	'Cadet Recruiting NCO',
