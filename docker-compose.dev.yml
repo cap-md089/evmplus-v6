@@ -74,7 +74,7 @@ services:
             - MYSQL_DATABASE=EventManagementv6
             - MYSQL_USER_FILE=/run/secrets/db_user
             - MYSQL_PASSWORD_FILE=/run/secrets/db_password
-            - MYSQL_RANDOM_ROOT_PASSWORD=yes
+            - MYSQL_ROOT_PASSWORD=toor
         volumes:
             - type: bind
               source: ./mysql-init
@@ -93,7 +93,7 @@ services:
             target: development-builder
         volumes:
             - .:/usr/evm-plus
-        command: sh -c 'git config core.hooksPath hooks && lerna bootstrap && lerna run build --ignore client'
+        command: /usr/evm-plus/scripts/dev-setup.sh
 
     build-watch:
         build:
@@ -138,8 +138,6 @@ services:
         environment:
             - DB_SCHEMA=EventManagementv6
             - DB_HOST=mysql
-        secrets:
-            - mysql_root_password
         tty: true
         stdin_open: true
         depends_on:
