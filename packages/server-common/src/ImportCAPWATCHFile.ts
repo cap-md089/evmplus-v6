@@ -53,6 +53,34 @@ import { getRequestFreeTeamsBackend, TeamsBackend } from './Team';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
 
+export const importModules = {
+	cadetAchv,
+	cadetAchvAprs,
+	cadetActivities,
+	cadetDutyPosition,
+	cadetHFZInformationParse,
+	cadetAchievementEnumParse,
+	commanders,
+	dutyPosition,
+	mbrAchievements,
+	mbrContact,
+	memberParse,
+	oFlight,
+	organization,
+	orgContact,
+	seniorAwards,
+	seniorLevel,
+	pl: {
+		groups: plGroups,
+		lookup: plLookup,
+		memberPathCredit: plMemberPathCredit,
+		memberTaskCredit: plMemberTaskCredit,
+		paths: plPaths,
+		taskGroupAssignments: plTaskGroupAssignments,
+		tasks: plTasks
+	}
+};
+
 export type FileData<T> = {
 	[P in keyof T]: string;
 };

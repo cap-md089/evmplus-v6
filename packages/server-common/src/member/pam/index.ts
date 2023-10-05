@@ -88,6 +88,17 @@ export {
 	SigninResult,
 	SigninSuccess,
 } from './Auth';
+export {
+	DEFAULT_PASSWORD_ITERATION_COUNT,
+	DEFAULT_PASSWORD_STORED_LENGTH,
+	DEFAULT_SALT_SIZE,
+	PASSWORD_HISTORY_LENGTH,
+	PASSWORD_MAX_AGE,
+	PASSWORD_MIN_AGE,
+	PASSWORD_NEW_ALGORITHM,
+	PASSWORD_RESET_TOKEN_EXPIRE_TIME,
+	hashPassword
+} from './Password';
 // export * from './Password';
 export {
 	BasicMaybeMemberRequest,

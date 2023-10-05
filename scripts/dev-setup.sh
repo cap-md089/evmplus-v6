@@ -31,3 +31,7 @@ DANGEROUSLY_DISABLE_HOST_CHECK=true
 EOD
 
 echo -n 6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe > keys/recaptcha_secret
+echo -n em > keys/db_user
+echo -n toor > keys/db_password
+
+packages/util-cli/dist/importFakeData.js

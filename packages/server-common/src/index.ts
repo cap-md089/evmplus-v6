@@ -63,7 +63,7 @@ export {
 	getRootFileObjectForUser,
 } from './File';
 export * from './GoogleUtils';
-export { default as ImportCAPWATCHFile } from './ImportCAPWATCHFile';
+export { default as ImportCAPWATCHFile, importModules as capwatchImportModules } from './ImportCAPWATCHFile';
 export * as PAM from './member/pam';
 export {
 	CAP,
