@@ -47,6 +47,7 @@ void (async () => {
                 user: config.DB_USER
             });
         } catch (e) {
+            console.log(e);
             await new Promise(res => setTimeout(res, 1000));
         }
     } while (session == null);
