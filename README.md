@@ -22,8 +22,9 @@ Current units running the Event Manager suite:
 
 **Table Of Contents**
 
-1. [Requirements for building and running](#requirements-for-building-and-running)
-2. [Server configuration](#server-configuration)
+1. [Developing EvMPlus v6](#developing-evmplus-v6)
+2. [Requirements for building and running](#requirements-for-building-and-running)
+3. [Server configuration](#server-configuration)
     1. [MySQL setup](#mysql-setup)
     2. [AWS SMTP credentials](#aws-smtp-setup)
     3. [AWS DNS credentials](#aws-dns-setup)
@@ -32,12 +33,15 @@ Current units running the Event Manager suite:
     6. [CAPWATCH credentials](#capwatch-setup)
     7. [reCAPTCHA keys](#recaptcha-setup)
     8. [Client setup](#client-setup)
-3. [Using Command Line Utilities](#using-command-line-utilities)
-4. [Building and running the server](#building-and-running-the-server)
+4. [Using Command Line Utilities](#using-command-line-utilities)
+5. [Building and running the server](#building-and-running-the-server)
     1. [Creating an account and supplying it data](#creating-an-account-and-supplying-it-data)
     2. [Accessing the site](#accessing-the-site)
-5. [Alternatively...](#alternatively)
-6. [Developing EvMPlus.org](#developing-evmplus.org)
+6. [Alternatively...](#alternatively)
+
+## Developing EvMPlus v6
+
+Development setup is now much simpler. To get a development environment, open this repository in either Visual Studio Code's dev containers extension or using a GitHub codespaces, wait for the environment to set itself up, and then in a terminal run `docker-compose -f docker-compose.dev.yml run --service-ports client_dev_server`. A development web server will spin up with a basic default dataset and an admin user with the credentials `testadmin`/`testpassword`.
 
 ## Requirements for building and running
 
