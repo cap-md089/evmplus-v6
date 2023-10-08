@@ -19,4 +19,19 @@
  along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
 LICENSE
 
-/usr/local/mysql-shell/bin/mysqlsh --password=$(cat /run/secrets/mysql_root_password 2>/dev/null || echo 'toor') --user=root --host=$DB_HOST --schema=$DB_SCHEMA "$@"
+git config core.hooksPath hooks
+lerna bootstrap
+lerna run build --ignore client
+
+cat <<EOD > packages/client/.env
+SKIP_PREFLIGHT_CHECK=true
+REACT_APP_HOSTNAME=localevmplus.org
+REACT_APP_RECAPTCHA_KEY=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI
+DANGEROUSLY_DISABLE_HOST_CHECK=true
+EOD
+
+echo -n 6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe > keys/recaptcha_secret
+echo -n em > keys/db_user
+echo -n toor > keys/db_password
+
+packages/util-cli/dist/importFakeData.js

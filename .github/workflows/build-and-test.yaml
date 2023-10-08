@@ -27,6 +27,8 @@ jobs:
 
       - name: Build code
         run: |
+          echo -n em > keys/db_user
+          echo -n toor > keys/db_password
           docker-compose -f docker-compose.dev.yml run --entrypoint='/bin/bash -c "lerna bootstrap && lerna run build --ignore client"' dev-setup
           echo "REACT_APP_HOST_NAME=events.md.cap.gov" >> packages/client/.env
           echo "REACT_APP_RECAPTCHA_KEY={{ secrets.RECAPTCHA_PUBLIC_KEY }}" >> packages/client/.env

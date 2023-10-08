@@ -362,6 +362,16 @@ export const addPresetRecords = (schema: Schema) => async (map: PresetRecords): 
 	await Promise.all(promises);
 };
 
+export const setPresetRecordsSchema = (records: PresetRecords) => async (schema: Schema): Promise<void> => {
+	await Promise.all(
+		COLLECTIONS_USED.map(name =>
+			schema.getCollection(name).remove('true').execute(),
+		),
+	);
+
+	await addPresetRecords(schema)(records);
+};
+
 /**
  * Adds all of the records specified by the PresetRecords map, where each field
  * represents a table and the array values are added to that table
