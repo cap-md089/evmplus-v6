@@ -107,9 +107,6 @@ services:
             - PORT=3001
             - HOST_NAME=localevmplus.org
             - NODE_ENV=development
-        secrets:
-            - db_user
-            - db_password
         command: /usr/evm-plus/scripts/dev-setup.sh
 
     full-build:
