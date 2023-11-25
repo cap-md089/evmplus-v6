@@ -30,8 +30,14 @@ REACT_APP_RECAPTCHA_KEY=6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI
 DANGEROUSLY_DISABLE_HOST_CHECK=true
 EOD
 
+mkdir /run/secrets
 echo -n 6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe > keys/recaptcha_secret
 echo -n em > keys/db_user
+echo -n em > /run/secrets/db_user
 echo -n toor > keys/db_password
+echo -n toor > /run/secrets/db_password
+echo -n > keys/discord_client_token
+echo -n > keys/aws_access_key_id
+echo -n > keys/aws_secret_access_key
 
 packages/util-cli/dist/importFakeData.js

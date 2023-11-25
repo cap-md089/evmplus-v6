@@ -23,6 +23,7 @@
 	],
 
 	"postCreateCommand": "docker-compose -f docker-compose.dev.yml run dev-setup",
+	"postStartCommand": "docker-compose -f docker-compose.dev.yml run --service-ports client_dev_server",
 
 	"customizations": {
 		"vscode": {
