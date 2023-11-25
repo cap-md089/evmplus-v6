@@ -214,7 +214,7 @@ export default class TeamEmailList extends Page<PageProps<{ id: string }>, Email
 		sortFunction: SortFunction.LASTNAME,
 		visibleItems: [],
 		displayAdvanced: false,
-		addParentEmails: false,
+		addParentEmails: true,
 		filterValues: {
 			memberFilter: MemberList.ALL,
 			nameInput: '',
