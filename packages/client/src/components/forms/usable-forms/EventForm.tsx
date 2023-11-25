@@ -1108,7 +1108,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					},
 				],
 			};
-			this.props.memberList.push(result.value);
 			this.props.onEventChange(event, false);
 			this.setState({ addingPOCbyID: false, addPOCbyID: null });
 		}
