@@ -22,7 +22,6 @@ import {
 	AuditableEvents,
 	ChangeEvent,
 	DeleteEvent,
-	effectiveManageEventPermissionForEvent,
 	Either,
 	EventAuditEvents,
 	EventObject,
@@ -30,7 +29,6 @@ import {
 	FromDatabase,
 	getURIComponent,
 	NewEventObject,
-	Permissions,
 } from 'common-lib';
 import * as React from 'react';
 import DropDownList from '../../components/DropDownList';
@@ -88,7 +86,7 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 		]);
 
 		this.props.deleteReduxState();
-		
+
 		if (Either.isLeft(informationEither)) {
 			this.setState(prev => ({
 				...prev,
@@ -148,13 +146,6 @@ export default class AuditViewer extends Page<AuditViewerProps> {
 
 		const eventAuditInfo = this.state.auditInformation;
 		const eventInfo = this.state.eventInformation;
-
-		if (
-			effectiveManageEventPermissionForEvent(this.props.member)(eventInfo) !==
-			Permissions.ManageEvent.FULL
-		) {
-			return <div>This page requires management permissions to view.</div>;
-		}
 
 		return (
 			<>
