@@ -276,7 +276,7 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 		);
 
 		this.props.deleteReduxState();
-		
+
 		if (Either.isLeft(eventInformation)) {
 			this.setState(prev => ({
 				...prev,
@@ -710,6 +710,8 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
 						</>
+					) : member ? (
+						<Link to={`/auditviewer/${event.id}`}>View Audit Log</Link>
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
