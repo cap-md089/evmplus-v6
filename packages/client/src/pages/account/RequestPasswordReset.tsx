@@ -84,6 +84,8 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 						<p>
 							Password reset request succesful. Please check your inbox for a password
 							reset link. The email may take up to 5 minutes to appear in your inbox.
+							If nothing shows up after 5 minutes, please double check the username
+							provided
 						</p>
 						<p>
 							If the email is not received in your inbox, please check your Spam or

@@ -263,7 +263,10 @@ export const checkIfPasswordValid = async (
 
 	const passwordExpireDate = userInfo.passwordHistory[0].created + PASSWORD_MAX_AGE;
 	if (passwordExpireDate < Date.now()) {
-		return PasswordResult.VALID_EXPIRED;
+		if (passwordExpireDate < 1706763600000 + PASSWORD_MAX_AGE) {
+			return PasswordResult.VALID_EXPIRED;
+		}
+		return PasswordResult.VALID;
 	}
 
 	return PasswordResult.VALID;
