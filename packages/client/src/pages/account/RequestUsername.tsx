@@ -56,7 +56,7 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 	public componentDidMount(): void {
 		this.props.deleteReduxState();
 	}
-		
+
 	public render = (): JSX.Element => (
 		<SimpleForm<RequestUsernameFormValues>
 			values={this.state.form}
@@ -68,7 +68,7 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 				capid: val => val !== null && val >= 100000,
 			}}
 			submitInfo={{
-				disabled: this.state.tryingSubmit,
+				disabled: this.state.tryingSubmit || this.state.success,
 				text: 'Request login',
 			}}
 		>
@@ -80,14 +80,17 @@ export default class RequestUsernameForm extends Page<PageProps, RequestUsername
 			) : null}
 			{this.state.success ? (
 				<TextBox>
-					<p>
-						Login request successful. Please check the email associated with the CAP ID
-						entered for an email with your CAP account.
-					</p>
-					<p>
-						If the email is not received in your inbox, please check your Spam or Junk
-						folder for the message
-					</p>
+					<div className="banner">
+						<p>
+							Login request successful. Please check the email associated with the CAP
+							ID entered for an email with your CAP account. This email may take up to
+							5 minutes to appear in your inbox.
+						</p>
+						<p>
+							If the email is not received in your inbox, please check your Spam or
+							Junk folder for the message
+						</p>
+					</div>
 				</TextBox>
 			) : null}
 
