@@ -51,7 +51,7 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 	public componentDidMount(): void {
 		this.props.deleteReduxState();
 	}
-		
+
 	public render = (): JSX.Element => (
 		<SimpleForm<FormValues>
 			disableOnInvalid={true}
@@ -116,7 +116,7 @@ export default class FinishSignup extends Page<PageProps<{ token: string }>, Fin
 
 		const fetchResult = await fetchApi.member.account.finishAccountSetup(
 			{},
-			{ token, username, password },
+			{ token, username: username.trim(), password },
 		);
 
 		if (Either.isLeft(fetchResult)) {
