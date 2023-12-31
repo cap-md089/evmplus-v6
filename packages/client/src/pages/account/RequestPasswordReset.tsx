@@ -138,7 +138,7 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 		const result = await fetchApi.member.account.passwordResetRequest(
 			{},
 			{
-				username: form.username,
+				username: form.username.trim(),
 				captchaToken: form.captchaToken,
 			},
 		);
