@@ -61,6 +61,10 @@ const formValidator = {
 	confirmPassword: passwordValidator,
 };
 
+export interface PasswordFormProps extends InputProps<string | null> {
+	passwordInHistory: boolean;
+}
+
 /**
  * A password form
  *
@@ -110,7 +114,7 @@ export default class PasswordForm extends React.Component<
 				Passwords must meet the following requirements:
 				<ul>
 					<li className={getClassFromShowLevel(this.state.showLengthError)}>
-						Length of at least 8 characters
+						Length of at least 11 characters
 					</li>
 					<li
 						className={getClassFromShowLevel(
@@ -138,8 +142,8 @@ export default class PasswordForm extends React.Component<
 					</li>
 				</ul>
 				* A special character is a space character or one of the following symbols:
-				<br />^ ! @ # $ % ^ &amp; * ( ) {'{'} {'}'} _ + - = {'<'} {'>'} , . ? / [ ] \ | ; '
-				"
+				<br />^ ! @ # $ % ^ &amp; * ( ) {'{'} {'}'} _ + - = &lt; &gt; , . ? / [ ] \ | ;
+				&apos; &quot;
 				<br />
 				<span className={getClassFromShowLevel(this.state.showMatchError)}>
 					Passwords must also match
@@ -213,7 +217,7 @@ export default class PasswordForm extends React.Component<
 			hasError = true;
 		}
 
-		if (fields.password.length >= 8) {
+		if (fields.password.length >= 11) {
 			update.showLengthError = ShowLevel.SHOWGOOD;
 		} else {
 			hasError = true;
