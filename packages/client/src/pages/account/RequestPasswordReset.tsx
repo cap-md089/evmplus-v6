@@ -56,7 +56,7 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 	public componentDidMount(): void {
 		this.props.deleteReduxState();
 	}
-		
+
 	public render = (): JSX.Element => (
 		<SimpleForm<RequestPasswordResetFormValues>
 			values={this.state.form}
@@ -68,7 +68,7 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 				username: val => val?.length > 0,
 			}}
 			submitInfo={{
-				disabled: this.state.tryingSubmit,
+				disabled: this.state.tryingSubmit || this.state.success,
 				text: 'Request password reset',
 			}}
 		>
@@ -80,14 +80,16 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 			) : null}
 			{this.state.success ? (
 				<TextBox>
-					<p>
-						Password reset request succesful. Please check your inbox for a password
-						reset link.
-					</p>
-					<p>
-						If the email is not received in your inbox, please check your Spam or Junk
-						folder for the message
-					</p>
+					<div className="banner">
+						<p>
+							Password reset request succesful. Please check your inbox for a password
+							reset link. The email may take up to 5 minutes to appear in your inbox.
+						</p>
+						<p>
+							If the email is not received in your inbox, please check your Spam or
+							Junk folder for the message
+						</p>
+					</div>
 				</TextBox>
 			) : null}
 
