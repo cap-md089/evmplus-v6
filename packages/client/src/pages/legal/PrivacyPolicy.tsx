@@ -6,13 +6,13 @@ const lineHeight = {
 
 export const PrivacyPolicy = (): JSX.Element => (
 	<div style={lineHeight}>
-		<h2>Welcome to EvMPlus.org</h2>
+		<h2>Welcome to Event Manager</h2>
 		<h3>Your privacy is critically important to us.</h3>
 		<br />
 		<p>
-			It is EvMPlus.org's policy to respect your privacy regarding any information we may
-			collect while operating our website. This Privacy Policy applies to EvMPlus.org
-			(hereinafter, "us", "we", or "EvMPlus.org"). We respect your privacy and are committed
+			It is Event Manager's policy to respect your privacy regarding any information we may
+			collect while operating our website. This Privacy Policy applies to Event Manager
+			(hereinafter, "us", "we", or "Event Manager"). We respect your privacy and are committed
 			to protecting personally identifiable information stored on our system. We have adopted
 			this privacy policy ("Privacy Policy") to explain what information may be present on our
 			Website, how we use this information, and under what circumstances we may disclose the
@@ -28,25 +28,25 @@ export const PrivacyPolicy = (): JSX.Element => (
 		</p>
 		<h2>Website Visitors</h2>
 		<p>
-			Like most website operators, EvMPlus.org may collect non-personally-identifying
+			Like most website operators, Event Manager may collect non-personally-identifying
 			information of the sort that web browsers and servers typically make available, such as
-			the browser type and the date and time of each visitor request. EvMPlus.org's purpose in
+			the browser type and the date and time of each visitor request. Event Manager's purpose in
 			collecting non-personally identifying information is to better understand how
-			EvMPlus.org's visitors use its website. From time to time, EvMPlus.org may release
+			Event Manager's visitors use its website. From time to time, Event Manager may release
 			non-personally-identifying information in the aggregate, e.g., by publishing a report on
 			trends in the usage of its website.
 		</p>
 		<p>
-			EvMPlus.org may also collect potentially personally-identifying information like CAPID
-			and Internet Protocol (IP) addresses for logged in users. EvMPlus.org only discloses
+			Event Manager may also collect potentially personally-identifying information like CAPID
+			and Internet Protocol (IP) addresses for logged in users. Event Manager only discloses
 			logged in user and commenter IP addresses under the same circumstances that it uses and
 			discloses personally-identifying information as described below.
 		</p>
 		<h2>Gathering of Personally-Identifying Information</h2>
 		<p>
-			Certain visitors to EvMPlus.org's websites choose to interact with EvMPlus.org in ways
-			that require EvMPlus.org to gather personally-identifying information. The amount and
-			type of information that EvMPlus.org gathers depends on the nature of the interaction.
+			Certain visitors to Event Manager's websites choose to interact with Event Manager in ways
+			that require Event Manager to gather personally-identifying information. The amount and
+			type of information that Event Manager gathers depends on the nature of the interaction.
 			For example, in order to register for a user account we ask for CAPID and email address
 			to verify current CAP membership.
 		</p>
@@ -70,57 +70,57 @@ export const PrivacyPolicy = (): JSX.Element => (
 		</p>
 		<h2>Protection of Certain Personally-Identifying Information</h2>
 		<p>
-			EvMPlus.org discloses potentially personally-identifying and personally-identifying
+			Event Manager discloses potentially personally-identifying and personally-identifying
 			information only to those of its developers and registered users that (i) need to know
 			that information in order to carry out CAP missions, and (ii) that have agreed not to
-			disclose it to others except in the performance of CAP missions. EvMPlus.org will not
+			disclose it to others except in the performance of CAP missions. Event Manager will not
 			rent or sell potentially personally-identifying and personally-identifying information
 			to anyone. Other than to its developers and registered users as described above,
-			EvMPlus.org discloses potentially personally-identifying and personally-identifying
+			Event Manager discloses potentially personally-identifying and personally-identifying
 			information only in response to a subpoena, court order or other governmental request,
-			or when EvMPlus.org believes in good faith that disclosure is reasonably necessary to
-			protect the property or rights of EvMPlus.org, third parties or the public at large.
+			or when Event Manager believes in good faith that disclosure is reasonably necessary to
+			protect the property or rights of Event Manager, third parties or the public at large.
 		</p>
 		<p>
-			If you are a registered user of EvMPlus.org, we may occasionally send you an email to
+			If you are a registered user of Event Manager, we may occasionally send you an email to
 			tell you about new features, solicit your feedback, or just keep you up to date with
-			what's going on with EvMPlus.org and our services. We expect to keep this type of email
+			what's going on with Event Manager and our services. We expect to keep this type of email
 			to a minimum. If you send us a request (for example via a support email or via one of
 			our feedback mechanisms), we reserve the right to publish it in order to help us clarify
-			or respond to your request or to help us support other users. EvMPlus.org takes all
+			or respond to your request or to help us support other users. Event Manager takes all
 			measures reasonably necessary to protect against the unauthorized access, use,
 			alteration or destruction of potentially personally-identifying and
 			personally-identifying information.
 		</p>
 		<h2>Aggregated Statistics</h2>
 		<p>
-			EvMPlus.org may collect statistics about the behavior of visitors to its website.
-			EvMPlus.org may display this information publicly or provide it to others. However,
-			EvMPlus.org does not disclose your personally-identifying information.
+			Event Manager may collect statistics about the behavior of visitors to its website.
+			Event Manager may display this information publicly or provide it to others. However,
+			Event Manager does not disclose your personally-identifying information.
 		</p>
 		<h2>Cookies</h2>
 		<p>
-			To enrich and perfect your online experience, EvMPlus.org uses "Cookies", similar
+			To enrich and perfect your online experience, Event Manager uses "Cookies", similar
 			technologies and services provided by others to display personalized content,
 			appropriate advertising and store your preferences on your computer.
 		</p>
 		<p>
 			A cookie is a string of information that a website stores on a visitor's computer, and
 			that the visitor's browser provides to the website each time the visitor returns.
-			EvMPlus.org may use cookies to help EvMPlus.org identify and track visitors, their usage
-			of the site, and their website access preferences. EvMPlus.org visitors who do not wish
+			Event Manager may use cookies to help Event Manager identify and track visitors, their usage
+			of the site, and their website access preferences. Event Manager visitors who do not wish
 			to have cookies placed on their computers should set their browsers to refuse cookies
-			before using EvMPlus.org's websites, with the drawback that certain features of
-			EvMPlus.org's websites may not function properly without the aid of cookies.
+			before using Event Manager's websites, with the drawback that certain features of
+			Event Manager's websites may not function properly without the aid of cookies.
 		</p>
 		<p>
 			By continuing to navigate our website without changing your cookie settings, you hereby
-			acknowledge and agree to EvMPlus.org's use of cookies.
+			acknowledge and agree to Event Manager's use of cookies.
 		</p>
 		<h2>Privacy Policy Changes</h2>
 		<p>
-			Although most changes are likely to be minor, EvMPlus.org may change its Privacy Policy
-			from time to time, and in EvMPlus.org's sole discretion. EvMPlus.org encourages visitors
+			Although most changes are likely to be minor, Event Manager may change its Privacy Policy
+			from time to time, and in Event Manager's sole discretion. Event Manager encourages visitors
 			to frequently check this page for any changes to its Privacy Policy. Your continued use
 			of this site after any change in this Privacy Policy will constitute your acceptance of
 			such change.
