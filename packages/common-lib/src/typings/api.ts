@@ -1,11 +1,11 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
  * This file and all of the files in `apis` document how to communicate
  * with the server.  All of these expect to be run from a browser; this means that
- * a host header is expected to be set with the format `${accountID}.evmplus.org`
+ * a host header is expected to be set with the format `${accountID}.events.md.cap.gov`
  *
  * Each interface defines:
  * 	- The URL parameters and where in the URL it is to be located (e.g: with params: { id: string }, and url: '/api/event/:id', get event 1 with the URL '/api/event/1')
@@ -24,18 +24,18 @@
  * 		If it is needed, a `token` property needs to be added to the request body
  * 		A token can be fetched from '/api/token', and is valid for one use
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { EitherObj } from '../lib/Either';

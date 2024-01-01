@@ -176,14 +176,14 @@ From inside the util-cli container [started here](#using-command-line-utilities)
 
 ### Accessing the site
 
-To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.evmplus.org`.
+To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.events.md.cap.gov`.
 
 ## Alternatively...
 
-If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `eventsupport@md.cap.gov` to request an official EvMPlus.org website.
+If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `eventsupport@md.cap.gov` to request an official Event Manager website.
 
-This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the EvMPlus.org domain.
+This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the cap.gov domain.
 
 CAPWATCH data for all Maryland Wing members and units is already being handled.
 
-There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a evmplus.org hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)
+There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a Event Manager hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)
