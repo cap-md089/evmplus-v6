@@ -65,11 +65,11 @@ export const GradeOrderMap: readonly GradeOrder[] = [
 		GradeOrder: 8,
 	},
 	{
-		Grade: 'C/2dLt',
+		Grade: 'C/2d Lt',
 		GradeOrder: 9,
 	},
 	{
-		Grade: 'C/1stLt',
+		Grade: 'C/1st Lt',
 		GradeOrder: 10,
 	},
 	{
@@ -81,7 +81,7 @@ export const GradeOrderMap: readonly GradeOrder[] = [
 		GradeOrder: 12,
 	},
 	{
-		Grade: 'C/LtCol',
+		Grade: 'C/Lt Col',
 		GradeOrder: 13,
 	},
 	{
