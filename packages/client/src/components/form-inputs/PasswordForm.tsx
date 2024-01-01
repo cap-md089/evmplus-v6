@@ -111,6 +111,15 @@ export default class PasswordForm extends React.Component<
 			<TextBox>
 				Please enter and confirm a password.
 				<br />
+				<br />
+				New update effective January 1st, 2024: All passwords must be at least 11 characters
+				in length. To read more about this change, please visit{' '}
+				<a href="https://github.com/cap-md089/evmplus-guides/wiki/Password-policy">
+					our user guide
+				</a>
+				.
+				<br />
+				<br />
 				Passwords must meet the following requirements:
 				<ul>
 					<li className={getClassFromShowLevel(this.state.showLengthError)}>
