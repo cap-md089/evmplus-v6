@@ -160,14 +160,14 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 
 		const unusedMembers = this.state.members
 			.map(unwrapMember)
-			.slice()
-			.filter(mem => !mem.seniorMember);
+			.slice();
+			// .filter(mem => !mem.seniorMember);
 		const flights: Array<[string, Member[]]> = [];
 
 		for (const flight of this.props.registry.RankAndFile.Flights) {
 			flights.push([flight, []]);
 			for (let i = unusedMembers.length - 1; i >= 0; i--) {
-				if (unusedMembers[i].flight === flight && !unusedMembers[i].seniorMember) {
+				if (unusedMembers[i].flight === flight) {
 					const oldMember = unusedMembers.splice(i, 1)[0];
 					flights[flights.length - 1][1].push(oldMember);
 				}
