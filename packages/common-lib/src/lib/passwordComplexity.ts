@@ -24,7 +24,7 @@
  */
 export const passwordMeetsRequirements = (password: string): boolean =>
 	password.length > 32 ||
-	(password.length >= 8 &&
+	(password.length >= 11 &&
 		// lowercase letter
 		!!password.match(/[a-z]/g) &&
 		// uppercase letter

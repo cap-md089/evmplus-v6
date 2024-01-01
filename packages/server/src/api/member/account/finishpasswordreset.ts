@@ -17,7 +17,7 @@
  * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { api, get, Maybe } from 'common-lib';
+import { always, api, get, Maybe } from 'common-lib';
 import { Backends, getCombinedPAMBackend, PAM, withBackends } from 'server-common';
 import { Endpoint } from '../../..';
 
@@ -27,7 +27,9 @@ export const func: Endpoint<
 > = backend => req =>
 	backend
 		.validatePasswordResetToken(req.body.token)
-		.tap(username => backend.addPasswordForUser([username, req.body.newPassword]))
+		.flatMap(username =>
+			backend.addPasswordForUser([username, req.body.newPassword]).map(always(username)),
+		)
 		.tap(() => backend.removePasswordValidationToken(req.body.token))
 		.flatMap(backend.getUserInformationForUser)
 		.filter(Maybe.isSome, {

@@ -359,7 +359,10 @@ export default class CreateProspectiveMember extends Page<PageProps, CreateAccou
 				seniorMember: !!form.seniorMember,
 			};
 
-			const password: CAPProspectiveMemberPasswordCreation = form.password;
+			const password: CAPProspectiveMemberPasswordCreation =
+				form.password.type !== CAPProspectiveMemberPasswordCreationType.EMAILLINK
+					? { ...form.password, username: form.password.username.trim() }
+					: form.password;
 
 			await fetchApi.member.account.capprospective
 				.requestProspectiveAccount(

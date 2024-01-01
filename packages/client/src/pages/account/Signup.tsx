@@ -58,7 +58,7 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 	public componentDidMount(): void {
 		this.props.deleteReduxState();
 	}
-		
+
 	public constructor(props: PageProps) {
 		super(props);
 
@@ -99,8 +99,10 @@ export default class Signup extends Page<PageProps, SignupFormState> {
 			) : null}
 			{this.state.success ? (
 				<TextBox>
-					Account request successful. Check your inbox and spam folder for a link to
-					finish creating your account
+					<div className="banner">
+						Account request successful. Check your inbox and spam folder for a link to
+						finish creating your account
+					</div>
 				</TextBox>
 			) : null}
 

@@ -156,7 +156,7 @@ export const RegularSignin: React.FC<SigninPageProps> = ({ state, authorizeUser,
 			.signin(
 				{},
 				{
-					username: state.signinFormValues.username,
+					username: state.signinFormValues.username.trim(),
 					password: state.signinFormValues.password,
 					token: {
 						type: SigninTokenType.RECAPTCHA,
