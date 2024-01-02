@@ -331,10 +331,10 @@ export const ReportsWidget = withFetchApi(
 			const wb = XLSX.utils.book_new();
 
 			let wsName = 'UnitInfo';
-			const wsDataEvent = spreadsheets.sqr6020XL();
+			const wsDataEvent = spreadsheets.sqr601XL();
 			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let sheet = spreadsheets.Formatsqr6020XL(ws);
+			let sheet = spreadsheets.Formatsqr601XL(ws);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 			wsName = 'CadetInfo';
@@ -344,7 +344,7 @@ export const ReportsWidget = withFetchApi(
 				// this.props.registry,
 			);
 			ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-			sheet = spreadsheets.Formatsqr6020MembersXL(ws, widths, wsDataAttendance.length);
+			sheet = spreadsheets.Formatsqr601MembersXL(ws, widths, wsDataAttendance.length);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 			const now = new Date();
