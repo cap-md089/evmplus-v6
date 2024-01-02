@@ -66,12 +66,14 @@ const setupEmail = (member: Member) => (email: string) => (token: string): Email
 	)}. \
 If you did not request this action, you can safely ignore this email. \
 <a href="${url}/finishpasswordreset/${token}">Go here</a> to reset your password. \
-This link will expire within 24 hours.`,
+This link will expire within 24 hours.  Please note that effective 1 Jan 2024 \ 
+all new passwords must be at least 11 characters in length.`,
 	textBody: `We have deteced that a password reset was requested for you, ${getFullMemberName(
 		member,
 	)}. \
 If you did not request this action, you can safely ignore this email. \
-This link will expire within 24 hours.\n\nLink: ${url}/finishpasswordreset/${token}`,
+This link will expire within 24 hours.  Please note that effective 1 Jan 2024 \ 
+all new passwords must be at least 11 characters in length.\n\nLink: ${url}/finishpasswordreset/${token}`,
 });
 
 const getMemberAndSendEmail = (
