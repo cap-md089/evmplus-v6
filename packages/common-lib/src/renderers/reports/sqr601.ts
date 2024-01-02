@@ -603,7 +603,7 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'Character Devel',
+								text: 'Char Dev or Wngmn',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',

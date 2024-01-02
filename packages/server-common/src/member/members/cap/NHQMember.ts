@@ -714,7 +714,7 @@ const promotionResultReducers: Array<{
 		}),
 	},
 	{
-		matches: /Character Forum Participation/,
+		matches: /(Character Forum Participation|Cadet Wingman Course)/,
 		update: (status, completion) => ({
 			...status,
 			CurrentCadetAchv: {
