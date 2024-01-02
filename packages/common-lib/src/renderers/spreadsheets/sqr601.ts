@@ -186,7 +186,7 @@ export const sqr601MembersXL = (
 		'HFZ Cred Exp',
 		'Drill Test',
 		'Oath',
-		'Character Devel',
+		'Char Dev or Wingman',
 		'Mentor?',
 		'GES',
 		'O-Flights',
