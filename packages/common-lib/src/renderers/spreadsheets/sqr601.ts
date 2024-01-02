@@ -53,9 +53,9 @@ const getHFZExpire = (reqs: CadetPromotionStatus): string =>
 	pipe(
 		get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
 		Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
-		Maybe.map(({ DateTaken }) => DateTaken.substr(0, 10)),
-		Maybe.map(s => +new Date(s) + 182 * 24 * 60 * 60 * 1000),
-		Maybe.map(s => new Date(s).toLocaleDateString('en-US')),
+		Maybe.map(({ DateTaken, IsPassed }) => [DateTaken.substr(0, 10), IsPassed] as const),
+		Maybe.map(([s, f]) => [+new Date(s) + 182 * 24 * 60 * 60 * 1000, f] as const),
+		Maybe.map(([s, f]) => new Date(s).toLocaleDateString('en-US') + (!f ? ' F' : '')),
 		Maybe.orSome(''),
 	)(reqs);
 
