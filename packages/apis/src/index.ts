@@ -93,6 +93,10 @@ type Tree = {
 				deleteProspectiveAccount: api.member.account.capprospective.DeleteProspectiveAccount;
 				upgradeProspectiveAccount: api.member.account.capprospective.UpgradeProspectiveAccount;
 			};
+			capexternal: {
+				createExternalAccount: api.member.account.capexternal.CreateExternalAccount;
+				deleteExternalAccount: api.member.account.capexternal.DeleteExternalAccount;
+			};
 			registerDiscord: api.member.account.RegisterDiscord;
 			passwordResetRequest: api.member.account.PasswordResetRequest;
 			finishPasswordReset: api.member.account.FinishPasswordReset;

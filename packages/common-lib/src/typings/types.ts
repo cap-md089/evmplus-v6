@@ -2214,6 +2214,22 @@ export type NewCAPProspectiveMember = Omit<
 	| '_id'
 >;
 
+export type NewCAPExternalMemberObject = Omit<
+	RawCAPExternalMemberObject,
+	| 'id'
+	| 'absenteeInformation'
+	| 'teamIDs'
+	| 'type'
+	| 'usrID'
+	| 'accountID'
+	| 'dutyPositions'
+	| 'memberRank'
+	| 'orgid'
+	| 'squadron'
+	| 'hasNHQReference'
+	| '_id'
+>;
+
 export interface CAPProspectiveMemberPasswordCreationWithPassword {
 	type: CAPProspectiveMemberPasswordCreationType.WITHPASSWORD;
 

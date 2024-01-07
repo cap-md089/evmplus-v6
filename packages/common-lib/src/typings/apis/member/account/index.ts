@@ -21,6 +21,7 @@ import { APIEither } from '../../../api';
 
 export * as capnhq from './capnhq';
 export * as capprospective from './capprospective';
+export * as capexternal from './capexternal';
 
 /**
  * Takes a Discord ID and assigns it to an account
