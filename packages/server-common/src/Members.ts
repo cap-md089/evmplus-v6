@@ -91,7 +91,9 @@ export const resolveReference = (schema: Schema) => (backend: Backends<[TeamsBac
 ) => <T extends MemberReference = MemberReference>(
 	ref: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
-	ref.type === 'CAPNHQMember' || ref.type === 'CAPProspectiveMember'
+	ref.type === 'CAPNHQMember' ||
+	ref.type === 'CAPProspectiveMember' ||
+	ref.type === 'CAPExternalMember'
 		? resolveCAPReference(schema)(backend)(account)<T>(ref)
 		: asyncLeft({
 				type: 'OTHER',

@@ -34,7 +34,7 @@ import {
 	asyncRight,
 	AttendanceStatus,
 	BasicMySQLRequest,
-	CAPNHQMemberObject,
+	CAPMember,
 	CAPProspectiveMemberObject,
 	collectGeneratorAsync,
 	complement,
@@ -347,11 +347,7 @@ export const getMembers = (schema: Schema) => (
 ) => (account: AccountObject) =>
 	async function* (
 		type?: MemberType | undefined,
-	): AsyncGenerator<
-		EitherObj<ServerError, CAPProspectiveMemberObject | CAPNHQMemberObject>,
-		void,
-		undefined
-	> {
+	): AsyncGenerator<EitherObj<ServerError, CAPMember>, void, undefined> {
 		const foundMembers: { [key: string]: boolean } = {};
 
 		if (account.type === AccountType.CAPSQUADRON) {
@@ -675,6 +671,13 @@ export const getOrgNameForMember = (
 				);
 
 		case 'CAPProspectiveMember':
+			return backend
+				.getRegistryUnsafe(member.accountID)
+				.map(get('Website'))
+				.map(get('Name'))
+				.map(Maybe.some);
+
+		case 'CAPExternalMember':
 			return backend
 				.getRegistryUnsafe(member.accountID)
 				.map(get('Website'))

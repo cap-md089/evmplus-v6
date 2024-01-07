@@ -1970,7 +1970,7 @@ export interface ClientUserObject {
 /**
  * A descriminator type used to help determine what the type of object is
  */
-export type CAPMemberType = 'CAPNHQMember' | 'CAPProspectiveMember';
+export type CAPMemberType = 'CAPNHQMember' | 'CAPProspectiveMember' | 'CAPExternalMember';
 
 /**
  * These are common to all CAPMembers, not necessarily all members
@@ -2148,6 +2148,19 @@ export interface RawCAPProspectiveMemberObject extends RawCAPMember, AccountIden
 	hasNHQReference: false;
 }
 
+export interface RawCAPExternalMemberObject extends RawCAPMember, AccountIdentifiable {
+	id: string;
+	type: 'CAPExternalMember';
+	approved: boolean;
+	expiry: number;
+	capid?: number;
+}
+
+export interface CAPExternalMemberObject extends RawCAPExternalMemberObject, CAPMemberObject {
+	id: string;
+	type: 'CAPExternalMember';
+}
+
 export interface RawCAPProspectiveUpgradedMemberObject extends AccountIdentifiable {
 	/**
 	 * We use string IDs for this account type
@@ -2250,8 +2263,16 @@ export interface CAPNHQMemberReference extends MemberReferenceBase {
 	id: number;
 }
 
-export type CAPMemberReference = CAPNHQMemberReference | CAPProspectiveMemberReference;
-export type CAPMember = CAPProspectiveMemberObject | CAPNHQMemberObject;
+export interface CAPExternalMemberReference extends MemberReferenceBase {
+	type: 'CAPExternalMember';
+	id: string;
+}
+
+export type CAPMemberReference =
+	| CAPNHQMemberReference
+	| CAPProspectiveMemberReference
+	| CAPExternalMemberReference;
+export type CAPMember = CAPProspectiveMemberObject | CAPNHQMemberObject | CAPExternalMemberObject;
 
 /**
  * Union type to allow for referring to both NHQMembers and ProspectiveMembers
@@ -2267,6 +2288,8 @@ export type MemberForMemberType<
 	? CAPNHQMemberObject
 	: T extends CAPProspectiveMemberReference['type']
 	? CAPProspectiveMemberObject
+	: T extends CAPExternalMemberReference['type']
+	? CAPExternalMemberObject
 	: Member;
 
 export type MemberForReference<T extends MemberReference> = MemberForMemberType<T['type']>;
@@ -2275,12 +2298,16 @@ export type ReferenceForMember<T extends Member> = T extends CAPNHQMemberReferen
 	? CAPNHQMemberReference
 	: T extends CAPProspectiveMemberReference
 	? CAPProspectiveMemberReference
+	: T extends CAPExternalMemberReference
+	? CAPExternalMemberObject
 	: MemberReference;
 
 export type ReferenceForType<T extends MemberType> = T extends 'CAPProspectiveMember'
 	? CAPProspectiveMemberReference
 	: T extends 'CAPNHQMember'
 	? CAPNHQMemberReference
+	: T extends 'CAPExternalMember'
+	? CAPExternalMemberReference
 	: MemberReference;
 
 export type UserForReference<T extends MemberReference> = MemberForReference<T> & UserObject;

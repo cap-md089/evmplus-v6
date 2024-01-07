@@ -139,7 +139,9 @@ export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
 ): ServerEither<AccountObject[]> =>
 	member.type === 'CAPNHQMember'
 		? getNHQMemberAccount(backend)(member)
-		: getProspectiveMemberAccounts(backend)(member);
+		: member.type === 'CAPProspectiveMember'
+		? getProspectiveMemberAccounts(backend)(member)
+		: invalidTypeLeft;
 
 interface CommanderInfo {
 	commanderName: string;

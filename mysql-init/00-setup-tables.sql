@@ -1118,6 +1118,19 @@ CREATE TABLE `UserPermissions` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `ExternalMembers`
+--
+
+DROP TABLE IF EXISTS `ExternalMembers`;
+CREATE TABLE `ExternalMembers` (
+  `doc` json DEFAULT NULL,
+  `_id` varbinary(32) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$._id'))) STORED NOT NULL,
+  `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
+  PRIMARY KEY (`_id`),
+  CONSTRAINT `$val_strict_8BCB71ED17452FCFB86C4DA18D1054CF0A070650` CHECK (json_schema_valid(`_json_schema`,`doc`)) /*!80016 NOT ENFORCED */
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Final view structure for view `MTC_Current`
 --
 
