@@ -27,6 +27,7 @@ import {
 	CadetPromotionStatus,
 	CAPAccountObject,
 	CAPExternalMemberObject,
+	CAPExternalMemberReference,
 	CAPExtraMemberInformation,
 	CAPMember,
 	CAPMemberObject,
@@ -45,6 +46,7 @@ import {
 	Maybe,
 	MaybeObj,
 	MemberForReference,
+	MemberReference,
 	memoize,
 	NewCAPExternalMemberObject,
 	NewCAPProspectiveMember,
@@ -62,13 +64,19 @@ import {
 import { DateTime } from 'luxon';
 import { AccountBackend } from '../../..';
 import { BasicAccountRequest } from '../../../Account';
-import { Backends, notImplementedError, notImplementedException } from '../../../backends';
+import {
+	Backends,
+	notImplementedError,
+	notImplementedException,
+	TimeBackend,
+} from '../../../backends';
 import { MemberBackend } from '../../../Members';
 import { collectResults, findAndBind, RawMySQLBackend } from '../../../MySQLUtil';
 import { RegistryBackend } from '../../../Registry';
 import { ServerEither } from '../../../servertypes';
 import { TeamsBackend } from '../../../Team';
 import {
+	approveExternalMember,
 	createExternalMember,
 	deleteExternalMember,
 	getExternalMember,
@@ -368,6 +376,9 @@ export interface CAPMemberBackend {
 	createExternalMember: (
 		account: RegularCAPAccountObject,
 	) => (member: NewCAPExternalMemberObject) => ServerEither<CAPExternalMemberObject>;
+	approveExternalMember: (
+		backend: Backends<[TimeBackend]>,
+	) => (approver: MemberReference) => (member: CAPExternalMemberReference) => ServerEither<void>;
 	getAccountsForMember: (member: CAPMember) => ServerEither<AccountObject[]>;
 	getNHQMembersInAccount: (
 		backend: Backends<[TeamsBackend]>,
@@ -402,6 +413,7 @@ export const getRequestFreeCAPMemberBackend = (
 	createProspectiveMember: createCAPProspectiveMember(mysqlx),
 	deleteExternalMember: deleteExternalMember(prevBackends),
 	createExternalMember: createExternalMember(prevBackends),
+	approveExternalMember: backends => approveExternalMember({ ...prevBackends, ...backends }),
 	getAccountsForMember: memoize(getAccountsForMember(prevBackends), stringifyMemberReference),
 	getNHQMembersInAccount: memoize(prevBackend =>
 		memoize(
@@ -438,6 +450,7 @@ export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 	createProspectiveMember: () => () => notImplementedError('createProspectiveMember'),
 	deleteExternalMember: () => notImplementedError('deleteExternalMember'),
 	createExternalMember: () => () => notImplementedError('createExternalMember'),
+	approveExternalMember: () => () => () => notImplementedError('approveExternalMember'),
 	getAccountsForMember: () => notImplementedException('getAccountsForMember'),
 	getNHQMembersInAccount: () => () => notImplementedError('getNHQMembersInAccount'),
 	getProspectiveMembersInAccount: () => () =>

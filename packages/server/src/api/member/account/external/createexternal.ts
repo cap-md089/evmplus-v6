@@ -19,7 +19,6 @@
 
 import { ServerAPIRequestParameter, ServerEither, validator } from 'auto-client-api';
 import {
-	AccountType,
 	api,
 	APIEndpointBody,
 	AsyncEither,
@@ -32,11 +31,11 @@ import {
 	errorGenerator,
 	getFullMemberName,
 	getMemberEmail,
+	isRegularCAPAccountObject,
 	Maybe,
-	NewCAPProspectiveMember,
+	NewCAPExternalMemberObject,
 	Permissions,
 	RawCAPProspectiveMemberObject,
-	RawCAPSquadronAccountObject,
 	SessionType,
 	toReference,
 	Validator,
@@ -186,18 +185,20 @@ const createWithRandomPassword = (
 			),
 	);
 
-const newProspectiveMemberAccountValidator = new Validator<
-	APIEndpointBody<api.member.account.capprospective.CreateProspectiveAccount>
+const newExternalMemberAccountValidator = new Validator<
+	APIEndpointBody<api.member.account.capexternal.CreateExternalAccount>
 >({
 	login: validator<CAPProspectiveMemberPasswordCreation>(Validator),
-	member: new Validator<NewCAPProspectiveMember>({
+	member: new Validator<NewCAPExternalMemberObject>({
 		contact: validator<CAPMemberContact>(Validator),
-		flight: validator<string | null>(Validator),
+		memberRank: Validator.String,
 		nameFirst: Validator.String,
 		nameLast: Validator.String,
 		nameMiddle: Validator.String,
 		nameSuffix: Validator.String,
 		seniorMember: Validator.Boolean,
+		expiry: Validator.Number,
+		capid: validator<number | null>(Validator),
 	}),
 });
 
@@ -217,23 +218,19 @@ export const func: Endpoint<
 > = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(
 		PAM.RequiresPermission(
-			'ProspectiveMemberManagement',
-			Permissions.ProspectiveMemberManagement.FULL,
+			'ExternalMemberManagement',
+			Permissions.ExternalMemberManagement.ADD,
 		)(request =>
-			validateRequest(newProspectiveMemberAccountValidator)(request)
+			validateRequest(newExternalMemberAccountValidator)(request)
 				.flatMap(req =>
 					asyncRight(req.account, errorGenerator('Could not create prospective member'))
-						.filter(
-							(account): account is RawCAPSquadronAccountObject =>
-								account.type === AccountType.CAPSQUADRON,
-							{
-								type: 'OTHER',
-								code: 400,
-								message:
-									'CAP Prospective member accounts may only be created for a CAP Squadron account',
-							},
-						)
-						.map(backend.createProspectiveMember)
+						.filter(isRegularCAPAccountObject, {
+							type: 'OTHER',
+							code: 400,
+							message:
+								'CAP external member accounts cannot be created for event accounts',
+						})
+						.map(backend.createExternalMember)
 						.flatApply(req.body.member)
 						.flatMap(
 							req.body.login.type ===
@@ -256,25 +253,25 @@ export default withBackends(
 	combineBackends<
 		BasicAccountRequest,
 		[
-			RawMySQLBackend,
 			AccountBackend,
 			RandomBackend,
 			EmailBackend,
 			RegistryBackend,
 			CAP.CAPMemberBackend,
 			TeamsBackend,
+			RawMySQLBackend,
 			MemberBackend,
 			TimeBackend,
 			PAM.PAMBackend,
 		]
 	>(
-		getRawMySQLBackend,
 		getAccountBackend,
 		getRandomBackend,
 		getEmailBackend,
 		getRegistryBackend,
 		CAP.getCAPMemberBackend,
 		getCombinedTeamsBackend(),
+		getRawMySQLBackend,
 		getMemberBackend,
 		getTimeBackend,
 		PAM.getPAMBackend,

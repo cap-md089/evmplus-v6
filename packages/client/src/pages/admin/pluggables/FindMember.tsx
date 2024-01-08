@@ -579,6 +579,7 @@ const MemberSearchRenderSearchedMembers = (): ReactElement => {
 	const inputHasBeenEntered = useSelector<MemberSearchState, boolean>(
 		state => state.inputHasBeenEntered,
 	);
+
 	const currentMember = useSelector<MemberSearchState, api.member.MemberSearchResult | null>(
 		state => state.memberViewed,
 		(a, b) =>

@@ -30,7 +30,7 @@ interface ExternalAccountBody {
 }
 
 /**
- * Allows an admin to create a prospective member for someone else
+ * Allows an admin to create a external member for someone else
  */
 export interface CreateExternalAccount {
 	(params: {}, body: ExternalAccountBody): APIEither<void>;
@@ -47,9 +47,9 @@ export interface CreateExternalAccount {
 }
 
 /**
- * Allows an admin to delete a Prospective member account
+ * Allows an admin to delete a External member account
  *
- * `account` is a stringified CAPProspectiveMemberReference
+ * `account` is a stringified CAPExternalMemberReference
  */
 export interface DeleteExternalAccount {
 	(params: { account: string }, body: {}): APIEither<void>;
@@ -57,6 +57,25 @@ export interface DeleteExternalAccount {
 	url: '/api/member/account/capexternal/:account';
 
 	method: 'delete';
+
+	requiresMember: 'required';
+
+	needsToken: true;
+
+	useValidator: false;
+}
+
+/**
+ * Allows an admin to approve a External member account
+ *
+ * `account` is a stringified CAPExternalMemberReference
+ */
+export interface ApproveExternalAccount {
+	(params: { account: string }, body: {}): APIEither<void>;
+
+	url: '/api/member/account/capexternal/:account/approve';
+
+	method: 'post';
 
 	requiresMember: 'required';
 

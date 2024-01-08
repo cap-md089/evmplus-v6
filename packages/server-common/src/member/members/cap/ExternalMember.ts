@@ -41,6 +41,8 @@ import {
 	getUserID,
 	isPartOfTeam,
 	isRegularCAPAccountObject,
+	Maybe,
+	MemberReference,
 	NewCAPExternalMemberObject,
 	RawCAPExternalMemberObject,
 	RegularCAPAccountObject,
@@ -52,7 +54,7 @@ import {
 } from 'common-lib';
 import { loadExtraCAPMemberInformation } from '.';
 import { AccountBackend } from '../../../Account';
-import { Backends } from '../../../backends';
+import { Backends, TimeBackend } from '../../../backends';
 import {
 	addToCollection,
 	collectResults,
@@ -60,6 +62,7 @@ import {
 	findAndBind,
 	findAndBindC,
 	generateResults,
+	modifyAndBindC,
 	RawMySQLBackend,
 } from '../../../MySQLUtil';
 import { RegistryBackend } from '../../../Registry';
@@ -79,7 +82,7 @@ const getRowsForExternalMember = (schema: Schema) => (account: CAPAccountObject)
 			}),
 		)
 		.map(collectResults)
-		.filter(results => results.length === 1, {
+		.filter(results => results.length === 1 && results[0].approved.hasValue, {
 			message: 'Could not find member',
 			code: 404,
 			type: 'OTHER',
@@ -117,54 +120,58 @@ export const getExternalMembersForAccount = (schema: Schema) => (
 				),
 				backend.getTeams(account),
 		  ]).map(([registry, members, orgExtraInfo, teamObjects]) =>
-				members.map(member => {
-					const memberID = toReference(member);
-					const finder = areMembersTheSame(member);
+				members
+					.map(member => {
+						const memberID = toReference(member);
+						const finder = areMembersTheSame(member);
 
-					const extraInfo =
-						orgExtraInfo.find(({ member: id }) => finder(id)) ??
-						({
+						const extraInfo =
+							orgExtraInfo.find(({ member: id }) => finder(id)) ??
+							({
+								accountID: account.id,
+								member: memberID,
+								temporaryDutyPositions: [],
+								flight: null,
+								teamIDs: teamObjects
+									.filter(isPartOfTeam(memberID))
+									.map(({ id }) => id),
+								absentee: null,
+								type: 'CAP',
+							} as CAPExtraMemberInformation);
+
+						return {
+							absenteeInformation: extraInfo.absentee,
+							contact: member.contact,
+							dutyPositions: extraInfo.temporaryDutyPositions.map(
+								item =>
+									({
+										date: item.assigned,
+										duty: item.Duty,
+										expires: item.validUntil,
+										type: 'CAPUnit',
+									} as ShortDutyPosition),
+							),
+							flight: extraInfo.flight,
+							id: member.id,
+							memberRank: member.memberRank,
+							nameFirst: member.nameFirst,
+							nameLast: member.nameLast,
+							nameMiddle: member.nameMiddle,
+							nameSuffix: member.nameSuffix,
+							hasNHQReference: false as const,
+							seniorMember: member.seniorMember,
+							squadron: registry.Website.Name,
+							type: 'CAPExternalMember' as const,
+							orgid: getORGIDsFromRegularCAPAccount(account)[0],
 							accountID: account.id,
-							member: memberID,
-							temporaryDutyPositions: [],
-							flight: null,
-							teamIDs: teamObjects.filter(isPartOfTeam(memberID)).map(({ id }) => id),
-							absentee: null,
-							type: 'CAP',
-						} as CAPExtraMemberInformation);
-
-					return {
-						absenteeInformation: extraInfo.absentee,
-						contact: member.contact,
-						dutyPositions: extraInfo.temporaryDutyPositions.map(
-							item =>
-								({
-									date: item.assigned,
-									duty: item.Duty,
-									expires: item.validUntil,
-									type: 'CAPUnit',
-								} as ShortDutyPosition),
-						),
-						flight: extraInfo.flight,
-						id: member.id,
-						memberRank: member.memberRank,
-						nameFirst: member.nameFirst,
-						nameLast: member.nameLast,
-						nameMiddle: member.nameMiddle,
-						nameSuffix: member.nameSuffix,
-						hasNHQReference: false as const,
-						seniorMember: member.seniorMember,
-						squadron: registry.Website.Name,
-						type: 'CAPExternalMember' as const,
-						orgid: getORGIDsFromRegularCAPAccount(account)[0],
-						accountID: account.id,
-						usrID: member.usrID,
-						teamIDs: extraInfo.teamIDs,
-						approved: member.approved,
-						capid: member.capid,
-						expiry: member.expiry,
-					};
-				}),
+							usrID: member.usrID,
+							teamIDs: extraInfo.teamIDs,
+							approved: member.approved,
+							capid: member.capid,
+							expiry: member.expiry,
+						};
+					})
+					.filter(({ approved }) => Maybe.isSome(approved)),
 		  )
 		: asyncLeft({
 				type: 'OTHER',
@@ -343,6 +350,7 @@ export const createExternalMember = (backends: Backends<[RawMySQLBackend, Regist
 				.flatMap(id =>
 					backends.getRegistry(account).map<RawCAPExternalMemberObject>(registry => ({
 						...data,
+						approved: Maybe.none(),
 						id,
 						absenteeInformation: null,
 						accountID: account.id,
@@ -379,5 +387,25 @@ export const deleteExternalMember = (backends: Backends<[RawMySQLBackend]>) => (
 		backends.getCollection('ExternalMembers'),
 		errorGenerator('Could not delete prospective member'),
 	)
-		.flatMap(deleteFromCollectionA(member))
+		.flatMap(deleteFromCollectionA(toReference(member)))
+		.map(destroy);
+
+export const approveExternalMember = (backends: Backends<[RawMySQLBackend, TimeBackend]>) => (
+	approver: MemberReference,
+) => (member: CAPExternalMemberReference): ServerEither<void> =>
+	asyncRight(
+		backends.getCollection('ExternalMembers'),
+		errorGenerator('Could not approve external member'),
+	)
+		.map(modifyAndBindC<RawCAPExternalMemberObject>(toReference(member)))
+		.map(modify =>
+			modify
+				.patch({
+					approved: Maybe.some({
+						by: toReference(approver),
+						when: backends.now(),
+					}),
+				})
+				.execute(),
+		)
 		.map(destroy);

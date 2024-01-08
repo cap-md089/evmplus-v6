@@ -24,6 +24,8 @@ import { endpointAdder } from '../../../lib/API';
 import createprospective from './capprospective/createprospective';
 import deleteprospective from './capprospective/deleteprospective';
 import upgradeprospective from './capprospective/upgradeprospective';
+import createexternal from './external/createexternal';
+import deleteexternal from './external/deleteexternal';
 import finishaccount from './finishaccount';
 import finishpasswordreset from './finishpasswordreset';
 import requestnhqaccount from './nhq/requestaccount';
@@ -41,6 +43,9 @@ addAPI(Validator, adder, requestnhqaccount);
 addAPI(Validator, adder, createprospective);
 addAPI(Validator, adder, deleteprospective);
 addAPI(Validator, adder, upgradeprospective);
+
+addAPI(Validator, adder, createexternal);
+addAPI(Validator, adder, deleteexternal);
 
 addAPI(Validator, adder, finishaccount);
 addAPI(Validator, adder, finishpasswordreset);

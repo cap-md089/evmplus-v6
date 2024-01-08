@@ -255,6 +255,12 @@ export namespace Permissions {
 		FULL = 'Full',
 	}
 
+	export enum ExternalMemberManagement {
+		NONE = 'None',
+		ADD = 'Add',
+		FULL = 'Full',
+	}
+
 	export enum EventLinkList {
 		NO = 'No',
 		YES = 'Yes',
@@ -1719,6 +1725,10 @@ export interface CAPWingMemberPermissions {
 	 * Whether or not the user can view attendance for other people
 	 */
 	AttendanceView: Permissions.AttendanceView;
+	/**
+	 * The ability to add and approve members that aren't in the database
+	 */
+	ExternalMemberManagement: Permissions.ExternalMemberManagement;
 
 	// Admin privileges
 	/**
@@ -1789,6 +1799,10 @@ export interface CAPRegionMemberPermissions {
 	 * Whether or not the user can view attendance for other people
 	 */
 	AttendanceView: Permissions.AttendanceView;
+	/**
+	 * The ability to add and approve members that aren't in the database
+	 */
+	ExternalMemberManagement: Permissions.ExternalMemberManagement;
 
 	// Admin privileges
 	/**
@@ -2151,9 +2165,9 @@ export interface RawCAPProspectiveMemberObject extends RawCAPMember, AccountIden
 export interface RawCAPExternalMemberObject extends RawCAPMember, AccountIdentifiable {
 	id: string;
 	type: 'CAPExternalMember';
-	approved: boolean;
+	approved: MaybeObj<{ by: MemberReference; when: number }>;
 	expiry: number;
-	capid?: number;
+	capid: number | null;
 }
 
 export interface CAPExternalMemberObject extends RawCAPExternalMemberObject, CAPMemberObject {
@@ -2220,6 +2234,7 @@ export type NewCAPExternalMemberObject = Omit<
 	| 'absenteeInformation'
 	| 'teamIDs'
 	| 'type'
+	| 'approved'
 	| 'usrID'
 	| 'accountID'
 	| 'dutyPositions'

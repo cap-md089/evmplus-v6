@@ -368,6 +368,7 @@ const CAPWingDefault: Readonly<CAPWingMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.NONE,
 	ScanAdd: Permissions.ScanAdd.NO,
 	AttendanceView: Permissions.AttendanceView.PERSONAL,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.NONE,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.NONE,
@@ -393,6 +394,7 @@ const CAPWingStaff: Readonly<CAPWingMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.NONE,
 	ScanAdd: Permissions.ScanAdd.NO,
 	AttendanceView: Permissions.AttendanceView.PERSONAL,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.NONE,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.NONE,
@@ -418,6 +420,7 @@ const CAPWingManager: Readonly<CAPWingMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.FULL,
 	ScanAdd: Permissions.ScanAdd.YES,
 	AttendanceView: Permissions.AttendanceView.OTHER,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.ADD,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.NONE,
@@ -443,6 +446,7 @@ const CAPWingAdmin: Readonly<CAPWingMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.FULL,
 	ScanAdd: Permissions.ScanAdd.YES,
 	AttendanceView: Permissions.AttendanceView.OTHER,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.FULL,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.FULL,
@@ -468,6 +472,7 @@ const CAPRegionDefault: Readonly<CAPRegionMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.NONE,
 	ScanAdd: Permissions.ScanAdd.NO,
 	AttendanceView: Permissions.AttendanceView.PERSONAL,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.NONE,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.NONE,
@@ -493,6 +498,7 @@ const CAPRegionStaff: Readonly<CAPRegionMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.NONE,
 	ScanAdd: Permissions.ScanAdd.NO,
 	AttendanceView: Permissions.AttendanceView.PERSONAL,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.NONE,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.NONE,
@@ -518,6 +524,7 @@ const CAPRegionManager: Readonly<CAPRegionMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.FULL,
 	ScanAdd: Permissions.ScanAdd.YES,
 	AttendanceView: Permissions.AttendanceView.OTHER,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.ADD,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.NONE,
@@ -543,6 +550,7 @@ const CAPRegionAdmin: Readonly<CAPRegionMemberPermissions> = {
 	FileManagement: Permissions.FileManagement.FULL,
 	ScanAdd: Permissions.ScanAdd.YES,
 	AttendanceView: Permissions.AttendanceView.OTHER,
+	ExternalMemberManagement: Permissions.ExternalMemberManagement.FULL,
 
 	// Admin privileges
 	PermissionManagement: Permissions.PermissionManagement.FULL,

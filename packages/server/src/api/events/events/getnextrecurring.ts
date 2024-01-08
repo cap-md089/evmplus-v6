@@ -36,8 +36,10 @@ import {
 	generateResults,
 	getAccountBackend,
 	getCombinedEventsBackend,
+	getRawMySQLBackend,
 	getRegistryBackend,
 	getTimeBackend,
+	RawMySQLBackend,
 	RegistryBackend,
 	TimeBackend,
 	withBackends,
@@ -74,6 +76,12 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicMySQLRequest,
-		[TimeBackend, RegistryBackend, AccountBackend, EventsBackend]
-	>(getTimeBackend, getRegistryBackend, getAccountBackend, getCombinedEventsBackend()),
+		[TimeBackend, RegistryBackend, RawMySQLBackend, AccountBackend, EventsBackend]
+	>(
+		getTimeBackend,
+		getRegistryBackend,
+		getRawMySQLBackend,
+		getAccountBackend,
+		getCombinedEventsBackend(),
+	),
 );
