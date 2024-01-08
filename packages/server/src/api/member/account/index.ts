@@ -24,6 +24,7 @@ import { endpointAdder } from '../../../lib/API';
 import createprospective from './capprospective/createprospective';
 import deleteprospective from './capprospective/deleteprospective';
 import upgradeprospective from './capprospective/upgradeprospective';
+import approveexternal from './external/approveexternal';
 import createexternal from './external/createexternal';
 import deleteexternal from './external/deleteexternal';
 import finishaccount from './finishaccount';
@@ -46,6 +47,7 @@ addAPI(Validator, adder, upgradeprospective);
 
 addAPI(Validator, adder, createexternal);
 addAPI(Validator, adder, deleteexternal);
+addAPI(Validator, adder, approveexternal);
 
 addAPI(Validator, adder, finishaccount);
 addAPI(Validator, adder, finishpasswordreset);
