@@ -343,7 +343,7 @@ export const getCAPAccountsForORGID = (schema: Schema) => (
 	);
 
 export const getMembers = (schema: Schema) => (
-	backend: Backends<[TeamsBackend, CAP.CAPMemberBackend]>,
+	backend: Backends<[RegistryBackend, RawMySQLBackend, TeamsBackend, CAP.CAPMemberBackend]>,
 ) => (account: AccountObject) =>
 	async function* (
 		type?: MemberType | undefined,
@@ -768,7 +768,7 @@ export interface AccountBackend {
 
 export const getAccountBackend = (
 	req: BasicMySQLRequest | BasicAccountRequest,
-	prevBackend: RegistryBackend,
+	prevBackend: Backends<[RawMySQLBackend, RegistryBackend]>,
 ): AccountBackend =>
 	'backend' in req
 		? req.backend
@@ -782,7 +782,7 @@ export const getAccountBackend = (
 
 export const getRequestFreeAccountsBackend = (
 	mysqlx: Schema,
-	prevBackend: Backends<[RegistryBackend]>,
+	prevBackend: Backends<[RawMySQLBackend, RegistryBackend]>,
 ): AccountBackend => {
 	const getCAPOrgInfo = memoize(getCAPOrganization(mysqlx));
 
@@ -793,7 +793,7 @@ export const getRequestFreeAccountsBackend = (
 			memoize(account =>
 				memoize(type =>
 					asyncRight(
-						getMembers(mysqlx)(memberBackend)(account)(type),
+						getMembers(mysqlx)({ ...prevBackend, ...memberBackend })(account)(type),
 						errorGenerator('Could not get member list'),
 					)
 						.map(

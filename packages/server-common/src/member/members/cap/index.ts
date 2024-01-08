@@ -19,13 +19,14 @@
 
 import type { Schema } from '@mysql/xdevapi';
 import {
-	api,
 	AccountObject,
+	api,
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
 	CadetPromotionStatus,
 	CAPAccountObject,
+	CAPExternalMemberObject,
 	CAPExtraMemberInformation,
 	CAPMember,
 	CAPMemberObject,
@@ -37,17 +38,20 @@ import {
 	EitherObj,
 	errorGenerator,
 	get,
-	getORGIDsFromCAPAccount,
 	getFullMemberName,
+	getORGIDsFromCAPAccount,
 	isPartOfTeam,
 	iterFind,
 	Maybe,
 	MaybeObj,
 	MemberForReference,
 	memoize,
+	NewCAPExternalMemberObject,
 	NewCAPProspectiveMember,
+	RawCAPExternalMemberObject,
 	RawCAPProspectiveMemberObject,
 	RawCAPSquadronAccountObject,
+	RegularCAPAccountObject,
 	ServerError,
 	ShortDutyPosition,
 	Some,
@@ -61,8 +65,17 @@ import { BasicAccountRequest } from '../../../Account';
 import { Backends, notImplementedError, notImplementedException } from '../../../backends';
 import { MemberBackend } from '../../../Members';
 import { collectResults, findAndBind, RawMySQLBackend } from '../../../MySQLUtil';
+import { RegistryBackend } from '../../../Registry';
 import { ServerEither } from '../../../servertypes';
 import { TeamsBackend } from '../../../Team';
+import {
+	createExternalMember,
+	deleteExternalMember,
+	getExternalMember,
+	getExternalMemberAccounts,
+	getExtraInformationFromExternalMember,
+	getNameForCAPExternalMember,
+} from './ExternalMember';
 import {
 	getBirthday,
 	getCadetPromotionRequirements,
@@ -106,15 +119,17 @@ export const getExtraMemberInformationForCAPMember = (account: AccountObject) =>
 		? Either.right(getExtraInformationFromCAPNHQMember(account)(member))
 		: member.type === 'CAPProspectiveMember'
 		? Either.right(getExtraInformationFromProspectiveMember(account)(member))
+		: member.type === 'CAPExternalMember'
+		? Either.right(getExtraInformationFromExternalMember(account)(member))
 		: Either.left({
 				type: 'OTHER',
 				message: 'Invalid member type',
 				code: 400,
 		  });
 
-export const resolveCAPReference = (schema: Schema) => (backends: Backends<[TeamsBackend]>) => (
-	account: AccountObject,
-) => <T extends CAPMemberReference = CAPMemberReference>(
+export const resolveCAPReference = (schema: Schema) => (
+	backends: Backends<[RawMySQLBackend, RegistryBackend, TeamsBackend]>,
+) => (account: AccountObject) => <T extends CAPMemberReference = CAPMemberReference>(
 	reference: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -122,6 +137,8 @@ export const resolveCAPReference = (schema: Schema) => (backends: Backends<[Team
 		? getNHQMember(schema)(backends)(account)(reference.id)
 		: reference.type === 'CAPProspectiveMember' && typeof reference.id === 'string'
 		? getProspectiveMember(schema)(backends)(account)(reference.id)
+		: reference.type === 'CAPExternalMember' && typeof reference.id === 'string'
+		? getExternalMember(schema)(backends)(account)(reference.id)
 		: invalidTypeLeft;
 
 export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => (
@@ -132,6 +149,8 @@ export const getCAPMemberName = (schema: Schema) => (account: AccountObject) => 
 		? getNameForCAPNHQMember(schema)(reference)
 		: reference.type === 'CAPProspectiveMember'
 		? getNameForCAPProspectiveMember(schema)(account)(reference)
+		: reference.type === 'CAPExternalMember'
+		? getNameForCAPExternalMember(schema)(account)(reference)
 		: invalidTypeLeft;
 
 export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
@@ -141,6 +160,8 @@ export const getAccountsForMember = (backend: Backends<[AccountBackend]>) => (
 		? getNHQMemberAccount(backend)(member)
 		: member.type === 'CAPProspectiveMember'
 		? getProspectiveMemberAccounts(backend)(member)
+		: member.type === 'CAPExternalMember'
+		? getExternalMemberAccounts(backend)(member)
 		: invalidTypeLeft;
 
 interface CommanderInfo {
@@ -343,6 +364,10 @@ export interface CAPMemberBackend {
 	createProspectiveMember: (
 		account: RawCAPSquadronAccountObject,
 	) => (member: NewCAPProspectiveMember) => ServerEither<CAPProspectiveMemberObject>;
+	deleteExternalMember: (member: RawCAPExternalMemberObject) => ServerEither<void>;
+	createExternalMember: (
+		account: RegularCAPAccountObject,
+	) => (member: NewCAPExternalMemberObject) => ServerEither<CAPExternalMemberObject>;
 	getAccountsForMember: (member: CAPMember) => ServerEither<AccountObject[]>;
 	getNHQMembersInAccount: (
 		backend: Backends<[TeamsBackend]>,
@@ -371,11 +396,12 @@ export const getCAPMemberBackend = (req: BasicAccountRequest): CAPMemberBackend 
 
 export const getRequestFreeCAPMemberBackend = (
 	mysqlx: Schema,
-	prevBackends: Backends<[AccountBackend, RawMySQLBackend]>,
+	prevBackends: Backends<[AccountBackend, RawMySQLBackend, RegistryBackend]>,
 ): CAPMemberBackend => ({
 	deleteProspectiveMember: deleteProspectiveMember(mysqlx),
-	createProspectiveMember: account => member =>
-		createCAPProspectiveMember(mysqlx)(account)(member),
+	createProspectiveMember: createCAPProspectiveMember(mysqlx),
+	deleteExternalMember: deleteExternalMember(prevBackends),
+	createExternalMember: createExternalMember(prevBackends),
 	getAccountsForMember: memoize(getAccountsForMember(prevBackends), stringifyMemberReference),
 	getNHQMembersInAccount: memoize(prevBackend =>
 		memoize(
@@ -410,6 +436,8 @@ export const getRequestFreeCAPMemberBackend = (
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
 	deleteProspectiveMember: () => notImplementedError('deleteProspectiveMember'),
 	createProspectiveMember: () => () => notImplementedError('createProspectiveMember'),
+	deleteExternalMember: () => notImplementedError('deleteExternalMember'),
+	createExternalMember: () => () => notImplementedError('createExternalMember'),
 	getAccountsForMember: () => notImplementedException('getAccountsForMember'),
 	getNHQMembersInAccount: () => () => notImplementedError('getNHQMembersInAccount'),
 	getProspectiveMembersInAccount: () => () =>

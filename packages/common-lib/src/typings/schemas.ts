@@ -10,6 +10,7 @@ import {
 	NotificationTarget,
 	PasswordResetTokenInformation,
 	RawAttendanceDBRecord,
+	RawCAPExternalMemberObject,
 	RawEventObject,
 	RawFileObject,
 	RawNotificationObject,
@@ -35,6 +36,7 @@ export interface TableNameMap {
 	DiscordAccounts: DiscordAccount;
 	Errors: Errors;
 	Events: RawEventObject;
+	ExternalMembers: RawCAPExternalMemberObject;
 	ExtraAccountMembership: StoredAccountMembership;
 	Files: RawFileObject;
 	MFASetup: StoredMFASecret;

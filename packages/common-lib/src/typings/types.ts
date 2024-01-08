@@ -2223,7 +2223,6 @@ export type NewCAPExternalMemberObject = Omit<
 	| 'usrID'
 	| 'accountID'
 	| 'dutyPositions'
-	| 'memberRank'
 	| 'orgid'
 	| 'squadron'
 	| 'hasNHQReference'

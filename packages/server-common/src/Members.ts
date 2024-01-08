@@ -86,9 +86,9 @@ import { TeamsBackend } from './Team';
 
 export * from './member/members';
 
-export const resolveReference = (schema: Schema) => (backend: Backends<[TeamsBackend]>) => (
-	account: AccountObject,
-) => <T extends MemberReference = MemberReference>(
+export const resolveReference = (schema: Schema) => (
+	backend: Backends<[RawMySQLBackend, RegistryBackend, TeamsBackend]>,
+) => (account: AccountObject) => <T extends MemberReference = MemberReference>(
 	ref: T,
 ): AsyncEither<ServerError, MemberForReference<T>> =>
 	ref.type === 'CAPNHQMember' ||
@@ -155,7 +155,9 @@ export const logSignin = logSigninFunc();
 export const getMemberName = (schema: Schema) => (account: AccountObject) => (
 	ref: MemberReference,
 ): AsyncEither<ServerError, string> =>
-	ref.type === 'CAPProspectiveMember' || ref.type === 'CAPNHQMember'
+	ref.type === 'CAPProspectiveMember' ||
+	ref.type === 'CAPNHQMember' ||
+	ref.type === 'CAPExternalMember'
 		? getCAPMemberName(schema)(account)(ref)
 		: asyncLeft({
 				type: 'OTHER',
@@ -429,7 +431,7 @@ export interface MemberBackend {
 
 export const getMemberBackend = (
 	req: BasicAccountRequest,
-	prevBackend: Backends<[CAP.CAPMemberBackend, TeamsBackend]>,
+	prevBackend: Backends<[CAP.CAPMemberBackend, RawMySQLBackend, RegistryBackend, TeamsBackend]>,
 ): MemberBackend => {
 	const backend: MemberBackend = {
 		getMember: memoize(

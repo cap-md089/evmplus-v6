@@ -45,7 +45,7 @@ import {
 import { CAP } from './member/members';
 import { getPAMBackend, PAMBackend } from './member/pam';
 import { getMemberBackend, MemberBackend, getRequestFreeMemberBackend } from './Members';
-import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
+import { getRawMySQLBackend, RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRegistryBackend, RegistryBackend, getRequestFreeRegistryBackend } from './Registry';
 import { EmailBackend, getEmailBackend } from './sendEmail';
 import { getTaskBackend, TaskBackend } from './Task';
@@ -56,8 +56,18 @@ export const getCombinedMemberBackend = (): ((
 ) => Backends<[AccountBackend, CAP.CAPMemberBackend, TimeBackend, TeamsBackend, MemberBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
-		[AccountBackend, CAP.CAPMemberBackend, TimeBackend, TeamsBackend, MemberBackend]
+		[
+			RawMySQLBackend,
+			RegistryBackend,
+			AccountBackend,
+			CAP.CAPMemberBackend,
+			TimeBackend,
+			TeamsBackend,
+			MemberBackend,
+		]
 	>(
+		getRawMySQLBackend,
+		getRegistryBackend,
 		getAccountBackend,
 		CAP.getCAPMemberBackend,
 		getTimeBackend,
@@ -101,13 +111,14 @@ export const getCombinedEventsBackend = (): ((
 	req: BasicMySQLRequest,
 ) => Backends<
 	[
+		RawMySQLBackend,
 		EmailBackend,
 		CAP.CAPMemberBackend,
-		TeamsBackend,
-		MemberBackend,
 		TimeBackend,
+		TeamsBackend,
 		RegistryBackend,
 		AccountBackend,
+		MemberBackend,
 		AuditsBackend,
 		GoogleBackend,
 		EventsBackend,
@@ -116,25 +127,27 @@ export const getCombinedEventsBackend = (): ((
 	combineBackends<
 		BasicMySQLRequest,
 		[
+			RawMySQLBackend,
 			EmailBackend,
 			CAP.CAPMemberBackend,
 			TimeBackend,
 			TeamsBackend,
-			MemberBackend,
 			RegistryBackend,
 			AccountBackend,
+			MemberBackend,
 			AuditsBackend,
 			GoogleBackend,
 			EventsBackend,
 		]
 	>(
+		getRawMySQLBackend,
 		getEmailBackend,
 		CAP.getCAPMemberBackend,
 		getTimeBackend,
 		getTeamsBackend,
-		getMemberBackend,
 		getRegistryBackend,
 		getAccountBackend,
+		getMemberBackend,
 		getCombinedAuditsBackend(),
 		getGoogleBackend,
 		getEventsBackend,
@@ -144,6 +157,8 @@ export const getCombinedAttendanceBackend = (): ((
 	req: BasicMySQLRequest,
 ) => Backends<
 	[
+		RawMySQLBackend,
+		RegistryBackend,
 		AccountBackend,
 		TimeBackend,
 		CAP.CAPMemberBackend,
@@ -156,6 +171,8 @@ export const getCombinedAttendanceBackend = (): ((
 	combineBackends<
 		BasicMySQLRequest,
 		[
+			RawMySQLBackend,
+			RegistryBackend,
 			AccountBackend,
 			TimeBackend,
 			CAP.CAPMemberBackend,
@@ -165,6 +182,8 @@ export const getCombinedAttendanceBackend = (): ((
 			AttendanceBackend,
 		]
 	>(
+		getRawMySQLBackend,
+		getRegistryBackend,
 		getAccountBackend,
 		getTimeBackend,
 		CAP.getCAPMemberBackend,
