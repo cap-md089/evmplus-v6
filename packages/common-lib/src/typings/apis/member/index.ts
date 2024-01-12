@@ -106,6 +106,7 @@ export interface MemberGet {
 export interface MemberSearchResult {
 	member: Member;
 	organization: MaybeObj<NHQ.Organization>;
+	dutyOrgs: NHQ.Organization[];
 }
 
 /**

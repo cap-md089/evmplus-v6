@@ -19,8 +19,10 @@
 
 import {
 	api,
+	AsyncEither,
 	asyncIterFilter,
 	asyncIterMap,
+	asyncIterTap,
 	asyncLeft,
 	asyncRight,
 	Either,
@@ -34,6 +36,7 @@ import {
 	Right,
 	ServerError,
 	SessionType,
+	ShortNHQDutyPosition,
 } from 'common-lib';
 import {
 	AccountBackend,
@@ -57,6 +60,7 @@ import wrapper from '../../lib/wrapper';
 const memberSearchSQL = (
 	schema: Schema,
 	orgids: number[],
+	dutyName: string,
 	includeAssts: boolean,
 ): string => /* sql */ `SELECT DISTINCT
 	M.CAPID
@@ -73,14 +77,14 @@ ON
 WHERE
 	M.ORGID in ${bindForArray(orgids)}
 AND
-	LOWER(M.doc ->> '$.NameFirst') LIKE ?
+	TRIM(LOWER(M.doc ->> '$.NameFirst')) LIKE ?
 AND
-	LOWER(M.doc ->> '$.NameLast') LIKE ?
+	TRIM(LOWER(M.doc ->> '$.NameLast')) LIKE ?
 AND
-	LOWER(O.doc ->> '$.Name') LIKE ?
-AND
-	LOWER(D.doc ->> '$.Duty') LIKE ?
-${includeAssts ? ';' : "AND D.doc ->> '$.Asst' = 0;"}`;
+	TRIM(LOWER(O.doc ->> '$.Name')) LIKE ?
+${dutyName.length > 3 ? "AND TRIM(LOWER(D.doc ->> '$.Duty')) LIKE ?" : "?"}
+${dutyName.length > 3 ? (includeAssts ? '' : "AND D.doc ->> '$.Asst' = 0") : ``}
+;`;
 
 const stripPunctuation = (s: string): string => s.replace(/[',.]/g, '');
 
@@ -118,17 +122,18 @@ export const func: Endpoint<
 								memberSearchSQL(
 									schema,
 									safeOrgIds,
+									req.params.dutyName??'%',
 									req.params.includeAssts === 'true',
 								),
 							)
 							.bind([
 								...safeOrgIds,
-								`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
-								`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
+								`%${(req.params.firstName ?? '').toLocaleLowerCase().trim()}%`,
+								`%${(req.params.lastName ?? '').toLocaleLowerCase().trim()}%`,
 								`%${stripPunctuation(
 									req.params.unitName ?? '',
-								).toLocaleLowerCase()}%`,
-								(req.params.dutyName ?? '').toLocaleLowerCase(),
+								).toLocaleLowerCase().trim()}%`,
+								`${(req.params.dutyName ?? '').toLocaleLowerCase().trim()}`,
 							])
 							.execute(),
 					)
@@ -160,13 +165,19 @@ export const func: Endpoint<
 									id,
 								})
 								.flatMap(member =>
-									getOrganization(member.orgid).map(organization => ({
-										member,
-										organization,
-									})),
+									AsyncEither.All([
+										getOrganization(member.orgid),
+										AsyncEither.All(member.dutyPositions.filter((duty): duty is ShortNHQDutyPosition => duty.type === 'NHQ').map(duty => getOrganization(duty.orgid)))
+									])
+										.map(([organization, dutyOrgs]) => ({
+											member,
+											organization,
+											dutyOrgs: dutyOrgs.filter(Maybe.isSome).map(get('value'))
+										}))
 								),
 						)(iter);
 					})
+					.tap(asyncIterTap(console.log))
 					.map(
 						asyncIterFilter<
 							EitherObj<ServerError, api.member.MemberSearchResult>,
