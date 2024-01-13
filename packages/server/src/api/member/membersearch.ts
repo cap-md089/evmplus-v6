@@ -160,7 +160,7 @@ export const func: Endpoint<
 							EitherObj<ServerError, api.member.MemberSearchResult>
 						>(id =>
 							backend
-								.getMember(req.account)({
+								.getMember(req.account.type === 'CAPWing' ? { ...req.account, id: req.account.id + '-ignore', orgIDs: safeOrgIds } : req.account)({
 									type: 'CAPNHQMember',
 									id,
 								})
