@@ -15,10 +15,14 @@ Current units running the Event Manager suite:
 9. [MD041 - Group 1](https://md041.events.md.cap.gov/)
 10. [MD042 - Group 2](https://md042.events.md.cap.gov/)
 11. [MD043 - Group 3](https://md043.events.md.cap.gov/)
-12. [MD079 - Easton Composite Squadron](https://easton.events.md.cap.gov/)
-13. [MD071 - Bethesda - Chevy Chase Composite Squadron](https://bcc.events.md.cap.gov/)
-14. [MD089 - St. Mary's Composite Squadron](https://stmarys.events.md.cap.gov/)
-15. [MD091 - Mt. Airy Composite Squadron](https://mtairy.events.md.cap.gov/)
+12. [MD044 - Group 4](https://md044.events.md.cap.gov/)
+13. [MD045 - Group 5](https://md045.events.md.cap.gov/)
+14. [MD052 - Bowie Composite Squadron](https://bowie.events.md.cap.gov/)
+15. [MD079 - Easton Composite Squadron](https://easton.events.md.cap.gov/)
+16. [MD071 - Bethesda - Chevy Chase Composite Squadron](https://bcc.events.md.cap.gov/)
+17. [MD085 - Apollo 1 Senior Squadron](https://apollo1.events.md.cap.gov/)
+18. [MD089 - St. Mary's Composite Squadron](https://stmarys.events.md.cap.gov/)
+19. [MD091 - Mt. Airy Composite Squadron](https://mtairy.events.md.cap.gov/)
 
 **Table Of Contents**
 
