@@ -48,6 +48,7 @@ export const parseRawConfiguration = (raw: RawServerConfiguration): ServerConfig
 	PORT: parseInt(raw.PORT, 10),
 
 	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN?.trim?.(),
+	DISCORD_KEEPALIVE_USERID: raw.DISCORD_KEEPALIVE_USERID?.trim?.(),
 
 	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH.trim(),
 
@@ -125,6 +126,7 @@ export const parseCLIConfiguration = (raw: RawCLIConfiguration): CLIConfiguratio
 	HOST_NAME: raw.HOST_NAME.trim(),
 
 	DISCORD_CLIENT_TOKEN: raw.DISCORD_CLIENT_TOKEN?.trim?.(),
+	DISCORD_KEEPALIVE_USERID: raw.DISCORD_KEEPALIVE_USERID?.trim?.(),
 
 	DRIVE_STORAGE_PATH: raw.DRIVE_STORAGE_PATH.trim(),
 });
