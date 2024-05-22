@@ -313,6 +313,20 @@ export default function setupDiscordBot(
 		}
 	});
 
+	if (conf.DISCORD_KEEPALIVE_USERID) {
+		const userid = conf.DISCORD_KEEPALIVE_USERID;
+		setInterval(() => {
+			console.log('Sending Discord bot keepalive...');
+			setTimeout(async () => {
+				const dmChannel = await client.users.createDM(userid);
+
+				await dmChannel.send(`Current time is ${Date.now()}`);
+
+				console.log('Keepalive sent.');
+			}, Math.random() * 1000);
+		}, 30 * 60 * 1000);
+	}
+
 	void client.login(conf.DISCORD_CLIENT_TOKEN);
 }
 

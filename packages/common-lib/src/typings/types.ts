@@ -3462,6 +3462,7 @@ export interface ServerConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 
@@ -3485,6 +3486,8 @@ export interface EnvServerConfiguration {
 
 	NODE_ENV: string;
 
+	DISCORD_KEEPALIVE_USERID?: string;
+
 	DRIVE_STORAGE_PATH: string;
 
 	HOST_NAME: string;
@@ -3505,6 +3508,7 @@ export interface RawServerConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 
@@ -3531,6 +3535,7 @@ export interface CLIConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 }
@@ -3546,6 +3551,8 @@ export interface EnvCLIConfiguration {
 	HOST_NAME: string;
 
 	NODE_ENV: string;
+
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 }
@@ -3565,6 +3572,7 @@ export interface RawCLIConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 }
