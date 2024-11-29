@@ -647,7 +647,7 @@ CREATE TABLE `NHQ_PL_Groups` (
   `_json_schema` json GENERATED ALWAYS AS (_utf8mb4'{"type":"object"}') VIRTUAL,
   `PathID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.PathID'))) STORED NOT NULL,
   `GroupID` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.GroupID'))) STORED NOT NULL,
-  `GroupName` varchar(45) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.GroupName'))) VIRTUAL,
+  `GroupName` varchar(150) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.GroupName'))) VIRTUAL,
   `NumberOfRequiredTasks` int GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.NumberOfRequiredTasks'))) VIRTUAL,
   `AwardsExtraCredit` varchar(45) GENERATED ALWAYS AS (json_unquote(json_extract(`doc`,_utf8mb4'$.AwardsExtraCredit'))) VIRTUAL,
   PRIMARY KEY (`_id`),
