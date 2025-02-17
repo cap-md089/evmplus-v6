@@ -166,6 +166,22 @@ export const ReportsWidget = withFetchApi(
 								<div>{this.state.error}</div>
 							) : (
 								<div>
+									SQR 60-2 Cadet status report &nbsp;
+									<Button
+										buttonType="none"
+										onClick={this.createsqr602Spreadsheet}
+									>
+										xlsx
+									</Button>
+									<br />
+								</div>
+							)}
+							{this.state.state === 'LOADING' ? (
+								<LoaderShort />
+							) : this.state.state === 'ERROR' ? (
+								<div>{this.state.error}</div>
+							) : (
+								<div>
 									SQR 60-20 Cadet HFZ report &nbsp;
 									<Button onClick={() => this.createSQR6020()} buttonType="none">
 										pdf
@@ -360,5 +376,52 @@ export const ReportsWidget = withFetchApi(
 
 			XLSX.writeFile(wb, `SQR 60-1 ${this.props.account.id}-${formatdate}.xlsx`);
 		};
+
+		private createsqr602Spreadsheet = async (): Promise<void> => {
+			if (this.state.state !== 'LOADED' || !this.props.member) {
+				return;
+			}
+
+			const XLSX = await import('xlsx');
+
+			const wb = XLSX.utils.book_new();
+
+			let wsName = 'UnitInfo';
+			const wsDataEvent = spreadsheets.sqr602XL();
+			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let sheet = spreadsheets.Formatsqr602XL(ws);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+			if (this.state.state === 'LOADED') {
+				this.props.registry.RankAndFile.Flights.forEach(flight => {
+					// need to loop through flights and create a sheet for each flight
+					wsName = flight.toString();
+					const [wsDataAttendance, widths] = spreadsheets.sqr602MembersXL(
+						this.state.nhqMembers.filter(member => member.flight === flight),
+						this.state.newMembers.filter(member => member.flight === flight),
+						// this.props.registry,
+					);
+					ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+					sheet = spreadsheets.Formatsqr602MembersXL(ws, widths, wsDataAttendance.length);
+					XLSX.utils.book_append_sheet(wb, sheet, wsName);
+				});
+			}
+
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
+			XLSX.writeFile(wb, `SQR 60-1 ${this.props.account.id}-${formatdate}.xlsx`);
+		};
+
+
 	},
 );
