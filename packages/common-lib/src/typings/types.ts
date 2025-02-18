@@ -92,6 +92,14 @@ export enum CAPWATCHImportErrors {
 	NOPERMISSIONS = 'BadPerms',
 }
 
+export enum EventDataImportErrors {
+	NONE = 'None',
+	BADDATA = 'BadData',
+	INSERT = 'BadInsert',
+	CLEAR = 'BadClear',
+	NOPERMISSIONS = 'BadPerms',
+}
+
 export enum AttendanceStatus {
 	COMMITTEDATTENDED = 'CommittedAttended',
 	NOSHOW = 'NoShow',
