@@ -392,21 +392,19 @@ export const ReportsWidget = withFetchApi(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let sheet = spreadsheets.Formatsqr602XL(ws);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+			const flights = this.props.registry.RankAndFile.Flights;
 
-			if (this.state.state === 'LOADED') {
-				this.props.registry.RankAndFile.Flights.forEach(flight => {
-					// need to loop through flights and create a sheet for each flight
-					wsName = flight.toString();
-					const [wsDataAttendance, widths] = spreadsheets.sqr602MembersXL(
-						this.state.nhqMembers.filter(member => member.flight === flight),
-						this.state.newMembers.filter(member => member.flight === flight),
-						// this.props.registry,
-					);
-					ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-					sheet = spreadsheets.Formatsqr602MembersXL(ws, widths, wsDataAttendance.length);
-					XLSX.utils.book_append_sheet(wb, sheet, wsName);
-				});
-			}
+			flights.forEach(flight => () => {
+				// need to loop through flights and create a sheet for each flight
+				wsName = flight.toString();
+				const [wsDataAttendance, widths]: [any[][], number[]] = spreadsheets.sqr602MembersXL(
+					this.state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
+					this.state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
+				);
+				ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+				sheet = spreadsheets.Formatsqr602MembersXL(ws, widths, wsDataAttendance.length);
+				XLSX.utils.book_append_sheet(wb, sheet, wsName);
+			});
 
 			const now = new Date();
 			const formatdate =

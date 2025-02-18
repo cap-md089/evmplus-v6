@@ -59,51 +59,6 @@ const getHFZExpire = (reqs: CadetPromotionStatus): string =>
 		Maybe.orSome(''),
 	)(reqs);
 
-// function determineSDA(
-// 	member: PromotionRequirementsItem,
-// 	requirements: CadetPromotionRequirements,
-// ): string {
-// 	let req = 0;
-// 	let reqComp = 0;
-// 	let compDate = new Date('01/01/2010').toLocaleDateString('en-US');
-// 	const recentDate = new Date('01/01/2010');
-// 	const reqs = [];
-// 	reqs.push({
-// 		required: requirements.SDAService,
-// 		completionDate: new Date(member.requirements.CurrentCadetAchv.StaffServiceDate),
-// 	});
-// 	reqs.push({
-// 		required: requirements.SDAWriting,
-// 		completionDate: new Date(
-// 			member.requirements.CurrentCadetAchv.TechnicalWritingAssignmentDate,
-// 		),
-// 	});
-// 	reqs.push({
-// 		required: requirements.SDAPresentation,
-// 		completionDate: new Date(member.requirements.CurrentCadetAchv.OralPresentationDate),
-// 	});
-
-// 	for (let i = 0; i < 3; i++) {
-// 		if (reqs[i].required) {
-// 			req++;
-// 			if (reqs[i].completionDate.getTime() > recentDate.getTime()) {
-// 				reqComp++;
-// 				if (reqs[i].completionDate.getTime() > new Date(compDate).getTime()) {
-// 					compDate = new Date(reqs[i].completionDate).toLocaleDateString('en-US');
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	if (req === 0) {
-// 		return 'N/A';
-// 	} else if (req > reqComp) {
-// 		return '';
-// 	} else {
-// 		return compDate;
-// 	}
-// }
-
 const unpoweredFlights = [1, 2, 3, 4, 5];
 const poweredFlights = [6, 7, 8, 9, 10];
 
