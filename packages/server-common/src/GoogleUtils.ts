@@ -454,15 +454,6 @@ export async function deleteAllGoogleCalendarEvents(
 			})
 		)?.data.items;
 	}
-	// const clearMainResponse = await myCalendar.calendars.clear ({
-	// 	auth: jwtClient,
-	// 	calendarId: inAccount.mainCalendarID
-	// });
-
-	// const clearWingResponse = await myCalendar.calendars.clear ({
-	// 	auth: jwtClient,
-	// 	calendarId: inAccount.wingCalendarID
-	// });
 }
 
 type JWTClient = InstanceType<typeof google.auth.JWT>;
@@ -482,7 +473,7 @@ async function deleteCalendarEvent(
 				eventId: eventUUID,
 			});
 		} catch (error) {
-			// 		console.log("delete event error: " + eventUUID);
+					console.log("delete event error: " + eventUUID);
 			// 9999999999 this shouldn't happen.  Should probably log
 			// 			this occurrence so that leaks can be plugged.
 			// this occurs when the event UUID doesn't exist on the Google calendar,
@@ -492,7 +483,7 @@ async function deleteCalendarEvent(
 			// exectuion
 			// need to catch and handle this error so that when attempting to delete or move
 			// events the code succeeds in execution
-			throw error;
+			// throw error;
 		}
 		if (typeof deleteResponse !== 'undefined') {
 			if (deleteResponse.status >= 400) {
