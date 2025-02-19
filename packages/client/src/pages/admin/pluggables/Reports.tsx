@@ -166,7 +166,7 @@ export const ReportsWidget = withFetchApi(
 								<div>{this.state.error}</div>
 							) : (
 								<div>
-									SQR 60-2 Cadet status report &nbsp;
+									SQR 60-2 Cadet status report by flight &nbsp;
 									<Button
 										buttonType="none"
 										onClick={this.createsqr602Spreadsheet}
@@ -393,16 +393,19 @@ export const ReportsWidget = withFetchApi(
 			let sheet = spreadsheets.Formatsqr602XL(ws);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
 			const flights = this.props.registry.RankAndFile.Flights;
+			const state = this.state;
 
-			flights.forEach(flight => () => {
+			flights.forEach(flight => {
 				// need to loop through flights and create a sheet for each flight
 				wsName = flight.toString();
+				console.log("flight", wsName);
 				const [wsDataAttendance, widths]: [any[][], number[]] = spreadsheets.sqr602MembersXL(
-					this.state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
-					this.state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
+					state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
+					state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
 				);
+
 				ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-				sheet = spreadsheets.Formatsqr602MembersXL(ws, widths, wsDataAttendance.length);
+				sheet = spreadsheets.Formatsqr602MembersXL(ws, widths, wsDataAttendance.length); 
 				XLSX.utils.book_append_sheet(wb, sheet, wsName);
 			});
 
@@ -417,7 +420,7 @@ export const ReportsWidget = withFetchApi(
 				now.getHours().toString().padStart(2, '0') +
 				now.getMinutes().toString().padStart(2, '0');
 
-			XLSX.writeFile(wb, `SQR 60-1 ${this.props.account.id}-${formatdate}.xlsx`);
+			XLSX.writeFile(wb, `SQR 60-2 ${this.props.account.id}-${formatdate}.xlsx`);
 		};
 
 
