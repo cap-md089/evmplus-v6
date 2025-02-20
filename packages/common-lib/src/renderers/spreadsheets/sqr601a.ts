@@ -23,31 +23,12 @@ import { get } from '../../lib/Util';
 import { PromotionRequirementsItem } from '../../typings/apis/member/promotionrequirements';
 import { pipe } from 'ramda';
 import {
-	// CadetPromotionRequirements,
 	CadetPromotionRequirementsMap,
 	CadetPromotionStatus,
 	CAPMember,
 	CAPProspectiveMemberObject,
-	// memoize,
 	NHQ,
-	// RegistryValues,
 } from '../..';
-// import { DateTime } from 'luxon';
-
-// function sortNHQName(a: PromotionRequirementsItem, b: PromotionRequirementsItem): number {
-// 	const aName = a.member.nameLast + ', ' + a.member.nameFirst;
-// 	const bName = b.member.nameLast + ', ' + b.member.nameFirst;
-// 	return aName.localeCompare(bName);
-// }
-
-// function sortProspectiveName(
-// 	a: CAPProspectiveMemberObject,
-// 	b: CAPProspectiveMemberObject,
-// ): number {
-// 	const aName = a.nameLast + ', ' + a.nameFirst;
-// 	const bName = b.nameLast + ', ' + b.nameFirst;
-// 	return aName.localeCompare(bName);
-// }
 
 const getHFZExpire = (reqs: CadetPromotionStatus): string =>
 	pipe(
@@ -79,8 +60,8 @@ const oflightsShortDescription = (rides: NHQ.OFlight[]): string =>
 		.replace('0p', '_p')
 		.replace('0u', '_u');
 
-export const sqr602XL = (): Array<Array<string | number>> => {
-	let row: Array<string | number> = ['Event Manager Cadet Status Report SQR 60-2'];
+export const sqr601aXL = (): Array<Array<string | number>> => {
+	let row: Array<string | number> = ['Event Manager Cadet Status Report SQR 60-1a'];
 	const retVal: Array<Array<string | number>> = [];
 	retVal.push(row);
 	retVal.push(['This document was generated on: ', '', '', Date.now()]);
@@ -94,7 +75,7 @@ export const sqr602XL = (): Array<Array<string | number>> => {
 	return retVal;
 };
 
-export const Formatsqr602XL = (sheet: XLSX.Sheet): XLSX.Sheet => {
+export const Formatsqr601aXL = (sheet: XLSX.Sheet): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
 	const dateWidth = dateFormat.length;
 	sheet['!merges'] = [
@@ -119,7 +100,7 @@ export const Formatsqr602XL = (sheet: XLSX.Sheet): XLSX.Sheet => {
 	return sheet;
 };
 
-export const sqr602MembersXL = (
+export const sqr601aMembersXL = (
 	nhqmembers: PromotionRequirementsItem[],
 	prospectiveMembers: CAPProspectiveMemberObject[],
 	// registry: RegistryValues,
@@ -398,7 +379,7 @@ export const sqr602MembersXL = (
 	return [retVal, widths.map(width => width + 3)];
 };
 
-export const Formatsqr602MembersXL = (
+export const Formatsqr601aMembersXL = (
 	sheet: XLSX.Sheet,
 	columnMaxWidths: number[],
 	numRows: number,
