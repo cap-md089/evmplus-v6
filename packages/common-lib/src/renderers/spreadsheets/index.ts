@@ -21,4 +21,4 @@ export * from './AttendanceXlsx';
 export * from './EventListXlsx';
 export * from './sqr6020';
 export * from './sqr601';
-export * from './sqr602';
+export * from './sqr601a';
