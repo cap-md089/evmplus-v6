@@ -51,54 +51,6 @@ import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
 import { getRequestFreeTeamsBackend, TeamsBackend } from './Team';
 
-export { CAPWATCHImportErrors as CAPWATCHError };
-
-export const importModules = {
-	cadetAchv,
-	cadetAchvAprs,
-	cadetActivities,
-	cadetDutyPosition,
-	cadetHFZInformationParse,
-	cadetAchievementEnumParse,
-	commanders,
-	dutyPosition,
-	mbrAchievements,
-	mbrContact,
-	memberParse,
-	oFlight,
-	organization,
-	orgContact,
-	seniorAwards,
-	seniorLevel,
-	pl: {
-		groups: plGroups,
-		lookup: plLookup,
-		memberPathCredit: plMemberPathCredit,
-		memberTaskCredit: plMemberTaskCredit,
-		paths: plPaths,
-		taskGroupAssignments: plTaskGroupAssignments,
-		tasks: plTasks
-	}
-};
-
-export type FileData<T> = {
-	[P in keyof T]: string;
-};
-
-export const convertCAPWATCHValidator = <T extends object>(
-	validator: Validator<T>,
-): Validator<FileData<T>> => {
-	const newRules = {} as ValidateRuleSet<FileData<T>>;
-
-	for (const ruleName in validator.rules) {
-		if (validator.rules.hasOwnProperty(ruleName)) {
-			newRules[ruleName] = Validator.String;
-		}
-	}
-
-	return new Validator(newRules);
-};
-
 export interface CAPWATCHFileResult {
 	type: 'Result';
 	error: CAPWATCHImportErrors;
@@ -125,158 +77,6 @@ export const badDataResult: CAPWATCHFileResult = {
 	error: CAPWATCHImportErrors.BADDATA,
 };
 
-export const isFileDataValid = <T extends object>(validator: Validator<T>) => (
-	fileData: Array<FileData<T>>,
-): boolean => {
-	const results = fileData.map(value => validator.validate(value, '')).filter(Either.isLeft);
-
-	if (results.length !== 0) {
-		console.error('Error! Error when validating CAPWATCH file data');
-
-		const displayCount = 3;
-
-		console.error(results.map(({ value }) => value).slice(displayCount));
-
-		if (results.length > displayCount) {
-			console.error(`... and ${results.length - displayCount} more errors`);
-		}
-
-		return false;
-	}
-
-	return true;
-};
-
-export type CAPWATCHModule<T> = (
-	backend: Backends<[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend]>,
-	fileData: Array<FileData<T>>,
-	schema: Schema,
-	isORGIDValid: (orgid: number) => boolean,
-	trustedFile: boolean,
-	capidMap: { [CAPID: number]: number },
-	files: string[],
-) => AsyncIterableIterator<
-	| CAPWATCHFileUpdateResult
-	| CAPWATCHFileLogResult
-	| CAPWATCHFileResult
-	| CAPWATCHFilePermissionsResult
->;
-
-const modules: Array<{
-	module: CAPWATCHModule<any>;
-	file: string;
-}> = [
-	{
-		module: memberParse,
-		file: 'Member.txt',
-	},
-	{
-		module: dutyPosition,
-		file: 'DutyPosition.txt',
-	},
-	{
-		module: mbrContact,
-		file: 'MbrContact.txt',
-	},
-	{
-		module: cadetDutyPosition,
-		file: 'CadetDutyPositions.txt',
-	},
-	{
-		module: cadetActivities,
-		file: 'CadetActivities.txt',
-	},
-	{
-		module: oFlight,
-		file: 'OFlight.txt',
-	},
-	{
-		module: mbrAchievements,
-		file: 'MbrAchievements.txt',
-	},
-	{
-		module: cadetAchv,
-		file: 'CadetAchv.txt',
-	},
-	{
-		module: cadetAchvAprs,
-		file: 'CadetAchvAprs.txt',
-	},
-	{
-		module: cadetAchievementEnumParse,
-		file: 'CdtAchvEnum.txt',
-	},
-	{
-		module: cadetHFZInformationParse,
-		file: 'CadetHFZInformation.txt',
-	},
-	{
-		module: seniorAwards,
-		file: 'SeniorAwards.txt',
-	},
-	{
-		module: seniorLevel,
-		file: 'SeniorLevel.txt',
-	},
-	/*  {
-		module: mbrAddresses,
-		file: 'MbrAddresses.txt'
-	},
-	{
-		module: mbrChars,
-		file: 'MbrChars.txt'
-	},*/
-	/* the following modules need only be imported occassionally as they do not change often */
-	{
-		module: commanders,
-		file: 'Commanders.txt',
-	},
-	{
-		module: organization,
-		file: 'Organization.txt',
-	},
-	{
-		module: orgContact,
-		file: 'OrgContact.txt',
-	} /*
-	{
-		module: orgAddresses,
-		file: 'OrganizationAddresses.txt'
-	},
-	{
-		module: orgMeeting,
-		file: 'OrganizationMeetings.txt'
-	}*/,
-	{
-		module: plGroups,
-		file: 'PL_Groups.txt',
-	},
-	{
-		module: plLookup,
-		file: 'PL_Lookup.txt',
-	},
-	{
-		module: plMemberPathCredit,
-		file: 'PL_MemberPathCredit.txt',
-	},
-	{
-		module: plMemberTaskCredit,
-		file: 'PL_MemberTaskCredit.txt',
-	},
-	{
-		module: plPaths,
-		file: 'PL_Paths.txt',
-	},
-	{
-		module: plTaskGroupAssignments,
-		file: 'PL_TaskGroupAssignments.txt',
-	},
-	{
-		module: plTasks,
-		file: 'PL_Tasks.txt',
-	},
-];
-
 export interface CAPWATCHModuleResult {
 	type: 'Result';
 	error: CAPWATCHImportErrors;
@@ -301,24 +101,17 @@ export type CAPWATCHUpdateOrResult =
 	| CAPWATCHFileUpdate
 	| CAPWATCHFileMemberImportError;
 
-export const defaultFiles: string[] = modules.map(mod => mod.file);
-
 export default async function* (
-	zipFileLocation: string,
+	accountID: string,
 	schema: Schema,
 	session: Session,
-	files: string[] = defaultFiles,
 	orgidFilter: number[] = [],
 ): AsyncIterableIterator<CAPWATCHUpdateOrResult> {
 	const foundModules: { [key: string]: boolean } = {};
 
-	// Always import Member.txt first, so that it can set which CAPID belongs to which ORGID
-	// The Member.txt module impurely updates an object to allow for quick checking of CAPIDs vs ORGIDs
-	const usedFiles = ['Member.txt', ...files.filter(file => file !== 'Member.txt')];
+	// need to delete all events for the given account
 
-	for (const i of usedFiles) {
-		foundModules[i] = false;
-	}
+	// need to loop through all events for the given account and add each one to the Google Calendar
 
 	const backend = combineBackends<
 		Schema,
