@@ -37,7 +37,7 @@ import {
 import * as React from 'react';
 import Button from '../Button';
 import DownloadDialogue from '../dialogues/DownloadDialogue';
-import { Checkbox, DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
+import { DisabledText, FormBlock, Label, TextInput } from '../forms/SimpleForm';
 import EnumRadioButton from './EnumRadioButton';
 import { NotOptionalInputProps } from './Input';
 import TextBox from './TextBox';
