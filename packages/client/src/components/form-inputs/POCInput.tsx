@@ -190,10 +190,10 @@ export default class POCInput extends React.Component<
 				<Label>Position</Label>
 				<TextInput name="position" />
 
-				<Label>Display publicly</Label>
+				{/* <Label>Display publicly</Label>
 				<Checkbox name="publicDisplay" />
 
-				{/* <Label>Receive event updates</Label>
+				<Label>Receive event updates</Label>
 				<Checkbox name="receiveEventUpdates" index={this.props.index} />
 
 				<Label>Receive roster</Label>
