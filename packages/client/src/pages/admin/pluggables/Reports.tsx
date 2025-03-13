@@ -399,14 +399,19 @@ export const ReportsWidget = withFetchApi(
 				// need to loop through flights and create a sheet for each flight
 				wsName = flight.toString();
 				console.log("flight", wsName);
-				const [wsDataAttendance, widths]: [any[][], number[]] = spreadsheets.sqr601aMembersXL(
-					state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
-					state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
-				);
+				if(
+					state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight).length +
+					state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight).length > 0
+				) {
+					const [wsDataAttendance, widths]: [any[][], number[]] = spreadsheets.sqr601aMembersXL(
+						state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
+						state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
+					);
 
-				ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-				sheet = spreadsheets.Formatsqr601aMembersXL(ws, widths, wsDataAttendance.length); 
-				XLSX.utils.book_append_sheet(wb, sheet, wsName);
+					ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+					sheet = spreadsheets.Formatsqr601aMembersXL(ws, widths, wsDataAttendance.length); 
+					XLSX.utils.book_append_sheet(wb, sheet, wsName);
+				}
 			});
 
 			const now = new Date();
