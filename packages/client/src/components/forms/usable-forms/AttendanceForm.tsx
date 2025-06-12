@@ -51,6 +51,7 @@ import SimpleForm, {
 	TextBox,
 	TextInput,
 } from '../SimpleForm';
+import './AttendanceForm.css';
 
 const clamp = (min: number, max: number, input: number): number =>
 	Math.max(min, Math.min(max, input));
@@ -178,7 +179,9 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 					),
 				},
 				errorSaving: false,
-				usePartTime: false,
+				usePartTime:
+					props.record.shiftTime.arrivalTime !== props.event.meetDateTime ||
+					props.record.shiftTime.departureTime !== props.event.pickupDateTime,
 				saving: false,
 				deleting: false,
 			};
@@ -243,8 +246,8 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 							? 'Updating...'
 							: 'Signing up...'
 						: !!this.props.record
-						? 'Update information'
-						: 'Sign up',
+							? 'Update information'
+							: 'Sign up',
 					disabled: this.state.saving || this.state.deleting,
 				}}
 			>
@@ -491,6 +494,19 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 			};
 		}
 
+		if (shiftTime) {
+			shiftTime.arrivalTime = clamp(
+				this.props.event.meetDateTime,
+				this.props.event.pickupDateTime,
+				shiftTime.arrivalTime,
+			);
+			shiftTime.departureTime = clamp(
+				this.props.event.meetDateTime,
+				this.props.event.pickupDateTime,
+				shiftTime.departureTime,
+			);
+		}
+
 		this.setState({
 			attendance: {
 				comments: attendanceSignup.comments,
@@ -536,7 +552,7 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 						this.props.event.pickupDateTime,
 						shiftTime.departureTime,
 					),
-			  }
+				}
 			: null;
 
 		const newRecord: NewAttendanceRecord = {
