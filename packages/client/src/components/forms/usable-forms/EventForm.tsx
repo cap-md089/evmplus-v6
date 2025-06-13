@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -252,7 +252,8 @@ export interface NewEventFormValues {
 	pointsOfContact: Array<InternalPointOfContactEdit | ExternalPointOfContact>;
 	customAttendanceFields: CustomAttendanceField[];
 	signUpPartTime: boolean;
-	uniform: SimpleMultCheckboxReturn;
+	smuniform: SimpleMultCheckboxReturn;
+	cuniform: SimpleMultCheckboxReturn;
 	mealsDescription: OtherMultCheckboxReturn;
 	lodgingArrangments: OtherMultCheckboxReturn;
 	activity: OtherMultCheckboxReturn;
@@ -331,7 +332,8 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 				: event.limitSignupsToTeam,
 		transportationDescription: event.transportationDescription,
 		transportationProvided: event.transportationProvided,
-		uniform: event.uniform,
+		smuniform: event.smuniform,
+		cuniform: event.cuniform,
 		privateAttendance: event.privateAttendance,
 		emailBody: event.useEmailBody ? Maybe.some(event.emailBody) : Maybe.none(),
 	}))(
@@ -351,7 +353,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 								receiveSignUpUpdates: poc.receiveSignUpUpdates,
 								receiveUpdates: poc.receiveUpdates,
 								type: PointOfContactType.INTERNAL,
-						  }))(poc.memberReference),
+							}))(poc.memberReference),
 			),
 		),
 	);
@@ -368,7 +370,8 @@ export const emptyEventFormValues = (): NewEventFormValues => ({
 	pickupLocation: '',
 	transportationProvided: false,
 	transportationDescription: '',
-	uniform: emptySimpleFromLabels(labels.Uniforms),
+	smuniform: emptySimpleFromLabels(labels.SMUniforms),
+	cuniform: emptySimpleFromLabels(labels.CUniforms),
 	desiredNumberOfParticipants: 8,
 	useRegistration: false,
 	registration: {
@@ -449,7 +452,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 					receiveUpdates: poc.receiveUpdates,
 					memberReference: Maybe.some(poc.memberReference),
 					type: PointOfContactType.INTERNAL,
-			  },
+				},
 	),
 	customAttendanceFields: event.customAttendanceFields,
 	regionEventNumber: event.regionEventNumber,
@@ -469,7 +472,8 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 	teamID: event.teamID ?? null,
 	transportationDescription: event.transportationDescription,
 	transportationProvided: event.transportationProvided,
-	uniform: event.uniform,
+	smuniform: event.smuniform,
+	cuniform: event.cuniform,
 	limitSignupsToTeam: event.limitSignupsToTeam ?? null,
 	privateAttendance: event.privateAttendance,
 	useEmailBody: Maybe.isSome(event.emailBody),
@@ -486,7 +490,8 @@ const eventValidator: FormValidator<NewEventFormValues> = {
 	startDateTime: (start, values) => start >= values.meetDateTime,
 	endDateTime: (end, values) => end >= values.startDateTime,
 	pickupDateTime: (pickup, values) => pickup >= values.endDateTime,
-	uniform: isOneOfSelected,
+	smuniform: isOneOfSelected,
+	cuniform: isOneOfSelected,
 	requiredEquipment: equipment =>
 		equipment.map(s => !!s).reduce((prev, curr) => prev && curr, true),
 };
@@ -623,8 +628,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						text: this.props.saving
 							? 'Saving...'
 							: this.props.isEventUpdate
-							? 'Update event'
-							: 'Create event',
+								? 'Update event'
+								: 'Create event',
 						disabled: this.props.saving,
 					}}
 					validator={eventValidator}
@@ -739,10 +744,17 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>Logistics Information</Title>
 
-					<Label>Uniform*~</Label>
+					<Label>Senior Member Uniform*~</Label>
 					<SimpleMultCheckbox
-						name="uniform"
-						labels={labels.Uniforms}
+						name="smuniform"
+						labels={labels.SMUniforms}
+						errorMessage="Uniform selection is required"
+					/>
+
+					<Label>Cadet Uniform*~</Label>
+					<SimpleMultCheckbox
+						name="cuniform"
+						labels={labels.CUniforms}
 						errorMessage="Uniform selection is required"
 					/>
 
@@ -795,13 +807,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 							<br />
 							(Click in the editor box to display existing text)
 						</Label>
-						<TextBox>
+						<TextBox name="body">
 							<textarea ref={this.emailBodyRef} />
 						</TextBox>
 					</FormBlock>
 
-					{/* <Label>Allow signing up part time</Label>
-					<Checkbox name="signUpPartTime" /> */}
+					<Label>Allow signing up part time</Label>
+					<Checkbox name="signUpPartTime" />
 
 					<Label>Use participation fee</Label>
 					<Checkbox name="useParticipationFee" />
@@ -940,7 +952,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 										EventStatus.COMPLETE,
 										EventStatus.CANCELLED,
 										EventStatus.INFORMATIONONLY,
-								  ]
+									]
 								: [EventStatus.DRAFT]
 						}
 						defaultValue={EventStatus.DRAFT}
@@ -1096,7 +1108,6 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					},
 				],
 			};
-			this.props.memberList.push(result.value);
 			this.props.onEventChange(event, false);
 			this.setState({ addingPOCbyID: false, addPOCbyID: null });
 		}

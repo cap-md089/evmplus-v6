@@ -1,0 +1,39 @@
+{
+	"name": "Node.js & TypeScript",
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {
+			"moby": true,
+			"azureDnsAutoDetection": true,
+			"installDockerBuildx": true,
+			"version": "20.10",
+			"dockerDashComposeVersion": "v2"
+		},
+		"ghcr.io/devcontainers-contrib/features/lerna-npm:1": {
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers-contrib/features/prettier:1" : {
+			"version": "latest"
+		}
+	},
+
+	"forwardPorts": [
+		3000,
+		3001
+	],
+
+	"postCreateCommand": "docker-compose -f docker-compose.dev.yml run dev-setup",
+	"postStartCommand": "docker-compose -f docker-compose.dev.yml run --service-ports client_dev_server",
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"esbenp.prettier-vscode",
+				"dbaeumer.vscode-eslint"
+			]
+		}
+	}
+
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+}

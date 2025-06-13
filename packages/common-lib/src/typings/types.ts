@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import type { Schema, Session } from '@mysql/xdevapi';
@@ -307,6 +307,11 @@ export namespace Permissions {
 	}
 
 	export enum CreateEventAccount {
+		NO = 'No',
+		YES = 'Yes',
+	}
+
+	export enum MemberSearch {
 		NO = 'No',
 		YES = 'Yes',
 	}
@@ -961,9 +966,13 @@ export interface NewEventObject {
 	 */
 	transportationDescription: string;
 	/**
-	 * The uniforms that can be worn
+	 * The uniforms that can be worn by Senior Members
 	 */
-	uniform: SimpleMultCheckboxReturn;
+	smuniform: SimpleMultCheckboxReturn;
+	/**
+	 * The uniforms that can be worn by Cadets
+	 */
+	cuniform: SimpleMultCheckboxReturn;
 	/**
 	 * How many people we want at the event
 	 */
@@ -1540,6 +1549,10 @@ export interface CAPSquadronMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 /**
@@ -1621,6 +1634,10 @@ export interface CAPEventMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPGroupMemberPermissions {
@@ -1687,6 +1704,10 @@ export interface CAPGroupMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPWingMemberPermissions {
@@ -1757,6 +1778,10 @@ export interface CAPWingMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPRegionMemberPermissions {
@@ -1827,6 +1852,10 @@ export interface CAPRegionMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export type MemberPermissions =
@@ -2043,7 +2072,7 @@ export interface NewShortCAPUnitDutyPosition {
 }
 
 /**
- * Short duty positions for use by EvMPlus.org
+ * Short duty positions for use by Event Manager
  */
 export interface ShortCAPUnitDutyPosition extends NewShortCAPUnitDutyPosition {
 	/**
@@ -2068,6 +2097,10 @@ export interface ShortNHQDutyPosition {
 	 * Represents which organization it is for
 	 */
 	orgid: number;
+	/**
+	 * Whether or not this duty position is an assitant duty position
+	 */
+	assistant: boolean;
 	/**
 	 * Signifies this is an official duty from CAPNHQ
 	 */
@@ -3450,7 +3483,7 @@ export interface PasswordResetTokenInformation {
 
 export interface DiscordAccount {
 	/**
-	 * The ID of the member we are associating with a EvMPlus.org account
+	 * The ID of the member we are associating with a Event Manager account
 	 */
 	discordID: string;
 	/**
@@ -3474,6 +3507,7 @@ export interface ServerConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 
@@ -3497,6 +3531,8 @@ export interface EnvServerConfiguration {
 
 	NODE_ENV: string;
 
+	DISCORD_KEEPALIVE_USERID?: string;
+
 	DRIVE_STORAGE_PATH: string;
 
 	HOST_NAME: string;
@@ -3517,6 +3553,7 @@ export interface RawServerConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 
@@ -3543,6 +3580,7 @@ export interface CLIConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 }
@@ -3558,6 +3596,8 @@ export interface EnvCLIConfiguration {
 	HOST_NAME: string;
 
 	NODE_ENV: string;
+
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 }
@@ -3577,6 +3617,7 @@ export interface RawCLIConfiguration {
 	NODE_ENV: string;
 
 	DISCORD_CLIENT_TOKEN?: string;
+	DISCORD_KEEPALIVE_USERID?: string;
 
 	DRIVE_STORAGE_PATH: string;
 }

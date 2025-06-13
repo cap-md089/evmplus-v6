@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -28,11 +28,11 @@ import {
 	effectiveManageEventPermissionForEvent,
 	Member,
 	NewAttendanceRecord,
+	Permissions,
 	RawResolvedEventObject,
 	RegistryValues,
 	SuccessfulSigninReturn,
 } from 'common-lib';
-import { DateTime } from 'luxon';
 import React, { Component } from 'react';
 import { FetchAPIProps, withFetchApi } from '../globals';
 import AttendanceForm from './forms/usable-forms/AttendanceForm';
@@ -101,7 +101,8 @@ export class AttendanceItemView extends Component<
 	}
 
 	public render = (): JSX.Element =>
-		effectiveManageEventPermissionForEvent(this.props.member)(this.props.owningEvent) ||
+		effectiveManageEventPermissionForEvent(this.props.member)(this.props.owningEvent) ===
+			Permissions.ManageEvent.FULL ||
 		(areMembersTheSame(this.props.member)(this.props.attendanceRecord.memberID) &&
 			Date.now() < this.props.pickupDateTime) ? (
 			<AttendanceForm
@@ -133,14 +134,30 @@ export class AttendanceItemView extends Component<
 				{this.props.attendanceRecord.shiftTime !== null ? (
 					<>
 						Arrival time:{' '}
-						{DateTime.fromMillis(
+						{new Date(
 							this.props.attendanceRecord.shiftTime.arrivalTime,
-						).toLocaleString()}
+						).toLocaleString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+							hour: '2-digit',
+							minute: '2-digit',
+							second: '2-digit',
+							timeZoneName: 'short',
+						})}
 						<br />
 						Departure time:{' '}
-						{DateTime.fromMillis(
+						{new Date(
 							this.props.attendanceRecord.shiftTime.departureTime,
-						).toLocaleString()}
+						).toLocaleString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric',
+							hour: '2-digit',
+							minute: '2-digit',
+							second: '2-digit',
+							timeZoneName: 'short',
+						})}
 					</>
 				) : null}
 				{this.props.attendanceRecord.customAttendanceFieldValues.map(field => (

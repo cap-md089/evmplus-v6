@@ -1,30 +1,33 @@
+/* eslint-disable jsdoc/check-alignment */
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
+import { Cursor, Schema } from '@mysql/xdevapi';
 import axios from 'axios';
 import {
 	AccountObject,
+	always,
 	areMembersTheSame,
 	AsyncEither,
 	asyncLeft,
 	asyncRight,
+	CadetAprvStatus,
 	CadetPromotionStatus,
 	CAPAccountObject,
 	CAPExtraMemberInformation,
@@ -37,15 +40,18 @@ import {
 	get as getProp,
 	getMemberName,
 	getORGIDsFromCAPAccount,
+	identity,
 	isPartOfTeam,
 	iterFilter,
 	iterMap,
 	Maybe,
 	NHQ,
+	RawCAPSquadronAccountObject,
 	RawTeamObject,
 	ServerError,
 	ShortCAPUnitDutyPosition,
 	ShortDutyPosition,
+	ShortNHQDutyPosition,
 	stripProp,
 } from 'common-lib';
 import { createWriteStream } from 'fs';
@@ -58,6 +64,7 @@ import {
 	bindForArray,
 	collectResults,
 	collectSqlResults,
+	convertNHQDate,
 	findAndBind,
 	findAndBindC,
 } from '../../../MySQLUtil';
@@ -185,29 +192,31 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 						}
 					});
 
-				const dutyPositions: ShortDutyPosition[] = [
-					...orgDutyPositions
+				const dutyPositions = [
+					...(orgDutyPositions
 						.filter(({ CAPID }) => CAPID === member.CAPID)
 						.map(dp => ({
 							duty: dp.Duty,
 							date: +DateTime.fromISO(dp.DateMod),
 							orgid: dp.ORGID,
+							assistant: dp.Asst === 1,
 							type: 'NHQ' as const,
-						})),
-					...orgCadetDutyPositions
+						})) as ShortNHQDutyPosition[]),
+					...(orgCadetDutyPositions
 						.filter(({ CAPID }) => CAPID === member.CAPID)
 						.map(dp => ({
 							duty: dp.Duty,
 							date: +DateTime.fromISO(dp.DateMod),
 							orgid: dp.ORGID,
+							assistant: dp.Asst === 1,
 							type: 'NHQ' as const,
-						})),
-					...extraInfo.temporaryDutyPositions.map(dp => ({
+						})) as ShortNHQDutyPosition[]),
+					...(extraInfo.temporaryDutyPositions.map(dp => ({
 						duty: dp.Duty,
 						date: dp.assigned,
 						expires: dp.validUntil,
 						type: 'CAPUnit' as const,
-					})),
+					})) as ShortCAPUnitDutyPosition[]),
 				];
 
 				return {
@@ -294,6 +303,7 @@ const getNHQDutyPositions = (schema: Schema) => (orgids: number[]) => (
 				duty: item.Duty,
 				date: +DateTime.fromISO(item.DateMod),
 				orgid: item.ORGID,
+				assistant: item.Asst === 1,
 				type: 'NHQ' as const,
 			})),
 		)
@@ -429,9 +439,9 @@ export const downloadCAPWATCHFile = (
 	const today = new Date();
 	const fileName = join(
 		downloadPath,
-		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${
-			today.getMonth() + 1
-		}-${today.getDate()}.zip`,
+		`CAPWATCH-${capid}-${orgid}-${today.getFullYear()}-${(today.getMonth() + 1)
+			.toString()
+			.padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}.zip`,
 	);
 
 	const encodedAuth = Buffer.from(`${capid}:${password}`, 'ascii').toString('base64');
@@ -470,6 +480,603 @@ export const downloadCAPWATCHFile = (
 		.map(([filepath]) => filepath);
 };
 
+/**
+ * __        ___    ____  _   _ ___ _   _  ____
+ * \ \      / / \  |  _ \| \ | |_ _| \ | |/ ___|
+ *  \ \ /\ / / _ \ | |_) |  \| || ||  \| | |  _
+ *   \ V  V / ___ \|  _ <| |\  || || |\  | |_| |
+ *    \_/\_/_/   \_\_| \_\_| \_|___|_| \_|\____|
+ *
+ * The following code was written in a time crunch and to be optimized. It is not optimized
+ * for human readability, and has multiple sections which are highly dependent on each other,
+ * with phantom mental states and dependence on the order of operations being executed with no
+ * assertions such as if such dependencies are met, and the cherry on top is that all the
+ * values from the database are JSON encoded with little type safety. We'll see how far this
+ * code goes...
+ */
+
+/**
+ * SQL commands run to get the database to the right place:
+	ALTER TABLE NHQ_PL_Tasks ADD COLUMN TaskID int GENERATED ALWAYS AS (doc ->> '$.TaskID') STORED;
+	ALTER TABLE NHQ_PL_MemberTaskCredit ADD COLUMN TaskID int GENERATED ALWAYS AS (doc ->> '$.TaskID') STORED;
+	ALTER TABLE NHQ_PL_MemberTaskCredit ADD COLUMN CAPID int GENERATED ALWAYS AS (doc ->> '$.CAPID') STORED;
+	alter table NHQ_PL_Paths add column PathID int GENERATED ALWAYS AS (doc ->> '$.PathID') stored not null;
+	alter table NHQ_PL_MemberPathCredit add column CAPID int GENERATED ALWAYS AS (doc ->> '$.CAPID') stored not null;
+	alter table NHQ_PL_MemberPathCredit add column PathID int GENERATED ALWAYS AS (doc ->> '$.PathID') stored not null;
+	alter table NHQ_PL_TaskGroupAssignments add column GroupID int generated always as (doc ->> '$.GroupID') stored not null;
+	alter table NHQ_PL_TaskGroupAssignments add column TaskID int generated always as (doc ->> '$.TaskID') stored not null;
+	alter table NHQ_PL_Groups add column PathID int generated always as (doc ->> '$.PathID') stored not null;
+	alter table NHQ_PL_Groups add column GroupID int generated always as (doc ->> '$.GroupID') stored not null;
+	alter table NHQ_PL_MemberTaskCredit ADD COLUMN MemberTaskCreditID int GENERATED ALWAYS AS (doc ->> '$.MemberTaskCreditID') STORED NOT NULL;
+	create unique index MemberTaskCreditID on NHQ_PL_MemberTaskCredit (MemberTaskCreditID);
+	create index CAPID on NHQ_PL_MemberTaskCredit (CAPID);
+	create index TaskID on NHQ_PL_MemberTaskCredit (TaskID);
+	create unique index TaskID on NHQ_PL_Tasks (TaskID);
+	create index GroupID on NHQ_PL_TaskGroupAssignments (GroupID);
+	create index TaskID on NHQ_PL_TaskGroupAssignments (TaskID);
+	create index GroupID on NHQ_PL_Groups (GroupID);
+	create index PathID on NHQ_PL_Groups (PathID);
+	create unique index PathID on NHQ_PL_Paths (PathID);
+	create index CAPID on NHQ_PL_MemberPathCredit (CAPID);
+	create index PathID on NHQ_PL_MemberPathCredit (PathID);
+
+	alter table NHQ_CadetAchv add column CAPID int generated always as (doc ->> '$.CAPID') stored not null;
+	alter table NHQ_CadetAchv add column CadetAchvID int generated always as (doc ->> '$.CadetAchvID') stored not null;
+	create index CAPID on NHQ_CadetAchv (CAPID, CadetAchvID);
+	ALTER TABLE NHQ_CadetAchvAprs ADD COLUMN CAPID int GENERATED ALWAYS AS (doc ->> '$.CAPID') STORED NOT NULL;
+	alter table NHQ_CadetAchvAprs add column CadetAchvID int generated always as (doc ->> '$.CadetAchvID') stored not null;
+	create index CAPID on NHQ_CadetAchvAprs (CAPID, CadetAchvID);
+	alter table NHQ_CadetActivities ADD COLUMN Type varchar(63) GENERATED ALWAYS AS (doc ->> '$.Type') STORED;
+	alter table NHQ_CadetActivities ADD COLUMN CAPID int GENERATED ALWAYS AS (doc ->> '$.CAPID') STORED NOT NULL;
+	alter table NHQ_CadetHFZInformation ADD COLUMN HFZID int GENERATED ALWAYS AS (doc ->> '$.HFZID') STORED NOT NULL;
+	alter table NHQ_OFlight add column CAPID int GENERATED ALWAYS AS (doc ->> '$.CAPID') stored not null;
+ */
+
+const getPromotionRequirementsSql = (orgids: number[]): string => `\
+WITH
+	MEMBERS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
+		orgids,
+	)} AND doc ->> '$.Type' = 'CADET'),
+	AEROSDA AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions,
+			IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) AS PathID
+			FROM NHQ_PL_MemberTaskCredit MTC
+			INNER JOIN MEMBERS M ON M.CAPID = MTC.CAPID
+			INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
+			WHERE IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) >= 31
+					AND IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) <= 51),
+	OTHERTASKS AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions, G.PathID
+			FROM NHQ_PL_MemberTaskCredit MTC
+			INNER JOIN MEMBERS M ON M.CAPID = MTC.CAPID
+			INNER JOIN NHQ_PL_TaskGroupAssignments TGA ON MTC.TaskID = TGA.TaskID
+			INNER JOIN NHQ_PL_Groups G ON TGA.GroupID = G.GroupID
+			INNER JOIN NHQ_PL_Tasks T ON T.TaskID = MTC.TaskID
+			WHERE (PathID >= 31 AND PathID <= 51) AND
+				(MTC.TaskID < 324 OR
+				(MTC.TaskID > 324 AND MTC.TaskID < 334) OR
+				(MTC.TaskID > 339 AND MTC.TaskID < 375) OR
+				(MTC.TaskID > 375 AND MTC.TaskID < 384) OR
+				(MTC.TaskID > 391 AND MTC.TaskID < 394) OR
+				MTC.TaskID > 399)),
+	MEMBERTASKS AS (SELECT CAPID, TaskName, TaskID, Completed, PathID, AdditionalOptions FROM AEROSDA
+				UNION SELECT CAPID, TaskName, TaskID, Completed, PathID, AdditionalOptions FROM OTHERTASKS),
+	CURRENTTASKS AS (SELECT MT.CAPID, TaskName, TaskID, Completed, MT.PathID, AdditionalOptions
+					FROM MEMBERTASKS MT
+					LEFT JOIN NHQ_PL_MemberPathCredit MPC ON (MT.CAPID = MPC.CAPID AND MT.PathID = MPC.PathID)
+					WHERE MPC.CAPID IS NULL)
+SELECT CAPID, Completed, TaskName, AdditionalOptions FROM CURRENTTASKS`;
+
+const getAchvsSql = (orgids: number[]): string => `\
+WITH
+	MEMBERS AS (SELECT CAPID FROM NHQ_Member WHERE ORGID IN ${bindForArray(
+		orgids,
+	)} AND doc ->> '$.Type' = 'CADET'),
+	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 0, 1), doc -> '$.Completed' FROM NHQ_CadetActivities A
+		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
+		WHERE doc ->> '$.Type' IN ("ENCAMP", "RCLS")),
+	GES AS (SELECT A.CAPID, 2, A.doc FROM NHQ_MbrAchievements A
+		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
+		WHERE A.AchvID = 53),
+	OFLIGHT AS (SELECT O.CAPID, 3, doc FROM NHQ_OFlight O
+		INNER JOIN MEMBERS M ON M.CAPID = O.CAPID),
+	MAXPATHCREDIT AS (SELECT MPC.CAPID, 4, MPC.doc FROM NHQ_PL_MemberPathCredit MPC
+		INNER JOIN MEMBERS M ON M.CAPID = MPC.CAPID
+		WHERE MPC.doc ->> '$.MemberPathCreditID' IN (SELECT * FROM (SELECT doc ->> '$.MemberPathCreditID' FROM NHQ_PL_MemberPathCredit MPCI
+			WHERE PathID >= 31 AND PathID <= 51 AND MPCI.CAPID = MPC.CAPID
+			ORDER BY PathID DESC
+			LIMIT 1) temp_tab)),
+	LASTAPRV AS (SELECT MPC.CAPID, 5, MPC.doc FROM NHQ_PL_MemberPathCredit MPC
+		INNER JOIN MEMBERS M ON M.CAPID = MPC.CAPID
+		WHERE MPC.doc ->> '$.MemberPathCreditID' IN (SELECT * FROM (SELECT doc ->> '$.MemberPathCreditID' FROM NHQ_PL_MemberPathCredit MPCI
+			WHERE PathID >= 31 AND PathID <= 51 AND MPCI.CAPID = MPC.CAPID AND doc ->> '$.StatusID' = 8
+			ORDER BY PathID DESC
+			LIMIT 1) temp_tab)),
+	LASTHFZ AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
+		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
+		WHERE HFZ.HFZID IN (SELECT * FROM (SELECT HFZID FROM NHQ_CadetHFZInformation HFZI
+			WHERE HFZI.CAPID = HFZ.CAPID
+			ORDER BY doc ->> '$.DateTaken' DESC
+			LIMIT 1) temp_tab)),
+	LASTHFZPASS AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
+		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
+		WHERE HFZ.HFZID IN (SELECT * FROM (SELECT HFZID FROM NHQ_CadetHFZInformation HFZI
+			WHERE HFZI.CAPID = HFZ.CAPID AND HFZI.doc ->> '$.IsPassed' = 'true'
+			ORDER BY doc ->> '$.DateTaken' DESC
+			LIMIT 1) temp_tab))
+(SELECT * FROM ACTIVITIES) UNION
+(SELECT * FROM GES) UNION
+(SELECT * FROM OFLIGHT) UNION
+(SELECT * FROM MAXPATHCREDIT) UNION
+(SELECT * FROM LASTAPRV) UNION
+(SELECT * FROM LASTHFZ) UNION
+(SELECT * FROM LASTHFZPASS);`;
+
+interface AchvResultsReducersState {
+	maxApproval: { Status: CadetAprvStatus; CadetAchvID: number } | null;
+	maxApprovedApproval: NHQ.CadetAchvAprs;
+}
+
+const promotionResultReducers: Array<{
+	matches: RegExp;
+	update: (
+		status: CadetPromotionStatus,
+		completion: string,
+		task: string,
+		additionalOptions: string,
+		capid: number,
+	) => CadetPromotionStatus;
+}> = [
+	{
+		matches: /Cadet Interactive Leadership Module \d+$/,
+		update: (status, completion, task, addtlOpts) => {
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
+
+			if (!scoreResult) {
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						LeadLabDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
+			}
+
+			return {
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					LeadLabDateP: convertNHQDate(completion).toISOString(),
+					LeadLabScore: parseInt(scoreResult[1], 10),
+				},
+			};
+		},
+	},
+	{
+		matches: /Drill and Ceremonies/,
+		update: (status, completion, task, addtlOpts) => {
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
+
+			if (!scoreResult) {
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						DrillDate: convertNHQDate(completion).toISOString(),
+					},
+				};
+			}
+
+			return {
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					DrillDate: convertNHQDate(completion).toISOString(),
+					DrillScore: parseInt(scoreResult[1], 10),
+				},
+			};
+		},
+	},
+	{
+		matches: /Learn to Lead/,
+		update: (status, completion, task, addtlOpts) => {
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
+
+			if (!scoreResult) {
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						LeadLabDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
+			}
+
+			return {
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					LeadLabDateP: convertNHQDate(completion).toISOString(),
+					LeadLabScore: parseInt(scoreResult[1], 10),
+				},
+			};
+		},
+	},
+	{
+		matches: /Cadet Oath/,
+		update: status => ({
+			...status,
+			CurrentCadetAchv: {
+				...status.CurrentCadetAchv,
+				CadetOath: true,
+			},
+		}),
+	},
+	{
+		matches: /(Character Forum Participation|Cadet Wingman Course)/,
+		update: (status, completion) => ({
+			...status,
+			CurrentCadetAchv: {
+				...status.CurrentCadetAchv,
+				MoralLDateP: convertNHQDate(completion).toISOString(),
+			},
+		}),
+	},
+	{
+		matches: /Aerospace Dimensions/,
+		update: (status, completion, task, addtlOpts) => {
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const aeMod = task.match(/Aerospace Dimensions (\d)/);
+
+			if (!scoreResult || !aeMod) {
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						AEDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
+			}
+
+			return {
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					AEDateP: convertNHQDate(completion).toISOString(),
+					AEScore: parseInt(scoreResult[1], 10),
+					AEMod: parseInt(aeMod[1], 10),
+				},
+			};
+		},
+	},
+	{
+		matches: /Journey of Flight Test/,
+		update: (status, completion, task, addtlOpts) => {
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const aeTest = task.match(/Journey of Flight Test (\d)/);
+
+			if (!scoreResult || !aeTest) {
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						AEDateP: convertNHQDate(completion).toISOString(),
+					},
+				};
+			}
+
+			return {
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					AEDateP: convertNHQDate(completion).toISOString(),
+					AEScore: parseInt(scoreResult[1], 10),
+					AETest: parseInt(aeTest[1], 10),
+				},
+			};
+		},
+	},
+	{
+		matches: /SDA Technical Writing Assignment/,
+		update: (status, completion, _, addtlOpts) => {
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const scoreResult = addtlOpts.match(/ScoreResult\s*:\s*(\d+)/);
+			// eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
+			const twa = addtlOpts.match(/ - (.*)$/);
+
+			if (!scoreResult || !twa) {
+				return {
+					...status,
+					CurrentCadetAchv: {
+						...status.CurrentCadetAchv,
+						TechnicalWritingAssignmentDate: convertNHQDate(completion).toISOString(),
+					},
+				};
+			}
+
+			return {
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					TechnicalWritingAssignmentDate: convertNHQDate(completion).toISOString(),
+					TechnicalWritingAssignment: twa[1],
+				},
+			};
+		},
+	},
+	{
+		matches: /Active Participation/,
+		update: status => ({
+			...status,
+			CurrentCadetAchv: {
+				...status.CurrentCadetAchv,
+				ActivePart: true,
+			},
+		}),
+	},
+	{
+		matches: /Leadership Expectations/,
+		update: (status, completion) => ({
+			...status,
+			CurrentCadetAchv: {
+				...status.CurrentCadetAchv,
+				StaffServiceDate: convertNHQDate(completion).toISOString(),
+			},
+		}),
+	},
+	{
+		matches: /SDA Oral Presentation/,
+		update: (status, completion) => ({
+			...status,
+			CurrentCadetAchv: {
+				...status.CurrentCadetAchv,
+				OralPresentationDate: convertNHQDate(completion).toISOString(),
+			},
+		}),
+	},
+];
+
+const reducePromotionResults = (
+	[status, state]: [CadetPromotionStatus, AchvResultsReducersState],
+	[capid, completion, task, addtlOpts]: [number, string, string, string],
+): [CadetPromotionStatus, AchvResultsReducersState] => {
+	const func = promotionResultReducers.find(({ matches }) => matches.test(task));
+	return [(func?.update ?? identity)(status, completion, task, addtlOpts, capid), state];
+};
+
+const achvResultsReducers: Array<
+	(
+		statusState: [status: CadetPromotionStatus, state: AchvResultsReducersState],
+		res: any,
+	) => [CadetPromotionStatus, AchvResultsReducersState]
+> = [
+	(
+		// encampment
+		[status, state],
+		res,
+	) => [{ ...status, EncampDate: Maybe.some(+new Date(res)) }, state],
+	(
+		// rcls
+		[status, state],
+		res,
+	) => [{ ...status, RCLSDate: Maybe.some(+new Date(res)) }, state],
+	(
+		// ges
+		[status, state],
+		res,
+	) => [{ ...status, ges: Maybe.some(res as NHQ.MbrAchievements) }, state],
+	(
+		// oflights
+		[status, state],
+		res,
+	) => [
+		{
+			...status,
+			oflights: [...status.oflights, res as NHQ.OFlight],
+		},
+		state,
+	],
+	(
+		// max path credit
+		[status, state],
+		res,
+	) => {
+		const { PathID, StatusID } = res as NHQ.PL.MemberPathCredit;
+
+		const AchvID = PathID - 30;
+		const STATUS_PENDING = 26;
+
+		return [
+			{
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+					CadetAchvID: StatusID === STATUS_PENDING ? AchvID - 1 : AchvID,
+				},
+				CurrentCadetGradeID: StatusID === STATUS_PENDING ? AchvID - 1 : AchvID,
+				NextCadetGradeID: StatusID === STATUS_PENDING ? AchvID : AchvID + 1,
+				NextCadetAchvID: StatusID === STATUS_PENDING ? AchvID : AchvID + 1,
+				MaxAprvStatus: StatusID === STATUS_PENDING ? 'PND' : 'INC',
+			},
+			state,
+		];
+	},
+	(
+		// max aprv credit
+		[status, state],
+		res,
+	) => {
+		const { Completed } = res as NHQ.PL.MemberPathCredit;
+
+		return [
+			{
+				...status,
+				CurrentCadetAchv: {
+					...status.CurrentCadetAchv,
+				},
+				LastAprvDate: Maybe.some(+convertNHQDate(Completed)),
+			},
+			state,
+		];
+	},
+	(
+		// hfz
+		[status, state],
+		res,
+	) => [
+		{
+			...status,
+			HFZRecord: Maybe.some(res as NHQ.CadetHFZInformation),
+		},
+		state,
+	],
+];
+
+export const getUnitPromotionRequirements = (schema: Schema) => (
+	account: RawCAPSquadronAccountObject,
+): ServerEither<{ [CAPID: number]: CadetPromotionStatus }> =>
+	asyncRight(
+		schema.getSession(),
+		errorGenerator('Could not get promotion requirements for the unit'),
+	)
+		.map(session =>
+			session
+				.sql('USE ' + schema.getName())
+				.execute()
+				.then(always(session)),
+		)
+		.flatMap(session =>
+			AsyncEither.All([
+				asyncRight<ServerError, Cursor<[number, string, string, string]>>(
+					session
+						.sql(getPromotionRequirementsSql(account.orgIDs))
+						.bind(account.orgIDs)
+						.execute(),
+					errorGenerator('Could not load PL data'),
+				),
+				asyncRight<ServerError, Cursor<[number, number, string]>>(
+					session.sql(getAchvsSql(account.orgIDs)).bind(account.orgIDs).execute(),
+					errorGenerator('Could not load cadet achievement data'),
+				),
+			]),
+		)
+		.map(([plResults, achvResults]) =>
+			plResults.fetchAll().reduce(
+				(promotionMap, [CAPID, Completion, Task, addtlOpts]) =>
+					promotionMap[CAPID]
+						? {
+								...promotionMap,
+								[CAPID]: reducePromotionResults(promotionMap[CAPID], [
+									CAPID,
+									Completion,
+									Task,
+									addtlOpts,
+								]),
+						  }
+						: promotionMap,
+				achvResults.fetchAll().reduce(
+					(promotionMap, [CAPID, achvType, achvResult]) => ({
+						...promotionMap,
+						[CAPID]: achvResultsReducers[achvType](
+							promotionMap[CAPID] ?? [
+								emptyCadetPromotionStatus,
+								{ maxApproval: null },
+							],
+							achvResult,
+						),
+					}),
+					{} as {
+						[CAPID: number]: [CadetPromotionStatus, AchvResultsReducersState];
+					},
+				),
+			),
+		)
+		.map(
+			results =>
+				Object.fromEntries(
+					Object.entries(results).map(([key, value]) => [key, value[0]]),
+				) as { [CAPID: number]: CadetPromotionStatus },
+		);
+
+const getPromotionRequirementsForMemberSql = `\
+WITH
+	MEMBERS AS (SELECT ? AS CAPID FROM dual),
+	AEROSDA AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions,
+			IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) AS PathID
+			FROM NHQ_PL_MemberTaskCredit MTC
+			INNER JOIN MEMBERS M ON M.CAPID = MTC.CAPID
+			INNER JOIN NHQ_PL_Tasks T ON MTC.TaskID = T.TaskID
+			WHERE IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) >= 31
+					AND IF((LEFT(AdditionalOptions, 12) = '{PunchedPath'), CAST(SUBSTR(AdditionalOptions, 14, 2) AS UNSIGNED), 0) <= 51),
+	OTHERTASKS AS (SELECT MemberTaskCreditID, TaskName, MTC.TaskID, MTC.CAPID, Completed, AdditionalOptions, G.PathID
+			FROM NHQ_PL_MemberTaskCredit MTC
+			INNER JOIN MEMBERS M ON M.CAPID = MTC.CAPID
+			INNER JOIN NHQ_PL_TaskGroupAssignments TGA ON MTC.TaskID = TGA.TaskID
+			INNER JOIN NHQ_PL_Groups G ON TGA.GroupID = G.GroupID
+			INNER JOIN NHQ_PL_Tasks T ON T.TaskID = MTC.TaskID
+			WHERE (PathID >= 31 AND PathID <= 51) AND
+				(MTC.TaskID < 324 OR
+				(MTC.TaskID > 324 AND MTC.TaskID < 334) OR
+				(MTC.TaskID > 339 AND MTC.TaskID < 375) OR
+				(MTC.TaskID > 375 AND MTC.TaskID < 384) OR
+				(MTC.TaskID > 391 AND MTC.TaskID < 394) OR
+				MTC.TaskID > 399)),
+	MEMBERTASKS AS (SELECT CAPID, TaskName, TaskID, Completed, PathID, AdditionalOptions FROM AEROSDA
+				UNION SELECT CAPID, TaskName, TaskID, Completed, PathID, AdditionalOptions FROM OTHERTASKS),
+	CURRENTTASKS AS (SELECT MT.CAPID, TaskName, TaskID, Completed, MT.PathID, AdditionalOptions
+					FROM MEMBERTASKS MT
+					LEFT JOIN NHQ_PL_MemberPathCredit MPC ON (MT.CAPID = MPC.CAPID AND MT.PathID = MPC.PathID)
+					WHERE MPC.CAPID IS NULL)
+SELECT CAPID, Completed, TaskName, AdditionalOptions FROM CURRENTTASKS`;
+
+const getAchvsForMemberSql = `\
+WITH
+	MEMBERS AS (SELECT ? AS CAPID FROM dual),
+	ACTIVITIES AS (SELECT A.CAPID, IF(doc ->> '$.Type' = "ENCAMP", 0, 1), doc -> '$.Completed' FROM NHQ_CadetActivities A
+		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
+		WHERE doc ->> '$.Type' IN ("ENCAMP", "RCLS")),
+	GES AS (SELECT A.CAPID, 2, A.doc FROM NHQ_MbrAchievements A
+		INNER JOIN MEMBERS M ON M.CAPID = A.CAPID
+		WHERE A.AchvID = 53),
+	OFLIGHT AS (SELECT O.CAPID, 3, doc FROM NHQ_OFlight O
+		INNER JOIN MEMBERS M ON M.CAPID = O.CAPID),
+	MAXPATHCREDIT AS (SELECT MPC.CAPID, 4, MPC.doc FROM NHQ_PL_MemberPathCredit MPC
+		INNER JOIN MEMBERS M ON M.CAPID = MPC.CAPID
+		WHERE MPC.doc ->> '$.MemberPathCreditID' IN (SELECT * FROM (SELECT doc ->> '$.MemberPathCreditID' FROM NHQ_PL_MemberPathCredit MPCI
+			WHERE PathID >= 31 AND PathID <= 51 AND MPCI.CAPID = MPC.CAPID
+			ORDER BY PathID DESC
+			LIMIT 1) temp_tab)),
+	LASTAPRV AS (SELECT MPC.CAPID, 5, MPC.doc FROM NHQ_PL_MemberPathCredit MPC
+		INNER JOIN MEMBERS M ON M.CAPID = MPC.CAPID
+		WHERE MPC.doc ->> '$.MemberPathCreditID' IN (SELECT * FROM (SELECT doc ->> '$.MemberPathCreditID' FROM NHQ_PL_MemberPathCredit MPCI
+			WHERE PathID >= 31 AND PathID <= 51 AND MPCI.CAPID = MPC.CAPID AND doc ->> '$.StatusID' = 8
+			ORDER BY PathID DESC
+			LIMIT 1) temp_tab)),
+	LASTHFZ AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
+		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
+		WHERE HFZ.HFZID IN (SELECT * FROM (SELECT HFZID FROM NHQ_CadetHFZInformation HFZI
+			WHERE HFZI.CAPID = HFZ.CAPID
+			ORDER BY doc ->> '$.DateTaken' DESC
+			LIMIT 1) temp_tab)),
+	LASTHFZPASS AS (SELECT HFZ.CAPID, 6, HFZ.doc FROM NHQ_CadetHFZInformation HFZ
+		INNER JOIN MEMBERS M ON M.CAPID = HFZ.CAPID
+		WHERE HFZ.HFZID IN (SELECT * FROM (SELECT HFZID FROM NHQ_CadetHFZInformation HFZI
+			WHERE HFZI.CAPID = HFZ.CAPID AND HFZI.doc ->> '$.IsPassed' = 'true'
+			ORDER BY doc ->> '$.DateTaken' DESC
+			LIMIT 1) temp_tab))
+(SELECT * FROM ACTIVITIES) UNION
+(SELECT * FROM GES) UNION
+(SELECT * FROM OFLIGHT) UNION
+(SELECT * FROM MAXPATHCREDIT) UNION
+(SELECT * FROM LASTAPRV) UNION
+(SELECT * FROM LASTHFZ) UNION
+(SELECT * FROM LASTHFZPASS);`;
+
 export const getCadetPromotionRequirements = (schema: Schema) => (
 	member: CAPNHQMemberObject,
 ): ServerEither<CadetPromotionStatus> =>
@@ -479,177 +1086,62 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 				code: 400,
 				message: 'Cannot get promotion requirements for a senior member',
 		  })
-		: asyncRight(
-				Promise.all([
-					collectResults(
-						findAndBind(schema.getCollection<NHQ.CadetAchv>('NHQ_CadetAchv'), {
-							CAPID: member.id,
-						})
-							.sort('CadetAchvID DESC')
-							.limit(1),
-					),
-					collectResults(
-						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
-							CAPID: member.id,
-							Status: 'APR',
-						})
-							.sort('CadetAchvID DESC')
-							.limit(1),
-					),
-					collectResults(
-						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
-							CAPID: member.id,
-							Status: 'PND',
-						})
-							.sort('CadetAchvID DESC')
-							.limit(1),
-					),
-					collectResults(
-						findAndBind(schema.getCollection<NHQ.CadetAchvAprs>('NHQ_CadetAchvAprs'), {
-							CAPID: member.id,
-						})
-							.sort('CadetAchvID DESC')
-							.limit(1),
-					),
-					collectResults(
-						findAndBind(
-							schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'),
-							{
-								CAPID: member.id,
-								Type: 'ENCAMP',
-							},
-						),
-					),
-					collectResults(
-						findAndBind(
-							schema.getCollection<NHQ.CadetActivities>('NHQ_CadetActivities'),
-							{
-								CAPID: member.id,
-								Type: 'RCLS',
-							},
-						),
-					),
-					collectResults(
-						findAndBind(
-							schema.getCollection<NHQ.CadetHFZInformation>(
-								'NHQ_CadetHFZInformation',
-							),
-							{
-								CAPID: member.id,
-							},
-						).sort('HFZID DESC'),
-					),
-					collectResults(
-						findAndBind(
-							schema.getCollection<NHQ.MbrAchievements>('NHQ_MbrAchievements'),
-							{
-								CAPID: member.id,
-								AchvID: 53,
-							},
-						),
-					),
-					collectResults(
-						findAndBind(schema.getCollection<NHQ.OFlight>('NHQ_OFlight'), {
-							CAPID: member.id,
-						}),
-					),
-				]),
-				errorGenerator('Could not load promotion requirements'),
-		  )
-				.map(
-					([
-						maxAchv,
-						maxApprovedApproval,
-						maxPendingApproval,
-						maxApproval,
-						encampResults,
-						rclsResults,
-						HFZ,
-						ges,
-						oflights,
-					]) =>
-						[
-							maxAchv.length === 1
-								? maxAchv[0]
-								: { ...emptyCadetAchv, CAPID: member.id },
-							maxApprovedApproval.length === 1
-								? maxApprovedApproval[0]
-								: { ...emptyCadetAchvAprApr, CAPID: member.id },
-							maxPendingApproval.length === 1
-								? maxPendingApproval[0]
-								: { ...emptyCadetAchvAprPnd, CAPID: member.id },
-							maxApproval,
-							encampResults,
-							rclsResults,
-							HFZ,
-							ges,
-							oflights,
-						] as const,
+		: asyncRight(schema.getSession(), errorGenerator('Could not load promotion requirements'))
+				.map(session =>
+					session
+						.sql('USE ' + schema.getName())
+						.execute()
+						.then(always(session)),
 				)
-				/**
-				 * NextCadetAchvID - The CadetAchvEnum associated with the achievement elements
-				 * 		the cadet needs to perform for their next promotion
-				 * CurrentCadetAchv - The current CadetAchvEnum for the cadet's present grade
-				 * CurrentAprvStatus - PND?
-				 *
-				 * States:
-				 * Brand new cadet - No achievement records
-				 * Partial achievement record = CadetAchv record and a CadetAchvAprs INC record at the cadet's next grade
-				 * Complete achievement record = CadetAchv record and a CadetAchvAprs PND record at the cadet's next grade - Leadership locked
-				 * Approved achievement record = CadetAchv record and a CadetAchvAprs APR record at the cadet's next grade - Leadership unlocked
-				 *
-				 */
-				.map<CadetPromotionStatus>(
-					([
-						maxAchv,
-						maxApprovedApproval,
-						maxPendingApproval,
-						maxApproval,
-						encampResults,
-						rclsResults,
-						HFZ,
-						ges,
-						oflights,
-					]) => ({
-						CurrentCadetAchv: maxAchv, // this is the achievement the cadet is pursuing (next higher grade)
-						CurrentCadetGradeID: maxApprovedApproval.CadetAchvID,
-						// NextCadetGradeID: 1 === 1 ? 1 : maxPendingApproval.CadetAchvID,
-						NextCadetGradeID:
-							maxApproval.length !== 1
-								? 1
-								: maxApproval[0]?.CadetAchvID === maxApprovedApproval.CadetAchvID
-								? maxApproval[0]?.CadetAchvID + 1
-								: maxApprovedApproval.CadetAchvID === 0 &&
-								  maxPendingApproval.CadetAchvID === 0
-								? 1
-								: maxPendingApproval.CadetAchvID > 0
-								? 23
-								: maxApproval[0]?.CadetAchvID,
-						// NextCadetAchvID: 2,
-						NextCadetAchvID:
-							maxApprovedApproval.CadetAchvID === 0
-								? 1
-								: maxApproval[0]?.CadetAchvID === maxApprovedApproval.CadetAchvID
-								? maxApproval[0]?.CadetAchvID + 1
-								: maxApproval[0]?.CadetAchvID,
-						MaxAprvStatus: maxApproval[0]?.Status ?? 'INC', // this is the approval status for the next achivement the cadet is pursuing
-						LastAprvDate: Maybe.map<NHQ.CadetAchvAprs, number>(
-							aprv => +new Date(aprv.DateMod),
-						)(Maybe.fromValue(maxApprovedApproval)),
-						EncampDate: Maybe.map<NHQ.CadetActivities, number>(
-							acti => +new Date(acti.Completed),
-						)(Maybe.fromValue(encampResults[0])),
-						RCLSDate: Maybe.map<NHQ.CadetActivities, number>(
-							acti => +new Date(acti.Completed),
-						)(Maybe.fromValue(rclsResults[0])),
-						HFZRecord: Maybe.fromValue(
-							maxAchv.CadetAchvID < 4
-								? HFZ[0]
-								: HFZ.find(record => record.IsPassed) ?? HFZ[0],
+				.flatMap(session =>
+					AsyncEither.All([
+						asyncRight<ServerError, Cursor<[number, string, string, string]>>(
+							session
+								.sql(getPromotionRequirementsForMemberSql)
+								.bind([member.id])
+								.execute(),
+							errorGenerator('Could not load PL data'),
 						),
-						ges: Maybe.fromValue(ges[0]),
-						oflights,
-					}),
+						asyncRight<ServerError, Cursor<[number, number, string]>>(
+							session.sql(getAchvsForMemberSql).bind([member.id]).execute(),
+							errorGenerator('Could not load cadet achievement data'),
+						),
+					]),
+				)
+				.map<CadetPromotionStatus>(
+					([plResults, achvResults]) =>
+						plResults.fetchAll().reduce(
+							(promotionMap, [CAPID, Completion, Task, addtlOpts]) =>
+								promotionMap[CAPID]
+									? {
+											...promotionMap,
+											[CAPID]: reducePromotionResults(promotionMap[CAPID], [
+												CAPID,
+												Completion,
+												Task,
+												addtlOpts,
+											]),
+									  }
+									: promotionMap,
+							achvResults.fetchAll().reduce(
+								(promotionMap, [CAPID, achvType, achvResult]) => ({
+									...promotionMap,
+									[CAPID]: achvResultsReducers[achvType](
+										promotionMap[CAPID] ?? [
+											emptyCadetPromotionStatus,
+											{ maxApproval: null },
+										],
+										achvResult,
+									),
+								}),
+								{} as {
+									[CAPID: number]: [
+										CadetPromotionStatus,
+										AchvResultsReducersState,
+									];
+								},
+							),
+						)[member.id][0],
 				);
 
 export const emptyCadetAchv: NHQ.CadetAchv = {
@@ -715,4 +1207,18 @@ export const emptyCadetAchvAprPnd: NHQ.CadetAchvAprs = {
 	FirstUsr: '',
 	DateCreated: '1900-01-01T05:00:00.000Z',
 	PrintedCert: false,
+};
+
+export const emptyCadetPromotionStatus: CadetPromotionStatus = {
+	CurrentCadetAchv: emptyCadetAchv,
+	CurrentCadetGradeID: 0,
+	NextCadetGradeID: 1,
+	NextCadetAchvID: 1,
+	MaxAprvStatus: 'INC',
+	LastAprvDate: Maybe.none(),
+	EncampDate: Maybe.none(),
+	RCLSDate: Maybe.none(),
+	HFZRecord: Maybe.none(),
+	oflights: [],
+	ges: Maybe.none(),
 };

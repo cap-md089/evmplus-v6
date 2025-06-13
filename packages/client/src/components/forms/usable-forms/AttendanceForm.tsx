@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -51,6 +51,7 @@ import SimpleForm, {
 	TextBox,
 	TextInput,
 } from '../SimpleForm';
+import './AttendanceForm.css';
 
 const clamp = (min: number, max: number, input: number): number =>
 	Math.max(min, Math.min(max, input));
@@ -178,7 +179,9 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 					),
 				},
 				errorSaving: false,
-				usePartTime: false,
+				usePartTime:
+					props.record.shiftTime.arrivalTime !== props.event.meetDateTime ||
+					props.record.shiftTime.departureTime !== props.event.pickupDateTime,
 				saving: false,
 				deleting: false,
 			};
@@ -243,8 +246,8 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 							? 'Updating...'
 							: 'Signing up...'
 						: !!this.props.record
-						? 'Update information'
-						: 'Sign up',
+							? 'Update information'
+							: 'Sign up',
 					disabled: this.state.saving || this.state.deleting,
 				}}
 			>
@@ -491,6 +494,19 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 			};
 		}
 
+		if (shiftTime) {
+			shiftTime.arrivalTime = clamp(
+				this.props.event.meetDateTime,
+				this.props.event.pickupDateTime,
+				shiftTime.arrivalTime,
+			);
+			shiftTime.departureTime = clamp(
+				this.props.event.meetDateTime,
+				this.props.event.pickupDateTime,
+				shiftTime.departureTime,
+			);
+		}
+
 		this.setState({
 			attendance: {
 				comments: attendanceSignup.comments,
@@ -536,7 +552,7 @@ export class AttendanceForm extends React.Component<AttendanceFormProps, Attenda
 						this.props.event.pickupDateTime,
 						shiftTime.departureTime,
 					),
-			  }
+				}
 			: null;
 
 		const newRecord: NewAttendanceRecord = {

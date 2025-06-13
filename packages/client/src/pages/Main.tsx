@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -68,6 +68,8 @@ export default class Main extends Page<PageProps, MainState> {
 	};
 
 	public async componentDidMount(): Promise<void> {
+		this.props.deleteReduxState();
+		
 		const links: SideNavigationItem[] = [
 			{
 				target: '/team',
@@ -182,11 +184,17 @@ export default class Main extends Page<PageProps, MainState> {
 								<br />
 								<strong>Location</strong>: {this.state.nextEvent.value.meetLocation}
 								<br />
-								<strong>Uniform of the day</strong>:{' '}
+								<strong>SM Uniform</strong>:{' '}
 								{pipe(
-									M.map(uniform => <>{uniform}</>),
-									M.orSome(<i>No uniform specified</i>),
-								)(presentMultCheckboxReturn(this.state.nextEvent.value.uniform))}
+									M.map(smuniform => <>{smuniform}</>),
+									M.orSome(<i>No SM uniform specified</i>),
+								)(presentMultCheckboxReturn(this.state.nextEvent.value.smuniform))}
+								<br />
+								<strong>Cadet Uniform</strong>:{' '}
+								{pipe(
+									M.map(cuniform => <>{cuniform}</>),
+									M.orSome(<i>No cadet uniform specified</i>),
+								)(presentMultCheckboxReturn(this.state.nextEvent.value.cuniform))}
 								<br />
 								<Link
 									to={`/eventviewer/${getURIComponent(

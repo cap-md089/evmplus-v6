@@ -2,28 +2,62 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Collection, getSession } from '@mysql/xdevapi';
+import {
+	EventType,
+	labels,
+	RawEventObject,
+	RawLinkedEvent,
+	RawRegularEventObject,
+	SimpleMultCheckboxReturn,
+	stripProp,
+} from 'common-lib';
 import 'dotenv/config';
 import { conf, generateResults } from 'server-common';
 
 process.on('unhandledRejection', up => {
 	throw up;
+});
+
+const fixRawRegularEventObject = (ev: RawRegularEventObject): RawRegularEventObject => ({
+	...(stripProp('uniform')(ev) as RawRegularEventObject),
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+	smuniform: (ev as any).uniform,
+	cuniform: {
+		labels: labels.CUniforms,
+		values: [
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[0],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[1],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[2],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[3],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[6],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[7],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			((ev as any).uniform as SimpleMultCheckboxReturn).values[8],
+		],
+	},
 });
 
 void (async () => {
@@ -68,7 +102,16 @@ void (async () => {
 	await session.startTransaction();
 
 	try {
-		await Promise.all([]);
+		await Promise.all([
+			upgradeTable(schema.getCollection<RawEventObject>('Events'), ev =>
+				ev.type === ((2 as unknown) as EventType.LINKED) || ev.type === EventType.LINKED
+					? {
+							...(ev as RawLinkedEvent),
+							type: EventType.LINKED as const,
+					  }
+					: fixRawRegularEventObject(ev as RawRegularEventObject),
+			),
+		]);
 
 		await session.commit();
 	} catch (e) {

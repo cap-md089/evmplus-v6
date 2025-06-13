@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -34,6 +34,7 @@ import {
 	stripProp,
 	toReference,
 	Permissions,
+	getDefaultMemberPermissions,
 } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
@@ -305,29 +306,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 							{
 								member: toReference(member),
 								name: getFullMemberName(member),
-								permissions: {
-									AdministerPT: 0,
-									AssignTasks: 0,
-									AssignTemporaryDutyPositions: 0,
-									AttendanceView: 0,
-									CreateNotifications: 0,
-									DownloadCAPWATCH: 0,
-									EventContactSheet: 0,
-									EventLinkList: 0,
-									FileManagement: 0,
-									FlightAssign: 0,
-									ManageEvent: 0,
-									ManageTeam: 0,
-									MusterSheet: 0,
-									ORMOPORD: 0,
-									PTSheet: 0,
-									PermissionManagement: 0,
-									PromotionManagement: 0,
-									ProspectiveMemberManagement: 0,
-									RegistryEdit: 0,
-									ScanAdd: 0,
-									ViewAccountNotifications: 0,
-								},
+								permissions: getDefaultMemberPermissions(this.props.account.type),
 							},
 						],
 				  }

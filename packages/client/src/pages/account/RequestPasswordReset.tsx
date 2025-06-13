@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Either } from 'common-lib';
@@ -53,6 +53,10 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 		this.submit = this.submit.bind(this);
 	}
 
+	public componentDidMount(): void {
+		this.props.deleteReduxState();
+	}
+
 	public render = (): JSX.Element => (
 		<SimpleForm<RequestPasswordResetFormValues>
 			values={this.state.form}
@@ -64,7 +68,7 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 				username: val => val?.length > 0,
 			}}
 			submitInfo={{
-				disabled: this.state.tryingSubmit,
+				disabled: this.state.tryingSubmit || this.state.success,
 				text: 'Request password reset',
 			}}
 		>
@@ -76,14 +80,18 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 			) : null}
 			{this.state.success ? (
 				<TextBox>
-					<p>
-						Password reset request succesful. Please check your inbox for a password
-						reset link.
-					</p>
-					<p>
-						If the email is not received in your inbox, please check your Spam or Junk
-						folder for the message
-					</p>
+					<div className="banner">
+						<p>
+							Password reset request succesful. Please check your inbox for a password
+							reset link. The email may take up to 5 minutes to appear in your inbox.
+							If nothing shows up after 5 minutes, please double check the username
+							provided
+						</p>
+						<p>
+							If the email is not received in your inbox, please check your Spam or
+							Junk folder for the message
+						</p>
+					</div>
 				</TextBox>
 			) : null}
 
@@ -132,7 +140,7 @@ export default class RequestPasswordResetForm extends Page<PageProps, RequestPas
 		const result = await fetchApi.member.account.passwordResetRequest(
 			{},
 			{
-				username: form.username,
+				username: form.username.trim(),
 				captchaToken: form.captchaToken,
 			},
 		);

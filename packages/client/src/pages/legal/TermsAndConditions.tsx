@@ -6,15 +6,15 @@ const lineHeight = {
 
 export const TermsAndConditions = (): JSX.Element => (
 	<div style={lineHeight}>
-		<h2>Welcome to EvMPlus.org</h2>
+		<h2>Welcome to Event Manager</h2>
 		<p>
 			These terms and conditions outline the rules and regulations for the use of
-			EvMPlus.org's Website.
+			Event Manager's Website.
 		</p>{' '}
 		<br />
 		<p>
 			By accessing this website you accept these terms and conditions in full. Do not continue
-			to use EvMPlus.org's website if you do not accept all of the terms and conditions stated
+			to use Event Manager's website if you do not accept all of the terms and conditions stated
 			on this page.
 		</p>
 		<p>
@@ -32,8 +32,8 @@ export const TermsAndConditions = (): JSX.Element => (
 		</p>
 		<h2>Cookies</h2>
 		<p>
-			We employ the use of cookies. By using EvMPlus.org's website you consent to the use of
-			cookies in accordance with EvMPlus.org's privacy policy.
+			We employ the use of cookies. By using Event Manager's website you consent to the use of
+			cookies in accordance with Event Manager's privacy policy.
 		</p>
 		<p>
 			Most of the modern day interactive web sites use cookies to enable us to retrieve user
@@ -42,21 +42,21 @@ export const TermsAndConditions = (): JSX.Element => (
 		</p>
 		<h2>License</h2>
 		<p>
-			Unless otherwise stated, EvMPlus.org and/or it's licensors own the intellectual property
-			rights for the presentation of all material on and downloaded from EvMPlus.org.
+			Unless otherwise stated, Event Manager and/or it's licensors own the intellectual property
+			rights for the presentation of all material on and downloaded from Event Manager.
 			eServices information, in the form of CAPWATCH file download and import actions, remain
 			the property of the Civil Air Patrol. All intellectual property rights are reserved. You
-			may view and/or print pages from EvMPlus.org in the performance of the CAP mission only
+			may view and/or print pages from Event Manager in the performance of the CAP mission only
 			and as subject to restrictions set in these terms and conditions.
 		</p>
 		<p>You must not:</p>
 		<ol>
-			<li>Republish material from EvMPlus.org</li>
-			<li>Sell, rent or sub-license material from EvMPlus.org</li>
-			<li>Reproduce, duplicate or copy material from EvMPlus.org</li>
+			<li>Republish material from Event Manager</li>
+			<li>Sell, rent or sub-license material from Event Manager</li>
+			<li>Reproduce, duplicate or copy material from Event Manager</li>
 		</ol>
 		<p>
-			Redistribute content from EvMPlus.org (unless content is specifically made for
+			Redistribute content from Event Manager (unless content is specifically made for
 			redistribution).
 		</p>
 		<h2>Hyperlinking to our Content</h2>
@@ -142,7 +142,7 @@ export const TermsAndConditions = (): JSX.Element => (
 			</li>
 		</ol>
 		<p>
-			No use of EvMPlus.org's logo or other artwork will be allowed for linking absent a
+			No use of Event Manager's logo or other artwork will be allowed for linking absent a
 			trademark license agreement.
 		</p>
 		<h2>Iframes</h2>

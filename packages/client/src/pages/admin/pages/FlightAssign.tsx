@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -102,6 +102,8 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			return;
 		}
 
+		this.props.deleteReduxState();
+		
 		this.updateTitle('Administration', 'Flight Assignment');
 		this.props.updateSideNav([
 			...this.props.registry.RankAndFile.Flights.map((flight, i) => ({
@@ -158,14 +160,14 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 
 		const unusedMembers = this.state.members
 			.map(unwrapMember)
-			.slice()
-			.filter(mem => !mem.seniorMember);
+			.slice();
+			// .filter(mem => !mem.seniorMember);
 		const flights: Array<[string, Member[]]> = [];
 
 		for (const flight of this.props.registry.RankAndFile.Flights) {
 			flights.push([flight, []]);
 			for (let i = unusedMembers.length - 1; i >= 0; i--) {
-				if (unusedMembers[i].flight === flight && !unusedMembers[i].seniorMember) {
+				if (unusedMembers[i].flight === flight) {
 					const oldMember = unusedMembers.splice(i, 1)[0];
 					flights[flights.length - 1][1].push(oldMember);
 				}
@@ -182,14 +184,6 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 
 		return (
 			<>
-				<p>
-					Duty responsibilities are indicated by a letter in front of the Cadet:
-					<ul>
-						<li>"o" for duty assignments involving Operations, </li>
-						<li>"s" for duty assignments involving Support, and</li>
-						<li>"c" for duty assignments involving CAC</li>
-					</ul>
-				</p>
 				<div>
 					{flights.map((flight, index) => (
 						<FlightRow
@@ -215,6 +209,20 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 						{this.state.saved ? <span style={saveMessage}>Saved!</span> : null}
 					</div>
 				</div>
+				<p>
+					Duty responsibilities are indicated by letters in front of the Cadet:
+					<ul>
+						<li>"cc" for duty assignment as Cadet Commander</li>
+						<li>"do" for duty assignment as Cadet Deputy Commander for Operations</li>
+						<li>"1st" for duty assignment as Cadet First Sergeant</li>
+						<li>"fc" for duty assignment as Cadet Flight Commander</li>
+						<li>"fs" for duty assignment as Cadet Flight Sergeant</li>
+						<li>"el" for duty assignment as Cadet Element Leader</li>
+						<li>"ds" for duty assignment as Cadet Deputy for Support</li>
+						<li>"s" for duty assignments involving Support</li>
+						<li>"c" for duty assignments on a Cadet Advisory Council</li>
+					</ul>
+				</p>
 			</>
 		);
 	}

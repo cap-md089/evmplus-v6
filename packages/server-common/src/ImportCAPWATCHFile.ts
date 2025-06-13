@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Schema, Session } from '@mysql/xdevapi';
@@ -52,6 +52,34 @@ import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
 import { getRequestFreeTeamsBackend, TeamsBackend } from './Team';
 
 export { CAPWATCHImportErrors as CAPWATCHError };
+
+export const importModules = {
+	cadetAchv,
+	cadetAchvAprs,
+	cadetActivities,
+	cadetDutyPosition,
+	cadetHFZInformationParse,
+	cadetAchievementEnumParse,
+	commanders,
+	dutyPosition,
+	mbrAchievements,
+	mbrContact,
+	memberParse,
+	oFlight,
+	organization,
+	orgContact,
+	seniorAwards,
+	seniorLevel,
+	pl: {
+		groups: plGroups,
+		lookup: plLookup,
+		memberPathCredit: plMemberPathCredit,
+		memberTaskCredit: plMemberTaskCredit,
+		paths: plPaths,
+		taskGroupAssignments: plTaskGroupAssignments,
+		tasks: plTasks
+	}
+};
 
 export type FileData<T> = {
 	[P in keyof T]: string;

@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { Client, getClient, getSession, Schema, Session } from '@mysql/xdevapi';
@@ -67,29 +67,42 @@ export const COLLECTIONS_USED: readonly string[] = [
 	'ExtraAccountMembership',
 	'ExtraMemberInformation',
 	'Files',
+	'MemberSessions',
 	'MFASetup',
 	'MFATokens',
-	'MemberSessions',
 	'NHQ_CadetAchv',
 	'NHQ_CadetAchvAprs',
 	'NHQ_CadetActivities',
 	'NHQ_CadetDutyPosition',
 	'NHQ_CadetHFZInformation',
 	'NHQ_CdtAchvEnum',
+	'NHQ_Commanders',
+	'NHQ_eServices_Session',
 	'NHQ_DutyPosition',
 	'NHQ_MbrAchievements',
 	'NHQ_MbrContact',
 	'NHQ_Member',
 	'NHQ_OFlight',
 	'NHQ_Organization',
+	'NHQ_OrgContact',
+	'NHQ_PL_Groups',
+	'NHQ_PL_Lookup',
+	'NHQ_PL_MemberPathCredit',
+	'NHQ_PL_MemberTaskCredit',
+	'NHQ_PL_Paths',
+	'NHQ_PL_TaskGroupAssignments',
+	'NHQ_PL_Tasks',
+	'NHQ_SeniorAwards',
+	'NHQ_SeniorLevel',
 	'Notifications',
+	'OAuthClients',
 	'PasswordResetTokens',
 	'ProspectiveMembers',
 	'Registry',
 	'Sessions',
-	'SignInLog',
 	'SignatureNonces',
 	'SigninKeys',
+	'SignInLog',
 	'SigninTokens',
 	'Tasks',
 	'Teams',
@@ -349,6 +362,16 @@ export const addPresetRecords = (schema: Schema) => async (map: PresetRecords): 
 	await Promise.all(promises);
 };
 
+export const setPresetRecordsSchema = (records: PresetRecords) => async (schema: Schema): Promise<void> => {
+	await Promise.all(
+		COLLECTIONS_USED.map(name =>
+			schema.getCollection(name).remove('true').execute(),
+		),
+	);
+
+	await addPresetRecords(schema)(records);
+};
+
 /**
  * Adds all of the records specified by the PresetRecords map, where each field
  * represents a table and the array values are added to that table
@@ -443,6 +466,7 @@ export const getMemberFromTestData = (
 			duty: dp.Duty,
 			date: +DateTime.fromISO(dp.DateMod),
 			orgid: dp.ORGID,
+			assistant: dp.Asst === 1,
 			type: 'NHQ',
 		}),
 	);

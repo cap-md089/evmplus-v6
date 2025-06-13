@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { DateTime } from 'luxon';
@@ -60,9 +60,9 @@ export const sqr601DocumentDefinition = (
 		pipe(
 			get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
 			Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
-			Maybe.map(({ DateTaken }) => DateTaken.substr(0, 10)),
-			Maybe.map(s => +new Date(s) + 182 * 24 * 60 * 60 * 1000),
-			Maybe.map(s => new Date(s).toLocaleDateString('en-US')),
+			Maybe.map(({ DateTaken, IsPassed }) => [DateTaken.substr(0, 10), IsPassed] as const),
+			Maybe.map(([s, f]) => [+new Date(s) + 182 * 24 * 60 * 60 * 1000, f] as const),
+			Maybe.map(([s, f]) => new Date(s).toLocaleDateString('en-US') + (!f ? ' F' : '')),
 			Maybe.orSome(''),
 		)(reqs);
 
@@ -218,16 +218,6 @@ export const sqr601DocumentDefinition = (
 					text:
 						CadetPromotionRequirementsMap[loopmember.requirements.NextCadetGradeID]
 							.Grade,
-					fontSize: mySmallFontSize,
-					bold: false,
-					alighment: 'left',
-				},
-				{
-					// Current achievement
-					text:
-						loopmember.requirements.CurrentCadetAchv.CadetAchvID.toString() +
-						'-' +
-						loopmember.requirements.MaxAprvStatus.substr(0, 1),
 					fontSize: mySmallFontSize,
 					bold: false,
 					alighment: 'left',
@@ -520,11 +510,10 @@ export const sqr601DocumentDefinition = (
 						13, // Exp
 						36, // Eligible
 						29, // Next
-						17, // Achv
 						36, // Lead Lab
 						36, // AeroEd
 						36, // SDA
-						36, // HFZ
+						40, // HFZ
 						36, // Drill Test
 						17, // Oath
 						36, // Char Dev
@@ -578,12 +567,6 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'eSvc Achv',
-								fontSize: mySmallFontSize,
-								bold: true,
-								alignment: 'left',
-							},
-							{
 								text: 'LeadLab',
 								fontSize: mySmallFontSize,
 								bold: true,
@@ -620,7 +603,7 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'Character Devel',
+								text: 'Char Dev or Wngmn',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',

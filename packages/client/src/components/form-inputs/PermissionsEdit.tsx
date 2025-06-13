@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -405,6 +405,15 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
 				defaultValue={Permissions.RegistryEdit.NO}
 			/>
+
+			<Label key="41">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="42"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
+			/>
 		</FormBlock>
 	);
 
@@ -758,6 +767,14 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
 				defaultValue={Permissions.RegistryEdit.NO}
 			/>
+			<Label key="41">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="42"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
+			/>
 		</FormBlock>
 	);
 
@@ -930,6 +947,14 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
 				defaultValue={Permissions.CreateEventAccount.NO}
 			/>
+			<Label key="43">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="44"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
+			/>
 		</FormBlock>
 	);
 
@@ -1101,6 +1126,14 @@ export default class PermissionsEdit extends React.Component<
 				labels={['No', 'Yes']}
 				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
 				defaultValue={Permissions.CreateEventAccount.NO}
+			/>
+			<Label key="43">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="44"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
 			/>
 		</FormBlock>
 	);

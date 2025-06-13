@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -154,6 +154,22 @@ export const ReportsWidget = withFetchApi(
 									<Button
 										buttonType="none"
 										onClick={this.createsqr601Spreadsheet}
+									>
+										xlsx
+									</Button>
+									<br />
+								</div>
+							)}
+							{this.state.state === 'LOADING' ? (
+								<LoaderShort />
+							) : this.state.state === 'ERROR' ? (
+								<div>{this.state.error}</div>
+							) : (
+								<div>
+									SQR 60-1a Cadet status report by flight &nbsp;
+									<Button
+										buttonType="none"
+										onClick={this.createsqr601aSpreadsheet}
 									>
 										xlsx
 									</Button>
@@ -331,10 +347,10 @@ export const ReportsWidget = withFetchApi(
 			const wb = XLSX.utils.book_new();
 
 			let wsName = 'UnitInfo';
-			const wsDataEvent = spreadsheets.sqr6020XL();
+			const wsDataEvent = spreadsheets.sqr601XL();
 			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let sheet = spreadsheets.Formatsqr6020XL(ws);
+			let sheet = spreadsheets.Formatsqr601XL(ws);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 			wsName = 'CadetInfo';
@@ -344,7 +360,7 @@ export const ReportsWidget = withFetchApi(
 				// this.props.registry,
 			);
 			ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-			sheet = spreadsheets.Formatsqr6020MembersXL(ws, widths, wsDataAttendance.length);
+			sheet = spreadsheets.Formatsqr601MembersXL(ws, widths, wsDataAttendance.length);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 			const now = new Date();
@@ -360,5 +376,58 @@ export const ReportsWidget = withFetchApi(
 
 			XLSX.writeFile(wb, `SQR 60-1 ${this.props.account.id}-${formatdate}.xlsx`);
 		};
+
+		private createsqr601aSpreadsheet = async (): Promise<void> => {
+			if (this.state.state !== 'LOADED' || !this.props.member) {
+				return;
+			}
+
+			const XLSX = await import('xlsx');
+
+			const wb = XLSX.utils.book_new();
+
+			let wsName = 'UnitInfo';
+			const wsDataEvent = spreadsheets.sqr601aXL();
+			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let sheet = spreadsheets.Formatsqr601aXL(ws);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+			const flights = this.props.registry.RankAndFile.Flights; 
+			const state = this.state;
+
+			flights.forEach(flight => {
+				// need to loop through flights and create a sheet for each flight
+				wsName = flight.toString();
+				console.log("flight", wsName);
+				if(
+					state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight).length +
+					state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight).length > 0
+				) {
+					const [wsDataAttendance, widths]: [any[][], number[]] = spreadsheets.sqr601aMembersXL(
+						state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
+						state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
+					);
+
+					ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+					sheet = spreadsheets.Formatsqr601aMembersXL(ws, widths, wsDataAttendance.length); 
+					XLSX.utils.book_append_sheet(wb, sheet, wsName);
+				}
+			});
+
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
+			XLSX.writeFile(wb, `SQR 60-1a ${this.props.account.id}-${formatdate}.xlsx`);
+		};
+
+
 	},
 );

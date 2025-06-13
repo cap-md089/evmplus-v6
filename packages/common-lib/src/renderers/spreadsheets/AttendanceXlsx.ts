@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import type * as XLSX from 'xlsx';
@@ -117,22 +117,22 @@ const GetBestEmails = (inMember: Member): string => {
 	let numbersData = '';
 
 	if (inMember.contact.EMAIL.PRIMARY) {
-		numbersData += 'EP ' + inMember.contact.EMAIL.PRIMARY + '\n';
+		numbersData += inMember.contact.EMAIL.PRIMARY + ', ';
 	}
 	if (inMember.contact.EMAIL.SECONDARY) {
-		numbersData += 'ES ' + inMember.contact.EMAIL.SECONDARY + '\n';
+		numbersData += inMember.contact.EMAIL.SECONDARY + ', ';
 	}
 	if (inMember.contact.EMAIL.EMERGENCY) {
-		numbersData += 'EE ' + inMember.contact.EMAIL.EMERGENCY + '\n';
+		numbersData += inMember.contact.EMAIL.EMERGENCY + ', ';
 	}
 	if (inMember.contact.CADETPARENTEMAIL.PRIMARY) {
-		numbersData += 'PP ' + inMember.contact.CADETPARENTEMAIL.PRIMARY + '\n';
+		numbersData += inMember.contact.CADETPARENTEMAIL.PRIMARY + ', ';
 	}
 	if (inMember.contact.CADETPARENTEMAIL.SECONDARY) {
-		numbersData += 'PS ' + inMember.contact.CADETPARENTEMAIL.SECONDARY + '\n';
+		numbersData += inMember.contact.CADETPARENTEMAIL.SECONDARY + ', ';
 	}
 	if (inMember.contact.CADETPARENTEMAIL.EMERGENCY) {
-		numbersData += 'PE ' + inMember.contact.CADETPARENTEMAIL.EMERGENCY + '\n';
+		numbersData += inMember.contact.CADETPARENTEMAIL.EMERGENCY + ', ';
 	}
 	if (numbersData.length > 2) {
 		numbersData = numbersData.substring(0, numbersData.length - 1);
@@ -153,7 +153,7 @@ const CustomAttendanceFieldTypeDisplay = {
 
 export const EventXL = (event: RawResolvedEventObject): Array<Array<string | number>> => {
 	let row: Array<string | number> = [
-		'EvMPlus.org Event Information and Sign-up/Attendance Roster',
+		'Event Manager Event Information and Sign-up/Attendance Roster',
 	];
 	const retVal: Array<Array<string | number>> = [];
 	retVal.push(row);
@@ -192,7 +192,7 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 		row = ['Field Name', '', 'Field Type', 'Prefill Value', '', 'See?', 'Edit?'];
 		retVal.push(row);
 		retVal.push([]);
-		let fieldPreFill: string;
+		let fieldPreFill;
 
 		for (const customField of event.customAttendanceFields) {
 			if (
@@ -204,8 +204,6 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 						? customField.preFill
 							? 'Y'
 							: 'N'
-						: typeof customField.preFill === 'number'
-						? customField.preFill.toString()
 						: customField.preFill;
 			} else if (customField.type !== CustomAttendanceFieldEntryType.QUAL) {
 				fieldPreFill = 'Qual Data'; // need to populate with live data before the event and stored data after the event?
@@ -228,7 +226,12 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 	return retVal;
 };
 
-export const FormatEventXL = (evt: string, sheet: XLSX.Sheet, hostname: string): XLSX.Sheet => {
+export const FormatEventXL = (
+	evt: string,
+	sheet: XLSX.Sheet,
+	hostname: string,
+	customAttendanceFieldValues: CustomAttendanceField[],
+): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
 	const dateWidth = dateFormat.length;
 	const aid = evt.split('-')[0];
@@ -261,6 +264,16 @@ export const FormatEventXL = (evt: string, sheet: XLSX.Sheet, hostname: string):
 		{ width: 25 },
 	];
 	sheet['!rows'] = [{ hpx: 19 }, {}, {}, { hpx: 17 }, { hpx: 14 }, {}, { hpx: 17 }, { hpx: 14 }];
+
+	const startRow = 23;
+	for (let j = 0; j < customAttendanceFieldValues.length; j++) {
+		const type = customAttendanceFieldValues[j].type;
+
+		if (type === CustomAttendanceFieldEntryType.DATE) {
+			(sheet[`D${startRow + j}`] as XLSX.CellObject).t = 'd';
+			(sheet[`D${startRow + j}`] as XLSX.CellObject).z = dateFormat;
+		}
+	}
 
 	return sheet;
 };
@@ -304,15 +317,24 @@ export const AttendanceXL = (
 		orEmptyString,
 	);
 
-	// attendee.orgInformation
-	// |> Maybe.map (\r -> r.commanderName)
-	// |> Maybe.withDefault ""
-
 	const getUnitName = pipe(Maybe.flatMap<SquadronPOC, string>(get('orgName')), orEmptyString);
 
-	const getUnitContacts = pipe(
+	const getUnitWebsite = pipe(
 		Maybe.map<SquadronPOC, string>(({ contacts }) =>
-			contacts.map<string>(curr => `${curr.type}: ${curr.contact}`).join('\n'),
+			contacts
+				.filter(({ type }) => type === 'URL')
+				.map<string>(get('contact'))
+				.join('\n'),
+		),
+		orEmptyString,
+	);
+
+	const getUnitEmails = pipe(
+		Maybe.map<SquadronPOC, string>(({ contacts }) =>
+			contacts
+				.filter(({ type }) => type === 'EMAIL')
+				.map<string>(get('contact'))
+				.join('\n'),
 		),
 		orEmptyString,
 	);
@@ -334,7 +356,8 @@ export const AttendanceXL = (
 			attendee.record.comments,
 			getUnitName(attendee.orgInformation),
 			getCommanderName(attendee.orgInformation),
-			getUnitContacts(attendee.orgInformation),
+			getUnitWebsite(attendee.orgInformation),
+			getUnitEmails(attendee.orgInformation),
 		];
 
 		for (const fieldVal of attendee.record.customAttendanceFieldValues) {
@@ -371,7 +394,7 @@ export const FormatAttendanceXL = (
 	numRows: number,
 ): XLSX.Sheet => {
 	const dateFormat = 'yyyy-mm-dd hh:mm';
-	const numStaticColumns = 12;
+	const numStaticColumns = 15; // ALWAYS UPDATE THIS NUMBER WHEN REPORT COLUMNS ARE ADJUSTED
 	let rowCount = 0;
 	let emails = '';
 	let phones = '';
@@ -393,7 +416,7 @@ export const FormatAttendanceXL = (
 
 			if (type === CustomAttendanceFieldEntryType.DATE) {
 				const cell = sheet[
-					encodeCell({ c: i + (numStaticColumns + 1), r: j })
+					encodeCell({ c: i + (numStaticColumns + 1), r: j - 1 })
 				] as XLSX.CellObject;
 				cell.t = 'd';
 				cell.z = dateFormat;

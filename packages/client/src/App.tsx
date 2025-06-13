@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
- *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * This file is part of Event Manager.
+ * 
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * 
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -34,6 +34,7 @@ import {
 	SigninReturn,
 } from 'common-lib';
 import * as React from 'react';
+import { Provider } from 'react-redux';
 import './App.css';
 import BreadCrumbs, { BreadCrumb } from './components/BreadCrumbs';
 import GlobalNotification from './components/GlobalNotification';
@@ -50,6 +51,8 @@ import {
 } from './globals';
 import fetchApi, { fetchAPIForAccount } from './lib/apis';
 import { getMember } from './lib/Members';
+import { store } from './store';
+import { deletePageState } from './state/pageState';
 
 interface AppUIState {
 	sideNavLinks: SideNavigationItem[];
@@ -207,35 +210,37 @@ export default class App extends React.Component<
 		);
 
 	private renderWithProviders = (el: JSX.Element): JSX.Element => (
-		<FetchAPIProvider value={{ fetchApi, fetchAPIForAccount }}>
-			<MemberDetailsProvider
-				value={{
-					member: this.state.state === 'LOADED' ? this.state.fullMember : null,
-					fullMember:
-						this.state.state === 'LOADED'
-							? this.state.member
-							: {
-									error: MemberCreateError.INVALID_SESSION_ID,
-							  },
-				}}
-			>
-				<MemberListProvider
+		<Provider store={store}>
+			<FetchAPIProvider value={{ fetchApi, fetchAPIForAccount }}>
+				<MemberDetailsProvider
 					value={{
-						state: this.state.memberList,
-						updateList: this.updateMemberList,
+						member: this.state.state === 'LOADED' ? this.state.fullMember : null,
+						fullMember:
+							this.state.state === 'LOADED'
+								? this.state.member
+								: {
+										error: MemberCreateError.INVALID_SESSION_ID,
+								  },
 					}}
 				>
-					<TeamListProvider
+					<MemberListProvider
 						value={{
-							state: this.state.teamList,
-							updateList: this.updateTeamList,
+							state: this.state.memberList,
+							updateList: this.updateMemberList,
 						}}
 					>
-						{el}
-					</TeamListProvider>
-				</MemberListProvider>
-			</MemberDetailsProvider>
-		</FetchAPIProvider>
+						<TeamListProvider
+							value={{
+								state: this.state.teamList,
+								updateList: this.updateTeamList,
+							}}
+						>
+							{el}
+						</TeamListProvider>
+					</MemberListProvider>
+				</MemberDetailsProvider>
+			</FetchAPIProvider>
+		</Provider>
 	);
 
 	private renderPage = (): JSX.Element =>
@@ -254,11 +259,16 @@ export default class App extends React.Component<
 				authorizeUser={this.authorizeUser}
 				registry={this.state.Registry}
 				key="pagerouter"
+				deleteReduxState={this.deleteReduxState}
 			/>
 		);
 
 	private updateSideNav = (sideNavLinks: SideNavigationItem[]): void => {
 		this.setState({ sideNavLinks });
+	};
+
+	private deleteReduxState = (): void => {
+		store.dispatch(deletePageState());
 	};
 
 	private updateBreadCrumbs = (breadCrumbs: BreadCrumb[]): void => {

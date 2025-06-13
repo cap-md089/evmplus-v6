@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux and Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -274,6 +274,8 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 			{ id: this.props.routeProps.match.params.id.split('-')[0] },
 			{},
 		);
+
+		this.props.deleteReduxState();
 
 		if (Either.isLeft(eventInformation)) {
 			this.setState(prev => ({
@@ -708,6 +710,8 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 							{' | '}
 							<Link to={`/multiadd/${event.id}`}>Add attendance</Link>
 						</>
+					) : member ? (
+						<Link to={`/auditviewer/${event.id}`}>View Audit Log</Link>
 					) : null}
 					{(member && effectiveManageEventPermissionForEvent(member)(event)) ||
 					(fullMemberDetails.error === MemberCreateError.NONE &&
@@ -840,11 +844,17 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 								<br />
 							</>
 						) : null}
-						<strong>Uniform:</strong>{' '}
+						<strong>SM Uniform:</strong>{' '}
 						{pipe(
-							Maybe.map(uniform => <>{uniform}</>),
-							Maybe.orSome(<i>No uniform specified</i>),
-						)(presentMultCheckboxReturn(event.uniform))}
+							Maybe.map(smuniform => <>{smuniform}</>),
+							Maybe.orSome(<i>No SM uniform specified</i>),
+						)(presentMultCheckboxReturn(event.smuniform))}
+						<br />
+						<strong>Cadet Uniform:</strong>{' '}
+						{pipe(
+							Maybe.map(cuniform => <>{cuniform}</>),
+							Maybe.orSome(<i>No Cadet uniform specified</i>),
+						)(presentMultCheckboxReturn(event.cuniform))}
 						<br />
 						{event.comments ? (
 							<>
@@ -1725,8 +1735,13 @@ export class EventViewer extends Page<EventViewerProps, EventViewerState> {
 		let wsName = 'EventInfo';
 		const wsDataEvent = spreadsheets.EventXL(this.state.eventInformation.event);
 		let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let sheet = spreadsheets.FormatEventXL(evtID, ws, process.env.REACT_APP_HOST_NAME!);
+		let sheet = spreadsheets.FormatEventXL(
+			evtID,
+			ws,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			process.env.REACT_APP_HOST_NAME!,
+			this.state.eventInformation.event.customAttendanceFields,
+		);
 		XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 		wsName = 'Attendance';

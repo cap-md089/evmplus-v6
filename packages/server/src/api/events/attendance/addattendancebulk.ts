@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { validator } from 'auto-client-api';
@@ -40,6 +40,7 @@ import {
 	NewAttendanceRecord,
 	RawEventObject,
 	RawTeamObject,
+	RegistryValues,
 	ServerError,
 	SessionType,
 	Validator,
@@ -169,23 +170,34 @@ export const func: Endpoint<
 		),
 	);
 
-const replaceEmailContent = (member: Member) => (event: EventObject) => (url: string) => (
-	body: string,
-) =>
+const replaceEmailContent = (registry: RegistryValues) => (member: Member) => (
+	event: EventObject,
+) => (url: string) => (body: string) =>
 	body
 		.replace(/%%MEMBER_NAME%%/, getFullMemberName(member))
 		.replace(/%%EVENT_NAME%%/, event.name)
-		.replace(/%%START_DATE%%/, new Date(event.startDateTime).toDateString())
+		.replace(
+			/%%START_DATE%%/,
+			new Intl.DateTimeFormat('en-US', {
+				timeZone: registry.Website.Timezone,
+				weekday: 'short',
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric',
+			}).format(new Date(event.startDateTime)),
+		)
 		.replace(/%%EVENT_LINK%%/, `${url}/eventviewer/${event.id}`);
 
-const generateEmail = (member: Member) => (event: EventObject) => (email: string) => (emailBody: {
-	body: string;
-}): EmailSetup => ({ url }) => ({
+const generateEmail = (registry: RegistryValues) => (member: Member) => (event: EventObject) => (
+	email: string,
+) => (emailBody: { body: string }): EmailSetup => ({ url }) => ({
 	bccAddresses: [SYSTEM_BCC_ADDRESS],
 	to: [email],
 	subject: 'Event Signup Notice',
-	textBody: replaceEmailContent(member)(event)(url)(emailBody.body),
-	htmlBody: markdown.markdown.toHTML(replaceEmailContent(member)(event)(url)(emailBody.body)),
+	textBody: replaceEmailContent(registry)(member)(event)(url)(emailBody.body),
+	htmlBody: markdown.markdown.toHTML(
+		replaceEmailContent(registry)(member)(event)(url)(emailBody.body),
+	),
 });
 
 const sendEmailToMember = (backend: Backends<[EmailBackend, RegistryBackend]>) => (
@@ -195,8 +207,9 @@ const sendEmailToMember = (backend: Backends<[EmailBackend, RegistryBackend]>) =
 }): ServerEither<void> =>
 	backend
 		.getRegistry(account)
-		.map(backend.sendEmail)
-		.flatApply(generateEmail(member)(event)(email)(emailBody));
+		.flatMap(registry =>
+			backend.sendEmail(registry)(generateEmail(registry)(member)(event)(email)(emailBody)),
+		);
 
 export default withBackends(
 	func,
