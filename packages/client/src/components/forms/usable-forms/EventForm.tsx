@@ -353,7 +353,7 @@ export const convertFormValuesToEvent = (event: NewEventFormValues): MaybeObj<Ne
 								receiveSignUpUpdates: poc.receiveSignUpUpdates,
 								receiveUpdates: poc.receiveUpdates,
 								type: PointOfContactType.INTERNAL,
-						  }))(poc.memberReference),
+							}))(poc.memberReference),
 			),
 		),
 	);
@@ -452,7 +452,7 @@ export const convertToFormValues = (event: NewEventObject): NewEventFormValues =
 					receiveUpdates: poc.receiveUpdates,
 					memberReference: Maybe.some(poc.memberReference),
 					type: PointOfContactType.INTERNAL,
-			  },
+				},
 	),
 	customAttendanceFields: event.customAttendanceFields,
 	regionEventNumber: event.regionEventNumber,
@@ -628,8 +628,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						text: this.props.saving
 							? 'Saving...'
 							: this.props.isEventUpdate
-							? 'Update event'
-							: 'Create event',
+								? 'Update event'
+								: 'Create event',
 						disabled: this.props.saving,
 					}}
 					validator={eventValidator}
@@ -812,8 +812,8 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						</TextBox>
 					</FormBlock>
 
-					{/* <Label>Allow signing up part time</Label>
-					<Checkbox name="signUpPartTime" /> */}
+					<Label>Allow signing up part time</Label>
+					<Checkbox name="signUpPartTime" />
 
 					<Label>Use participation fee</Label>
 					<Checkbox name="useParticipationFee" />
@@ -952,7 +952,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 										EventStatus.COMPLETE,
 										EventStatus.CANCELLED,
 										EventStatus.INFORMATIONONLY,
-								  ]
+									]
 								: [EventStatus.DRAFT]
 						}
 						defaultValue={EventStatus.DRAFT}

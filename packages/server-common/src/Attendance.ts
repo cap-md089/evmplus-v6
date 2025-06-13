@@ -110,16 +110,20 @@ const getAttendanceEventIdentifier = ({
 	accountID,
 });
 
-export const getAttendanceForEvent = (schema: Schema) => (
-	event: RawEventObject,
-): ServerEither<AsyncIter<AttendanceRecord>> =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records'),
-	)
-		.map(findAndBindC<RawAttendanceDBRecord>(getAttendanceEventIdentifier(getEventID(event))))
-		.map(generateResults)
-		.map(attendanceRecordIterMapper);
+export const getAttendanceForEvent =
+	(schema: Schema) =>
+	(event: RawEventObject): ServerEither<AsyncIter<AttendanceRecord>> =>
+		asyncRight(
+			schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+			errorGenerator('Could not get attendance records'),
+		)
+			.map(
+				findAndBindC<RawAttendanceDBRecord>(
+					getAttendanceEventIdentifier(getEventID(event)),
+				),
+			)
+			.map(generateResults)
+			.map(attendanceRecordIterMapper);
 
 export const attendanceRecordMapper = (rec: RawAttendanceDBRecord): AttendanceRecord => ({
 	comments: rec.comments,
@@ -151,379 +155,423 @@ export const rawAttendanceRecordWrapper = (rec: AttendanceRecord): RawAttendance
 
 export const attendanceRecordIterMapper = asyncIterMap(attendanceRecordMapper);
 
-const findForMemberFunc = (now = Date.now) => ({ id: accountID }: AccountObject) => (
-	member: MemberReference,
-) => (collection: Collection<RawAttendanceDBRecord>) =>
-	collection
-		.find(
-			'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND shiftTime.departureTime < :endDateTime',
-		)
-		.bind('member_id' as any, member.id)
-		.bind('member_type' as any, member.type)
-		.bind('accountID', accountID)
-		.bind('endDateTime' as any, now());
+const findForMemberFunc =
+	(now = Date.now) =>
+	({ id: accountID }: AccountObject) =>
+	(member: MemberReference) =>
+	(collection: Collection<RawAttendanceDBRecord>) =>
+		collection
+			.find(
+				'memberID.id = :member_id AND memberID.type = :member_type AND accountID = :accountID AND shiftTime.departureTime < :endDateTime',
+			)
+			.bind('member_id' as any, member.id)
+			.bind('member_type' as any, member.type)
+			.bind('accountID', accountID)
+			.bind('endDateTime' as any, now());
 
-export const getLatestAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
-	account: AccountObject,
-) => (member: MemberReference): ServerEither<MaybeObj<AttendanceRecord>> =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records'),
-	)
-		.map(findForMemberFunc(now)(account)(member))
-		.map(find => find.limit(1).sort('shiftTime.departureTime DESC'))
-		.map(collectResults)
-		.map(Maybe.fromArray)
-		.map(Maybe.map(attendanceRecordMapper));
+export const getLatestAttendanceForMemberFunc =
+	(now = Date.now) =>
+	(schema: Schema) =>
+	(account: AccountObject) =>
+	(member: MemberReference): ServerEither<MaybeObj<AttendanceRecord>> =>
+		asyncRight(
+			schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+			errorGenerator('Could not get attendance records'),
+		)
+			.map(findForMemberFunc(now)(account)(member))
+			.map(find => find.limit(1).sort('shiftTime.departureTime DESC'))
+			.map(collectResults)
+			.map(Maybe.fromArray)
+			.map(Maybe.map(attendanceRecordMapper));
 export const getLatestAttendanceForMember = getLatestAttendanceForMemberFunc(Date.now);
 
-export const getAttendanceForMemberFunc = (now = Date.now) => (schema: Schema) => (
-	account: AccountObject,
-) => (member: MemberReference): ServerEither<AsyncIter<AttendanceRecord>> =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not get attendance records'),
-	)
-		.map(findForMemberFunc(now)(account)(member))
-		.map<AsyncIter<RawAttendanceDBRecord>>(generateResults)
-		.map(attendanceRecordIterMapper);
+export const getAttendanceForMemberFunc =
+	(now = Date.now) =>
+	(schema: Schema) =>
+	(account: AccountObject) =>
+	(member: MemberReference): ServerEither<AsyncIter<AttendanceRecord>> =>
+		asyncRight(
+			schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+			errorGenerator('Could not get attendance records'),
+		)
+			.map(findForMemberFunc(now)(account)(member))
+			.map<AsyncIter<RawAttendanceDBRecord>>(generateResults)
+			.map(attendanceRecordIterMapper);
 export const getAttendanceForMember = getAttendanceForMemberFunc(Date.now);
 
 const attendanceFilterError = errorGenerator('Could not verify attendance permissions');
 const arrayHasOneTrue = (arr: boolean[]): boolean => arr.some(identity);
 
-export const getAttendanceFilter = (
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	backend
-		.getAccount(attendanceRecord.sourceAccountID)
-		.flatMap(account =>
-			AsyncEither.All([
-				backend
-					.getEvent(account)(attendanceRecord.sourceEventID)
-					.flatMap(newEnsureResolvedEvent(backend)),
-				backend.getMember(account)(attendanceRecord.memberID),
-			]).flatMap(([event, member]) =>
+export const getAttendanceFilter =
+	(backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>) =>
+	(attendanceViewer: User) =>
+	(attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
+		backend
+			.getAccount(attendanceRecord.sourceAccountID)
+			.flatMap(account =>
 				AsyncEither.All([
-					getDetailedAttendanceFilter(backend)(attendanceViewer)(attendanceRecord),
-					event.privateAttendance
-						? asyncRight(
-								false,
-								errorGenerator('Could not verify attendance permissions'),
-						  )
-						: backend.areMembersInTheSameAccount(attendanceViewer)(member),
-				]).map(arrayHasOneTrue),
-			),
+					backend
+						.getEvent(account)(attendanceRecord.sourceEventID)
+						.flatMap(newEnsureResolvedEvent(backend)),
+					backend.getMember(account)(attendanceRecord.memberID),
+				]).flatMap(([event, member]) =>
+					AsyncEither.All([
+						getDetailedAttendanceFilter(backend)(attendanceViewer)(attendanceRecord),
+						event.privateAttendance
+							? asyncRight(
+									false,
+									errorGenerator('Could not verify attendance permissions'),
+								)
+							: backend.areMembersInTheSameAccount(attendanceViewer)(member),
+					]).map(arrayHasOneTrue),
+				),
+			);
+
+export const getDetailedAttendanceFilterSansMember =
+	(backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>) =>
+	(attendanceViewer: User) =>
+	(attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
+		backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
+			backend
+				.getEvent(account)(attendanceRecord.sourceEventID)
+				.flatMap(newEnsureResolvedEvent(backend))
+				.flatMap(event =>
+					AsyncEither.All([
+						event.teamID === undefined || event.teamID === null
+							? asyncRight(
+									hasBasicAttendanceManagementPermission(attendanceViewer)(event)(
+										Maybe.none(),
+									),
+									attendanceFilterError,
+								)
+							: backend
+									.getTeam(account)(event.teamID)
+									.map(Maybe.some)
+									.map(
+										hasBasicAttendanceManagementPermission(attendanceViewer)(
+											event,
+										),
+									),
+						asyncRight(
+							effectiveManageEventPermissionForEvent(attendanceViewer)(event) ===
+								Permissions.ManageEvent.FULL,
+							errorGenerator('Could not verify attendance permissions'),
+						),
+					]).map(arrayHasOneTrue),
+				),
 		);
 
-export const getDetailedAttendanceFilterSansMember = (
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
-		backend
-			.getEvent(account)(attendanceRecord.sourceEventID)
-			.flatMap(newEnsureResolvedEvent(backend))
-			.flatMap(event =>
-				AsyncEither.All([
-					event.teamID === undefined || event.teamID === null
-						? asyncRight(
-								hasBasicAttendanceManagementPermission(attendanceViewer)(event)(
-									Maybe.none(),
-								),
-								attendanceFilterError,
-						  )
-						: backend
-								.getTeam(account)(event.teamID)
-								.map(Maybe.some)
-								.map(
-									hasBasicAttendanceManagementPermission(attendanceViewer)(event),
-								),
-					asyncRight(
-						effectiveManageEventPermissionForEvent(attendanceViewer)(event) ===
-							Permissions.ManageEvent.FULL,
-						errorGenerator('Could not verify attendance permissions'),
-					),
-				]).map(arrayHasOneTrue),
-			),
-	);
+export const getDetailedAttendanceFilter =
+	(backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>) =>
+	(attendanceViewer: User) =>
+	(attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
+		backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
+			backend
+				.getEvent(account)(attendanceRecord.sourceEventID)
+				.flatMap(newEnsureResolvedEvent(backend))
+				.flatMap(event =>
+					AsyncEither.All([
+						asyncRight(
+							areMembersTheSame(attendanceViewer)(attendanceRecord.memberID),
+							attendanceFilterError,
+						),
+						event.teamID === undefined || event.teamID === null
+							? asyncRight(
+									hasBasicAttendanceManagementPermission(attendanceViewer)(event)(
+										Maybe.none(),
+									),
+									attendanceFilterError,
+								)
+							: backend
+									.getTeam(account)(event.teamID)
+									.map(Maybe.some)
+									.map(
+										hasBasicAttendanceManagementPermission(attendanceViewer)(
+											event,
+										),
+									),
+						asyncRight(
+							effectiveManageEventPermissionForEvent(attendanceViewer)(event) ===
+								Permissions.ManageEvent.FULL,
+							errorGenerator('Could not verify attendance permissions'),
+						),
+					]).map(arrayHasOneTrue),
+				),
+		);
 
-export const getDetailedAttendanceFilter = (
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceViewer: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
-		backend
-			.getEvent(account)(attendanceRecord.sourceEventID)
-			.flatMap(newEnsureResolvedEvent(backend))
-			.flatMap(event =>
+export const applyAttendanceFilter =
+	(backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>) =>
+	(
+		attendanceViewer: User,
+	): ((iter: AsyncIter<AttendanceRecord>) => AsyncIter<AttendanceRecord>) =>
+		pipe(
+			asyncIterEitherFilter(getAttendanceFilter(backend)(attendanceViewer)),
+			asyncIterMap<AttendanceRecord, AttendanceRecord>(record =>
 				AsyncEither.All([
+					backend
+						.getAccount(record.sourceAccountID)
+						.flatMap(account => backend.getEvent(account)(record.sourceEventID))
+						.flatMap(backend.ensureResolvedEvent),
+					getDetailedAttendanceFilterSansMember(backend)(attendanceViewer)(record),
 					asyncRight(
-						areMembersTheSame(attendanceViewer)(attendanceRecord.memberID),
+						areMembersTheSame(attendanceViewer)(record.memberID),
 						attendanceFilterError,
 					),
-					event.teamID === undefined || event.teamID === null
-						? asyncRight(
-								hasBasicAttendanceManagementPermission(attendanceViewer)(event)(
-									Maybe.none(),
-								),
-								attendanceFilterError,
-						  )
-						: backend
-								.getTeam(account)(event.teamID)
-								.map(Maybe.some)
-								.map(
-									hasBasicAttendanceManagementPermission(attendanceViewer)(event),
-								),
-					asyncRight(
-						effectiveManageEventPermissionForEvent(attendanceViewer)(event) ===
-							Permissions.ManageEvent.FULL,
-						errorGenerator('Could not verify attendance permissions'),
-					),
-				]).map(arrayHasOneTrue),
-			),
-	);
-
-export const applyAttendanceFilter = (
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (
-	attendanceViewer: User,
-): ((iter: AsyncIter<AttendanceRecord>) => AsyncIter<AttendanceRecord>) =>
-	pipe(
-		asyncIterEitherFilter(getAttendanceFilter(backend)(attendanceViewer)),
-		asyncIterMap<AttendanceRecord, AttendanceRecord>(record =>
-			AsyncEither.All([
-				backend
-					.getAccount(record.sourceAccountID)
-					.flatMap(account => backend.getEvent(account)(record.sourceEventID))
-					.flatMap(backend.ensureResolvedEvent),
-				getDetailedAttendanceFilterSansMember(backend)(attendanceViewer)(record),
-				asyncRight(
-					areMembersTheSame(attendanceViewer)(record.memberID),
-					attendanceFilterError,
-				),
-			])
-				.map(([event, canSeeDetails, membersTheSame]) =>
-					canSeeDetails || membersTheSame
-						? {
-								...record,
-								customAttendanceFieldValues: record.customAttendanceFieldValues.filter(
-									value =>
-										canSeeDetails ||
-										!!event.customAttendanceFields.find(
-											field => field.title === value.title,
-										)?.displayToMember,
-								),
-						  }
-						: {
-								comments: '',
-								customAttendanceFieldValues: [],
-								memberID: record.memberID,
-								memberName: record.memberName,
-								planToUseCAPTransportation: false,
-								shiftTime: {
-									arrivalTime: event.meetDateTime,
-									departureTime: event.pickupDateTime,
+				])
+					.map(([event, canSeeDetails, membersTheSame]) =>
+						canSeeDetails || membersTheSame
+							? {
+									...record,
+									customAttendanceFieldValues:
+										record.customAttendanceFieldValues.filter(
+											value =>
+												canSeeDetails ||
+												!!event.customAttendanceFields.find(
+													field => field.title === value.title,
+												)?.displayToMember,
+										),
+								}
+							: {
+									comments: '',
+									customAttendanceFieldValues: [],
+									memberID: record.memberID,
+									memberName: record.memberName,
+									planToUseCAPTransportation: false,
+									shiftTime: {
+										arrivalTime: event.meetDateTime,
+										departureTime: event.pickupDateTime,
+									},
+									sourceAccountID: record.sourceAccountID,
+									sourceEventID: record.sourceEventID,
+									status: record.status,
+									summaryEmailSent: false,
+									timestamp: record.timestamp,
 								},
-								sourceAccountID: record.sourceAccountID,
-								sourceEventID: record.sourceEventID,
-								status: record.status,
-								summaryEmailSent: false,
-								timestamp: record.timestamp,
-						  },
-				)
-				.fullJoin()
-				.then(identity, always(record)),
-		),
-	);
-
-export const canMemberModifyRecord = (
-	backend: Backends<[TimeBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
-		backend
-			.getEvent(account)(attendanceRecord.sourceEventID)
-			.flatMap(backend.ensureResolvedEvent)
-			.flatMap(event =>
-				AsyncEither.All([
-					asyncRight(
-						areMembersTheSame(attendanceModifier)(attendanceRecord.memberID),
-						errorGenerator('Could not verify attendance record owner'),
-					),
-					asyncRight(
-						event.endDateTime < backend.now(),
-						errorGenerator('Could not verify event start time'),
-					),
-					(event.teamID !== undefined && event.teamID !== null
-						? backend.getTeam(account)(event.teamID).map(Maybe.some)
-						: asyncRight(
-								Maybe.none(),
-								errorGenerator('Could not verify event permissions'),
-						  )
-					).map(hasBasicAttendanceManagementPermission(attendanceModifier)(event)),
-				]).map(
-					([sameMember, pastEditDate, hasManagementPermission]) =>
-						(sameMember && !pastEditDate) || hasManagementPermission,
-				),
+					)
+					.fullJoin()
+					.then(identity, always(record)),
 			),
-	);
-
-export const canMemberDeleteRecord = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-) => (attendanceDeleter: User) => (attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
-	backend
-		.getAccount(attendanceRecord.sourceAccountID)
-		.flatMap(account =>
-			backend
-				.getEvent(account)(attendanceRecord.sourceEventID)
-				.flatMap(backend.ensureResolvedEvent)
-				.map(canFullyManageEvent(attendanceDeleter)),
 		);
 
-export const visibleCustomAttendanceFields = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-) => (attendanceViewer: User) => (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	customAttendanceField: AttendanceRecord,
-): ServerEither<CustomAttendanceFieldValue[]> => asyncRight([], attendanceFilterError);
-
-export const canMemberModifyCustomAttendanceField = (
-	backend: Backends<
-		[RawMySQLBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]
-	>,
-) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) => (
-	customAttendanceField: CustomAttendanceFieldValue,
-): ServerEither<boolean> =>
-	backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
-		backend
-			.getEvent(account)(attendanceRecord.sourceEventID)
-			.flatMap(backend.ensureResolvedEvent)
-			.map(
-				event =>
-					effectiveManageEventPermissionForEvent(attendanceModifier)(event) ===
-						Permissions.ManageEvent.FULL ||
-					!!getCustomAttendanceFieldForValue(event.customAttendanceFields)(
-						customAttendanceField,
-					)?.allowMemberToModify,
-			),
-	);
-
-export const applyAttendanceRecordUpdates = (
-	backend: Backends<
-		[TimeBackend, RawMySQLBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]
-	>,
-) => (attendanceModifier: User) => (attendanceRecord: AttendanceRecord) => (
-	changes: NewAttendanceRecord,
-): ServerEither<void> =>
-	backend
-		.getAccount(attendanceRecord.sourceAccountID)
-		.flatMap(account =>
+export const canMemberModifyRecord =
+	(
+		backend: Backends<
+			[TimeBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]
+		>,
+	) =>
+	(attendanceModifier: User) =>
+	(attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
+		backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
 			backend
 				.getEvent(account)(attendanceRecord.sourceEventID)
 				.flatMap(backend.ensureResolvedEvent)
-				.filter(
-					event =>
-						(typeof event.teamID === 'number'
+				.flatMap(event =>
+					AsyncEither.All([
+						asyncRight(
+							areMembersTheSame(attendanceModifier)(attendanceRecord.memberID),
+							errorGenerator('Could not verify attendance record owner'),
+						),
+						asyncRight(
+							event.endDateTime < backend.now(),
+							errorGenerator('Could not verify event start time'),
+						),
+						(event.teamID !== undefined && event.teamID !== null
 							? backend.getTeam(account)(event.teamID).map(Maybe.some)
 							: asyncRight(
 									Maybe.none(),
-									errorGenerator(
-										'Could not check permissions for attendance update',
-									),
-							  )
+									errorGenerator('Could not verify event permissions'),
+								)
 						).map(hasBasicAttendanceManagementPermission(attendanceModifier)(event)),
-					{
-						type: 'OTHER',
-						code: 403,
-						message: 'You do not have permission to modify this attendance record',
+					]).map(
+						([sameMember, pastEditDate, hasManagementPermission]) =>
+							(sameMember && !pastEditDate) || hasManagementPermission,
+					),
+				),
+		);
+
+export const canMemberDeleteRecord =
+	(
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	) =>
+	(attendanceDeleter: User) =>
+	(attendanceRecord: AttendanceRecord): ServerEither<boolean> =>
+		backend
+			.getAccount(attendanceRecord.sourceAccountID)
+			.flatMap(account =>
+				backend
+					.getEvent(account)(attendanceRecord.sourceEventID)
+					.flatMap(backend.ensureResolvedEvent)
+					.map(canFullyManageEvent(attendanceDeleter)),
+			);
+
+export const visibleCustomAttendanceFields =
+	(
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		backend: Backends<[MemberBackend, AccountBackend, EventsBackend, TeamsBackend]>,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	) =>
+	(attendanceViewer: User) =>
+	(
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		customAttendanceField: AttendanceRecord,
+	): ServerEither<CustomAttendanceFieldValue[]> =>
+		asyncRight([], attendanceFilterError);
+
+export const canMemberModifyCustomAttendanceField =
+	(
+		backend: Backends<
+			[RawMySQLBackend, MemberBackend, AccountBackend, EventsBackend, TeamsBackend]
+		>,
+	) =>
+	(attendanceModifier: User) =>
+	(attendanceRecord: AttendanceRecord) =>
+	(customAttendanceField: CustomAttendanceFieldValue): ServerEither<boolean> =>
+		backend.getAccount(attendanceRecord.sourceAccountID).flatMap(account =>
+			backend
+				.getEvent(account)(attendanceRecord.sourceEventID)
+				.flatMap(backend.ensureResolvedEvent)
+				.map(
+					event =>
+						effectiveManageEventPermissionForEvent(attendanceModifier)(event) ===
+							Permissions.ManageEvent.FULL ||
+						!!getCustomAttendanceFieldForValue(event.customAttendanceFields)(
+							customAttendanceField,
+						)?.allowMemberToModify,
+				),
+		);
+
+export const applyAttendanceRecordUpdates =
+	(
+		backend: Backends<
+			[
+				TimeBackend,
+				RawMySQLBackend,
+				MemberBackend,
+				AccountBackend,
+				EventsBackend,
+				TeamsBackend,
+			]
+		>,
+	) =>
+	(attendanceModifier: User) =>
+	(attendanceRecord: AttendanceRecord) =>
+	(changes: NewAttendanceRecord): ServerEither<void> =>
+		backend
+			.getAccount(attendanceRecord.sourceAccountID)
+			.flatMap(account =>
+				backend
+					.getEvent(account)(attendanceRecord.sourceEventID)
+					.flatMap(backend.ensureResolvedEvent)
+					.filter(
+						event =>
+							(typeof event.teamID === 'number'
+								? backend.getTeam(account)(event.teamID).map(Maybe.some)
+								: asyncRight(
+										Maybe.none(),
+										errorGenerator(
+											'Could not check permissions for attendance update',
+										),
+									)
+							).map(
+								hasBasicAttendanceManagementPermission(attendanceModifier)(event),
+							),
+						{
+							type: 'OTHER',
+							code: 403,
+							message: 'You do not have permission to modify this attendance record',
+						},
+					),
+			)
+			.flatMap(() =>
+				AsyncEither.All(
+					attendanceRecord.customAttendanceFieldValues.map(value =>
+						canMemberModifyCustomAttendanceField(backend)(attendanceModifier)(
+							attendanceRecord,
+						)(value).map(canModify => ({
+							canModify,
+							value,
+						})),
+					),
+				),
+			)
+			.map<AttendanceRecord>(modifiableValues => ({
+				timestamp: backend.now(),
+				comments: changes.comments ?? attendanceRecord.comments,
+				customAttendanceFieldValues: attendanceRecord.customAttendanceFieldValues.map(
+					value => {
+						const findResult = modifiableValues.find(
+							result => result.value.title === value.title,
+						);
+
+						const changedValue = changes.customAttendanceFieldValues.find(
+							({ title }) => title === value.title,
+						);
+
+						if (findResult?.canModify && changedValue) {
+							return changedValue;
+						} else {
+							return value;
+						}
 					},
 				),
-		)
-		.flatMap(() =>
-			AsyncEither.All(
-				attendanceRecord.customAttendanceFieldValues.map(value =>
-					canMemberModifyCustomAttendanceField(backend)(attendanceModifier)(
-						attendanceRecord,
-					)(value).map(canModify => ({
-						canModify,
-						value,
-					})),
-				),
-			),
-		)
-		.map<AttendanceRecord>(modifiableValues => ({
-			timestamp: backend.now(),
-			comments: changes.comments ?? attendanceRecord.comments,
-			customAttendanceFieldValues: attendanceRecord.customAttendanceFieldValues.map(value => {
-				const findResult = modifiableValues.find(
-					result => result.value.title === value.title,
-				);
-
-				const changedValue = changes.customAttendanceFieldValues.find(
-					({ title }) => title === value.title,
-				);
-
-				if (findResult?.canModify && changedValue) {
-					return changedValue;
-				} else {
-					return value;
-				}
-			}),
-			memberID: attendanceRecord.memberID,
-			memberName: attendanceRecord.memberName,
-			planToUseCAPTransportation:
-				changes.planToUseCAPTransportation ?? attendanceRecord.planToUseCAPTransportation,
-			shiftTime: changes.shiftTime ?? attendanceRecord.shiftTime,
-			sourceAccountID: attendanceRecord.sourceAccountID,
-			sourceEventID: attendanceRecord.sourceEventID,
-			status: changes.status ?? attendanceRecord.status,
-			summaryEmailSent: attendanceRecord.summaryEmailSent,
-		}))
-		.map(rawAttendanceRecordWrapper)
-		.flatMap(record =>
-			asyncRight(
-				backend.getCollection('Attendance'),
-				errorGenerator('Cannot save attendance record'),
+				memberID: attendanceRecord.memberID,
+				memberName: attendanceRecord.memberName,
+				planToUseCAPTransportation:
+					changes.planToUseCAPTransportation ??
+					attendanceRecord.planToUseCAPTransportation,
+				shiftTime: changes.shiftTime ?? attendanceRecord.shiftTime,
+				sourceAccountID: attendanceRecord.sourceAccountID,
+				sourceEventID: attendanceRecord.sourceEventID,
+				status: changes.status ?? attendanceRecord.status,
+				summaryEmailSent: attendanceRecord.summaryEmailSent,
+			}))
+			.map(rawAttendanceRecordWrapper)
+			.flatMap(record =>
+				asyncRight(
+					backend.getCollection('Attendance'),
+					errorGenerator('Cannot save attendance record'),
+				)
+					.map(
+						modifyAndBindC({
+							accountID: record.accountID,
+							eventID: record.eventID,
+							memberID: record.memberID,
+						}),
+					)
+					.map(modify => modify.patch(record).execute()),
 			)
-				.map(
-					modifyAndBindC({
-						accountID: record.accountID,
-						eventID: record.eventID,
-						memberID: record.memberID,
-					}),
-				)
-				.map(modify => modify.patch(record).execute()),
-		)
-		.map(destroy);
+			.map(destroy);
 
-export const removeMemberFromEventAttendance = (schema: Schema) => (account: AccountObject) => (
-	event: RawEventObject,
-) => (member: MemberReference): ServerEither<void> =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not delete attendance record'),
-	)
-		.map(collection =>
-			collection
-				.remove(
-					generateFindStatement({
-						accountID: account.id,
-						eventID: event.id,
-						memberID: toReference(member),
-					}),
-				)
-				.bind(
-					generateBindObject({
-						accountID: account.id,
-						eventID: event.id,
-						memberID: toReference(member),
-					}),
-				)
-				.execute(),
+export const removeMemberFromEventAttendance =
+	(schema: Schema) =>
+	(account: AccountObject) =>
+	(event: RawEventObject) =>
+	(member: MemberReference): ServerEither<void> =>
+		asyncRight(
+			schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+			errorGenerator('Could not delete attendance record'),
 		)
-		.map(destroy);
+			.map(collection =>
+				collection
+					.remove(
+						generateFindStatement({
+							accountID: account.id,
+							eventID: event.id,
+							memberID: toReference(member),
+						}),
+					)
+					.bind(
+						generateBindObject({
+							accountID: account.id,
+							eventID: event.id,
+							memberID: toReference(member),
+						}),
+					)
+					.execute(),
+			)
+			.map(destroy);
 
 const sendSignupDenyMessage = (message: string): ServerEither<void> =>
 	asyncLeft({
@@ -532,88 +580,112 @@ const sendSignupDenyMessage = (message: string): ServerEither<void> =>
 		message,
 	});
 
-export const addMemberToAttendance = (
-	backend: Backends<[TeamsBackend, TimeBackend, RawMySQLBackend, MemberBackend]>,
-) => (account: AccountObject) => (event: EventObject) => (isAdmin: boolean) => (
-	attendee: Required<NewAttendanceRecord>,
-): ServerEither<FromDatabase<WithoutEmpty<RawAttendanceDBRecord>>> =>
-	(event.teamID !== null && event.teamID !== undefined
-		? backend.getTeam(account)(event.teamID).map(Maybe.some)
-		: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
-	)
-		.map(isAdmin ? always(canSignSomeoneElseUpForEvent(event)) : canSignUpForEvent(event))
-		.map(call(attendee.memberID))
-		.flatMap(
-			Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
-				asyncRight(void 0, errorGenerator('Could not add member to attendance')),
-			),
+export const addMemberToAttendance =
+	(backend: Backends<[TeamsBackend, TimeBackend, RawMySQLBackend, MemberBackend]>) =>
+	(account: AccountObject) =>
+	(event: EventObject) =>
+	(isAdmin: boolean) =>
+	(
+		attendee: Required<NewAttendanceRecord>,
+	): ServerEither<FromDatabase<WithoutEmpty<RawAttendanceDBRecord>>> =>
+		(event.teamID !== null && event.teamID !== undefined
+			? backend.getTeam(account)(event.teamID).map(Maybe.some)
+			: asyncRight(Maybe.none(), errorGenerator('Could not get team information'))
 		)
-		.flatMap(() =>
-			backend
-				.getMemberName(account)(attendee.memberID)
-				.flatMap(memberName =>
-					addToCollection(backend.getCollection('Attendance'))({
-						...attendee,
-						accountID:
-							event.type === EventType.LINKED
-								? event.targetAccountID
-								: event.accountID,
-						eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
-						timestamp: backend.now(),
-						memberName,
-						summaryEmailSent: false,
-						shiftTime: attendee.shiftTime ?? {
+			.map(isAdmin ? always(canSignSomeoneElseUpForEvent(event)) : canSignUpForEvent(event))
+			.map(call(attendee.memberID))
+			.flatMap(
+				Either.cata<string, void, ServerEither<void>>(sendSignupDenyMessage)(() =>
+					asyncRight(void 0, errorGenerator('Could not add member to attendance')),
+				),
+			)
+			.flatMap(() =>
+				backend
+					.getMemberName(account)(attendee.memberID)
+					.flatMap(memberName =>
+						addToCollection(backend.getCollection('Attendance'))({
+							...attendee,
+							accountID:
+								event.type === EventType.LINKED
+									? event.targetAccountID
+									: event.accountID,
+							eventID:
+								event.type === EventType.LINKED ? event.targetEventID : event.id,
+							timestamp: backend.now(),
+							memberName,
+							summaryEmailSent: false,
+							shiftTime: attendee.shiftTime
+								? {
+										arrivalTime: Math.max(
+											event.meetDateTime,
+											Math.min(
+												event.pickupDateTime,
+												attendee.shiftTime.arrivalTime,
+											),
+										),
+										departureTime: Math.min(
+											event.meetDateTime,
+											Math.max(
+												event.pickupDateTime,
+												attendee.shiftTime.departureTime,
+											),
+										),
+									}
+								: {
+										arrivalTime: event.meetDateTime,
+										departureTime: event.pickupDateTime,
+									},
+						}),
+					)
+					.leftFlatMap(err =>
+						isDuplicateRecordError(err)
+							? Either.left({
+									type: 'OTHER',
+									code: 400,
+									message: 'Member is already in attendance',
+								})
+							: Either.left(err),
+					),
+			);
+
+export const modifyEventAttendanceRecord =
+	(schema: Schema) =>
+	(event: RawResolvedEventObject) =>
+	(member: Member) =>
+	(record: Omit<Partial<NewAttendanceRecord>, 'memberID'>): ServerEither<void> =>
+		asyncRight(
+			schema.getCollection<RawAttendanceDBRecord>('Attendance'),
+			errorGenerator('Could not save attendance record'),
+		)
+			.map(
+				modifyAndBindC<RawAttendanceDBRecord>({
+					accountID:
+						event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
+					eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
+					memberID: toReference(member),
+				}),
+			)
+			.map(collection =>
+				collection
+					.patch({
+						...record,
+						memberID: toReference(member),
+						memberName: getFullMemberName(member),
+						shiftTime: record.shiftTime ?? {
 							arrivalTime: event.meetDateTime,
 							departureTime: event.pickupDateTime,
 						},
-					}),
-				)
-				.leftFlatMap(err =>
-					isDuplicateRecordError(err)
-						? Either.left({
-								type: 'OTHER',
-								code: 400,
-								message: 'Member is already in attendance',
-						  })
-						: Either.left(err),
-				),
-		);
+					})
+					.execute(),
+			)
+			.map(destroy);
 
-export const modifyEventAttendanceRecord = (schema: Schema) => (event: RawResolvedEventObject) => (
-	member: Member,
-) => (record: Omit<Partial<NewAttendanceRecord>, 'memberID'>): ServerEither<void> =>
-	asyncRight(
-		schema.getCollection<RawAttendanceDBRecord>('Attendance'),
-		errorGenerator('Could not save attendance record'),
-	)
-		.map(
-			modifyAndBindC<RawAttendanceDBRecord>({
-				accountID:
-					event.type === EventType.LINKED ? event.targetAccountID : event.accountID,
-				eventID: event.type === EventType.LINKED ? event.targetEventID : event.id,
-				memberID: toReference(member),
-			}),
-		)
-		.map(collection =>
-			collection
-				.patch({
-					...record,
-					memberID: toReference(member),
-					memberName: getFullMemberName(member),
-					shiftTime: record.shiftTime ?? {
-						arrivalTime: event.meetDateTime,
-						departureTime: event.pickupDateTime,
-					},
-				})
-				.execute(),
-		)
-		.map(destroy);
-
-export const deleteAttendanceRecord = (backend: Backends<[RawMySQLBackend]>) =>
+export const deleteAttendanceRecord =
+	(backend: Backends<[RawMySQLBackend]>) =>
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	(actor: User) => (member: MemberReference) => (
-		event: RawResolvedEventObject,
-	): ServerEither<void> =>
+	(actor: User) =>
+	(member: MemberReference) =>
+	(event: RawResolvedEventObject): ServerEither<void> =>
 		asyncRight(
 			backend.getCollection('Attendance'),
 			errorGenerator('Could not delete attendance record'),
@@ -628,23 +700,24 @@ export const deleteAttendanceRecord = (backend: Backends<[RawMySQLBackend]>) =>
 			.map(collection => collection.execute())
 			.map(destroy);
 
-export const getMemberAttendanceRecordForEvent = (backend: Backends<[RawMySQLBackend]>) => (
-	event: RawEventObject,
-) => (member: MemberReference): ServerEither<MaybeObj<AttendanceRecord>> =>
-	asyncRight(
-		backend.getCollection('Attendance'),
-		errorGenerator('Could not get member attendance'),
-	)
-		.map(
-			findAndBindC<RawAttendanceDBRecord>({
-				accountID: event.accountID,
-				eventID: event.id,
-				memberID: toReference(member),
-			}),
+export const getMemberAttendanceRecordForEvent =
+	(backend: Backends<[RawMySQLBackend]>) =>
+	(event: RawEventObject) =>
+	(member: MemberReference): ServerEither<MaybeObj<AttendanceRecord>> =>
+		asyncRight(
+			backend.getCollection('Attendance'),
+			errorGenerator('Could not get member attendance'),
 		)
-		.map(collectResults)
-		.map(Maybe.fromArray)
-		.map(Maybe.map(attendanceRecordMapper));
+			.map(
+				findAndBindC<RawAttendanceDBRecord>({
+					accountID: event.accountID,
+					eventID: event.id,
+					memberID: toReference(member),
+				}),
+			)
+			.map(collectResults)
+			.map(Maybe.fromArray)
+			.map(Maybe.map(attendanceRecordMapper));
 
 export interface AttendanceBackend {
 	getAttendanceForEvent: (event: RawEventObject) => ServerEither<AsyncIter<AttendanceRecord>>;

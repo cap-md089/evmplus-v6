@@ -315,6 +315,11 @@ export namespace Permissions {
 		NO = 'No',
 		YES = 'Yes',
 	}
+
+	export enum MemberSearch {
+		NO = 'No',
+		YES = 'Yes',
+	}
 }
 
 export type HTTPRequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -1530,6 +1535,10 @@ export interface CAPSquadronMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 /**
@@ -1611,6 +1620,10 @@ export interface CAPEventMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPGroupMemberPermissions {
@@ -1677,6 +1690,10 @@ export interface CAPGroupMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPWingMemberPermissions {
@@ -1747,6 +1764,10 @@ export interface CAPWingMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPRegionMemberPermissions {
@@ -1817,6 +1838,10 @@ export interface CAPRegionMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export type MemberPermissions =

@@ -28,11 +28,13 @@ import {
 	Either,
 	EitherObj,
 	getFullMemberName,
+	hasPermission,
 	HTTPError,
 	identity,
 	isRioux,
 	Maybe,
 	NHQ,
+	Permissions,
 	pipe,
 	ShortNHQDutyPosition,
 	stringifyMemberReference
@@ -463,8 +465,9 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 	return store;
 }
 
-export const shouldRenderMemberSearchWidget = ({ member }: PageProps): boolean =>
-	!!member && ((member.seniorMember && member.dutyPositions.length > 0) || isRioux(member));
+export const shouldRenderMemberSearchWidget = (props: PageProps): boolean =>
+	!!props.member && ((props.member.seniorMember && props.member.dutyPositions.length > 0) || isRioux(props.member)
+		|| hasPermission('MemberSearch')(Permissions.MemberSearch.YES)(props.member));
 
 export interface RequiredMember extends PageProps, FetchAPIProps {
 	member: ClientUser;
