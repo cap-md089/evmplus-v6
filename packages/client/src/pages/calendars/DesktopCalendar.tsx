@@ -370,6 +370,8 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 				}
 			}
 		}
+		const calendarLink = "https://calendar.google.com/calendar/embed?src=" + this.props.account.mainCalendarID.replace("@", "%40") 
+		 + "&ctz=America%2FNew_York";
 
 		return (
 			<div className="calendar calendar-desktop">
@@ -378,6 +380,8 @@ export default class DesktopCalendar extends Page<CalendarProps> {
 					Permissions.ManageEvent.NONE ? (
 					<Link to="/eventform">Add event</Link>
 				) : null}
+				&nbsp;&nbsp;
+				Access these events on Google Calendar at <a href={calendarLink}>this link</a>
 				<table>
 					<caption>
 						<Link

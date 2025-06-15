@@ -371,7 +371,7 @@ export const saveRegularEventFunc = (
 	oldEvent: FromDatabase<RawRegularEventObject>,
 ) => (event: RawRegularEventObject): ServerEither<FromDatabase<RawResolvedEventObject>> =>
 	backend
-		.updateGoogleCalendars(event)
+		.updateGoogleCalendars(event)  // need return value to update event object prior to save
 		.map<FromDatabase<RawRegularEventObject>>(([mainId, regId, feeId]) => ({
 			_id: oldEvent._id,
 			acceptSignups: event.acceptSignups,
