@@ -105,6 +105,12 @@ export enum AuditableEventType {
 	DELETE = 'Delete',
 }
 
+export enum PopulateGoogleCalendarErrors {
+	NONE = 'None',
+	INSERT = 'InsertError',
+	NOPERMISSIONS = 'NoPermissions',
+}
+
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
