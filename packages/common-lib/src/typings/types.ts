@@ -158,6 +158,7 @@ export enum CustomAttendanceFieldEntryType {
 	DATE = 'Date',
 	CHECKBOX = 'Checkbox',
 	FILE = 'File',
+	QUAL = 'Qual',
 }
 
 export enum CAPWATCHImportUpdate {
@@ -1303,12 +1304,24 @@ export interface CustomAttendanceFieldText extends CustomAttendanceFieldBase {
 	preFill: string;
 }
 
+export interface CustomAttendanceFieldQual extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.QUAL;
+	/**
+	 * Set prefill type to string
+	 */
+	preFill: string;
+}
+
 export type CustomAttendanceField =
 	| CustomAttendanceFieldCheckbox
 	| CustomAttendanceFieldDate
 	| CustomAttendanceFieldFile
 	| CustomAttendanceFieldNumber
-	| CustomAttendanceFieldText;
+	| CustomAttendanceFieldText
+	| CustomAttendanceFieldQual;
 
 export interface CustomAttendanceFieldValueBase {
 	type: CustomAttendanceFieldEntryType;
@@ -1346,12 +1359,19 @@ export interface CustomAttendanceFieldTextValue extends CustomAttendanceFieldVal
 	value: string;
 }
 
+export interface CustomAttendanceFieldQualValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.QUAL;
+
+	value: string;
+}
+
 export type CustomAttendanceFieldValue =
 	| CustomAttendanceFieldCheckboxValue
 	| CustomAttendanceFieldDateValue
 	| CustomAttendanceFieldFileValue
 	| CustomAttendanceFieldNumberValue
-	| CustomAttendanceFieldTextValue;
+	| CustomAttendanceFieldTextValue
+	| CustomAttendanceFieldQualValue;
 
 /**
  * A basic point of contact
