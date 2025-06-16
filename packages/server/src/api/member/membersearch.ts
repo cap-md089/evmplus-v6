@@ -1,26 +1,28 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
 	api,
+	AsyncEither,
 	asyncIterFilter,
 	asyncIterMap,
+	asyncIterTap,
 	asyncLeft,
 	asyncRight,
 	Either,
@@ -34,6 +36,7 @@ import {
 	Right,
 	ServerError,
 	SessionType,
+	ShortNHQDutyPosition,
 } from 'common-lib';
 import {
 	AccountBackend,
@@ -57,6 +60,7 @@ import wrapper from '../../lib/wrapper';
 const memberSearchSQL = (
 	schema: Schema,
 	orgids: number[],
+	dutyName: string,
 	includeAssts: boolean,
 ): string => /* sql */ `SELECT DISTINCT
 	M.CAPID
@@ -73,14 +77,14 @@ ON
 WHERE
 	M.ORGID in ${bindForArray(orgids)}
 AND
-	LOWER(M.doc ->> '$.NameFirst') LIKE ?
+	TRIM(LOWER(M.doc ->> '$.NameFirst')) LIKE ?
 AND
-	LOWER(M.doc ->> '$.NameLast') LIKE ?
+	TRIM(LOWER(M.doc ->> '$.NameLast')) LIKE ?
 AND
-	LOWER(O.doc ->> '$.Name') LIKE ?
-AND
-	LOWER(D.doc ->> '$.Duty') LIKE ?
-${includeAssts ? ';' : "AND D.doc ->> '$.Asst' = 0;"}`;
+	TRIM(LOWER(O.doc ->> '$.Name')) LIKE ?
+${dutyName.length > 3 ? "AND TRIM(LOWER(D.doc ->> '$.Duty')) LIKE ?" : "?"}
+${dutyName.length > 3 ? (includeAssts ? '' : "AND D.doc ->> '$.Asst' = 0") : ``}
+;`;
 
 const stripPunctuation = (s: string): string => s.replace(/[',.]/g, '');
 
@@ -118,17 +122,18 @@ export const func: Endpoint<
 								memberSearchSQL(
 									schema,
 									safeOrgIds,
+									req.params.dutyName??'%',
 									req.params.includeAssts === 'true',
 								),
 							)
 							.bind([
 								...safeOrgIds,
-								`%${(req.params.firstName ?? '').toLocaleLowerCase()}%`,
-								`%${(req.params.lastName ?? '').toLocaleLowerCase()}%`,
+								`%${(req.params.firstName ?? '').toLocaleLowerCase().trim()}%`,
+								`%${(req.params.lastName ?? '').toLocaleLowerCase().trim()}%`,
 								`%${stripPunctuation(
 									req.params.unitName ?? '',
-								).toLocaleLowerCase()}%`,
-								(req.params.dutyName ?? '').toLocaleLowerCase(),
+								).toLocaleLowerCase().trim()}%`,
+								`${(req.params.dutyName ?? '').toLocaleLowerCase().trim()}`,
 							])
 							.execute(),
 					)
@@ -155,18 +160,24 @@ export const func: Endpoint<
 							EitherObj<ServerError, api.member.MemberSearchResult>
 						>(id =>
 							backend
-								.getMember(req.account)({
+								.getMember(req.account.type === 'CAPWing' ? { ...req.account, id: req.account.id + '-ignore', orgIDs: safeOrgIds } : req.account)({
 									type: 'CAPNHQMember',
 									id,
 								})
 								.flatMap(member =>
-									getOrganization(member.orgid).map(organization => ({
-										member,
-										organization,
-									})),
+									AsyncEither.All([
+										getOrganization(member.orgid),
+										AsyncEither.All(member.dutyPositions.filter((duty): duty is ShortNHQDutyPosition => duty.type === 'NHQ').map(duty => getOrganization(duty.orgid)))
+									])
+										.map(([organization, dutyOrgs]) => ({
+											member,
+											organization,
+											dutyOrgs: dutyOrgs.filter(Maybe.isSome).map(get('value'))
+										}))
 								),
 						)(iter);
 					})
+					.tap(asyncIterTap(console.log))
 					.map(
 						asyncIterFilter<
 							EitherObj<ServerError, api.member.MemberSearchResult>,

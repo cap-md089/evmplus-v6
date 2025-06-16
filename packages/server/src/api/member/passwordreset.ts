@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { always, api, Either, PasswordSetResult, SessionType } from 'common-lib';
@@ -31,7 +31,9 @@ export const func: Endpoint<Backends<[PAM.PAMBackend]>, api.member.PasswordReset
 			.addPasswordForUser([req.session.userAccount.username, req.body.password])
 			.flatMap<PasswordSetResult>(() =>
 				req.session.type === SessionType.PASSWORD_RESET
-					? backend.updateSession(req.session).map(always(PasswordSetResult.OK))
+					? backend
+						.updateSession({ ...req.session, type: SessionType.REGULAR })
+						.map(always(PasswordSetResult.OK))
 					: Either.right(PasswordSetResult.OK),
 			)
 			.map(wrapper),

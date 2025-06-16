@@ -22,8 +22,9 @@ Current units running the Event Manager suite:
 
 **Table Of Contents**
 
-1. [Requirements for building and running](#requirements-for-building-and-running)
-2. [Server configuration](#server-configuration)
+1. [Developing EvMPlus v6](#developing-evmplus-v6)
+2. [Requirements for building and running](#requirements-for-building-and-running)
+3. [Server configuration](#server-configuration)
     1. [MySQL setup](#mysql-setup)
     2. [AWS SMTP credentials](#aws-smtp-setup)
     3. [AWS DNS credentials](#aws-dns-setup)
@@ -32,12 +33,15 @@ Current units running the Event Manager suite:
     6. [CAPWATCH credentials](#capwatch-setup)
     7. [reCAPTCHA keys](#recaptcha-setup)
     8. [Client setup](#client-setup)
-3. [Using Command Line Utilities](#using-command-line-utilities)
-4. [Building and running the server](#building-and-running-the-server)
+4. [Using Command Line Utilities](#using-command-line-utilities)
+5. [Building and running the server](#building-and-running-the-server)
     1. [Creating an account and supplying it data](#creating-an-account-and-supplying-it-data)
     2. [Accessing the site](#accessing-the-site)
-5. [Alternatively...](#alternatively)
-6. [Developing EvMPlus.org](#developing-evmplus.org)
+6. [Alternatively...](#alternatively)
+
+## Developing EvMPlus v6
+
+Development setup is now much simpler. To get a development environment, open this repository in either Visual Studio Code's dev containers extension or using a GitHub codespaces, wait for the environment to set itself up, and then in a terminal run `docker-compose -f docker-compose.dev.yml run --service-ports client_dev_server`. A development web server will spin up with a basic default dataset and an admin user with the credentials `testadmin`/`testpassword`.
 
 ## Requirements for building and running
 
@@ -172,14 +176,14 @@ From inside the util-cli container [started here](#using-command-line-utilities)
 
 ### Accessing the site
 
-To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.evmplus.org`.
+To access the site, you have to use a domain name that starts with the account ID you used earlier. For instance, to access the `md089` account, you would go to `md089.events.md.cap.gov`.
 
 ## Alternatively...
 
-If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `eventsupport@md.cap.gov` to request an official EvMPlus.org website.
+If you are a unit commander or unit IT officer looking to implement this for your squadron, you can instead send an email to `eventsupport@md.cap.gov` to request an official Event Manager website.
 
-This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the EvMPlus.org domain.
+This will take advantage of the hosting and support already available, and will allow for cross unit communication with units already established under the cap.gov domain.
 
 CAPWATCH data for all Maryland Wing members and units is already being handled.
 
-There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a evmplus.org hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)
+There is currently a feature request being worked on which will allow you as a unit commander or unit IT officer to upload your own CAPWATCH data to a Event Manager hosted unit. [This feature request can be tracked here.](https://github.com/cap-md089/evmplus-v6/issues/48)

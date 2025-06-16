@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
- *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * This file is part of Event Manager.
+ * 
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
- *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * 
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
@@ -34,7 +34,7 @@ import FinishSignup from '../pages/account/FinishSignup';
 import RegisterDiscord from '../pages/account/RegisterDiscord';
 import RequestPasswordResetForm from '../pages/account/RequestPasswordReset';
 import RequestUsernameForm from '../pages/account/RequestUsername';
-import Signin from '../pages/account/Signin';
+import { SigninF } from '../pages/account/Signin';
 import Signup from '../pages/account/Signup';
 import Admin from '../pages/admin/Admin';
 import FlightAssign from '../pages/admin/pages/FlightAssign';
@@ -72,232 +72,237 @@ const pages: Array<{
 	component: typeof Page | React.FC<PageProps<any>>;
 	exact: boolean;
 }> = [
-	{
-		url: '/',
-		component: Main,
-		exact: true,
-	},
-	{
-		url: '/eventform',
-		component: AddEvent,
-		exact: true,
-	},
-	{
-		url: '/addevent',
-		component: AddEvent,
-		exact: true,
-	},
-	{
-		url: '/eventviewer/:id',
-		component: EventViewer,
-		exact: false,
-	},
-	{
-		url: '/auditviewer/:id',
-		component: AuditViewer,
-		exact: false,
-	},
-	{
-		url: '/eventlinklist',
-		component: LinkList,
-		exact: false,
-	},
-	{
-		url: '/eventform/:id',
-		component: ModifyEvent,
-		exact: false,
-	},
-	{
-		url: '/modifyevent/:id',
-		component: ModifyEvent,
-		exact: false,
-	},
-	{
-		url: '/changelog',
-		component: ChangeLog,
-		exact: true,
-	},
-	{
-		url: '/calendar/:month?/:year?',
-		component: Calendar,
-		exact: false,
-	},
-	{
-		url: '/filemanagement/:id?',
-		component: Drive,
-		exact: false,
-	},
-	{
-		url: '/drive/:id?',
-		component: Drive,
-		exact: false,
-	},
-	{
-		url: '/multiadd/:id',
-		component: AttendanceMultiAdd,
-		exact: false,
-	},
-	{
-		url: '/team/create',
-		component: TeamAdd,
-		exact: false,
-	},
-	{
-		url: '/team',
-		component: TeamList,
-		exact: true,
-	},
-	{
-		url: '/teamlist',
-		component: TeamList,
-		exact: false,
-	},
-	{
-		url: '/team/list',
-		component: TeamList,
-		exact: false,
-	},
-	{
-		url: '/teamview/:id',
-		component: TeamView,
-		exact: false,
-	},
-	{
-		url: '/team/emails/:id',
-		component: TeamEmailList,
-		exact: false,
-	},
-	{
-		url: '/team/view/:id',
-		component: TeamView,
-		exact: false,
-	},
-	{
-		url: '/team/edit/:id',
-		component: TeamEdit,
-		exact: false,
-	},
-	{
-		url: '/team/:id',
-		component: TeamView,
-		exact: false,
-	},
-	{
-		url: '/admin',
-		component: Admin,
-		exact: false,
-	},
-	{
-		url: '/regedit',
-		component: RegEdit,
-		exact: false,
-	},
-	{
-		url: '/flightassign',
-		component: FlightAssign,
-		exact: false,
-	},
-	// {
-	// 	url: '/notifications',
-	// 	component: Notifications,
-	// 	exact: false,
-	// },
-	{
-		url: '/debug',
-		component: Debug,
-		exact: true,
-	},
-	{
-		url: '/signin',
-		component: Signin,
-		exact: false,
-	},
-	{
-		url: '/finishaccount/:token',
-		component: FinishSignup,
-		exact: true,
-	},
-	{
-		url: '/create-account',
-		component: Signup,
-		exact: true,
-	},
-	{
-		url: '/passwordreset',
-		component: RequestPasswordResetForm,
-		exact: true,
-	},
-	{
-		url: '/usernamerequest',
-		component: RequestUsernameForm,
-		exact: true,
-	},
-	{
-		url: '/finishpasswordreset/:token',
-		component: FinishPasswordResetForm,
-		exact: true,
-	},
-	{
-		url: '/registerdiscord/:discordid',
-		component: RegisterDiscord,
-		exact: true,
-	},
-	{
-		url: '/capr393quizzer',
-		component: Quizzer,
-		exact: false,
-	},
-	{
-		url: '/events/scanadd/:id',
-		component: ScanAdd,
-		exact: false,
-	},
-	{
-		url: '/terms-and-conditions',
-		component: TermsAndConditions,
-		exact: false,
-	},
-	{
-		url: '/privacy-policy',
-		component: PrivacyPolicy,
-		exact: false,
-	},
+		{
+			url: '/',
+			component: Main,
+			exact: true,
+		},
+		{
+			url: '/eventform',
+			component: AddEvent,
+			exact: true,
+		},
+		{
+			url: '/addevent',
+			component: AddEvent,
+			exact: true,
+		},
+		{
+			url: '/eventviewer/:id',
+			component: EventViewer,
+			exact: false,
+		},
+		{
+			url: '/auditviewer/:id',
+			component: AuditViewer,
+			exact: false,
+		},
+		{
+			url: '/eventlinklist',
+			component: LinkList,
+			exact: false,
+		},
+		{
+			url: '/eventform/:id',
+			component: ModifyEvent,
+			exact: false,
+		},
+		{
+			url: '/modifyevent/:id',
+			component: ModifyEvent,
+			exact: false,
+		},
+		{
+			url: '/changelog',
+			component: ChangeLog,
+			exact: true,
+		},
+		{
+			url: '/calendar/:month?/:year?',
+			component: Calendar,
+			exact: false,
+		},
+		{
+			url: '/filemanagement/:id?',
+			component: Drive,
+			exact: false,
+		},
+		{
+			url: '/drive/:id?',
+			component: Drive,
+			exact: false,
+		},
+		{
+			url: '/multiadd/:id',
+			component: AttendanceMultiAdd,
+			exact: false,
+		},
+		{
+			url: '/team/create',
+			component: TeamAdd,
+			exact: false,
+		},
+		{
+			url: '/team',
+			component: TeamList,
+			exact: true,
+		},
+		{
+			url: '/teamlist',
+			component: TeamList,
+			exact: false,
+		},
+		{
+			url: '/team/list',
+			component: TeamList,
+			exact: false,
+		},
+		{
+			url: '/teamview/:id',
+			component: TeamView,
+			exact: false,
+		},
+		{
+			url: '/team/emails/:id',
+			component: TeamEmailList,
+			exact: false,
+		},
+		{
+			url: '/team/view/:id',
+			component: TeamView,
+			exact: false,
+		},
+		{
+			url: '/team/edit/:id',
+			component: TeamEdit,
+			exact: false,
+		},
+		{
+			url: '/team/:id',
+			component: TeamView,
+			exact: false,
+		},
+		{
+			url: '/admin',
+			component: Admin,
+			exact: false,
+		},
+		{
+			url: '/regedit',
+			component: RegEdit,
+			exact: false,
+		},
+		{
+			url: '/flightassign',
+			component: FlightAssign,
+			exact: false,
+		},
+		// {
+		// 	url: '/notifications',
+		// 	component: Notifications,
+		// 	exact: false,
+		// },
+		{
+			url: '/debug',
+			component: Debug,
+			exact: true,
+		},
+		{
+			url: '/signin',
+			component: SigninF,
+			exact: false,
+		},
+		{
+			url: '/finishaccount/:token',
+			component: FinishSignup,
+			exact: true,
+		},
+		{
+			url: '/create-account',
+			component: Signup,
+			exact: true,
+		},
+		{
+			url: '/passwordreset',
+			component: RequestPasswordResetForm,
+			exact: true,
+		},
+		{
+			url: '/usernamerequest',
+			component: RequestUsernameForm,
+			exact: true,
+		},
+		{
+			url: '/finishpasswordreset/:token',
+			component: FinishPasswordResetForm,
+			exact: true,
+		},
+		{
+			url: '/registerdiscord/:discordid',
+			component: RegisterDiscord,
+			exact: true,
+		},
+		{
+			url: '/capr393quizzer',
+			component: Quizzer,
+			exact: false,
+		},
+		{
+			url: '/events/scanadd/:id',
+			component: ScanAdd,
+			exact: false,
+		},
+		{
+			url: '/terms-and-conditions',
+			component: TermsAndConditions,
+			exact: false,
+		},
+		{
+			url: '/privacy-policy',
+			component: PrivacyPolicy,
+			exact: false,
+		},
 
-	// THIS GOES LAST
-	// Otherwise, have fun debugging why you get a 404 for every page
-	{
-		url: '/',
-		component: NotFound,
-		exact: false,
-	},
-];
+		// THIS GOES LAST
+		// Otherwise, have fun debugging why you get a 404 for every page
+		{
+			url: '/',
+			component: NotFound,
+			exact: false,
+		},
+	];
 
-const composeElement = (props: {
-	El: typeof Page | React.FC<PageProps>;
-	account: AccountObject;
-	authorizeUser: (arg: SigninReturn) => void;
-	updateSideNav: (links: SideNavigationItem[]) => void;
-	updateBreadCrumbs: (links: BreadCrumb[]) => void;
-	registry: RegistryValues;
-	member: ClientUser | null;
-	fullMemberDetails: SigninReturn;
-	updateApp: () => void;
-	key: string;
-}) => (routeProps: RouteComponentProps<any>) => (
-	<PageDisplayer
-		key={props.key}
-		updateApp={props.updateApp}
-		El={props.El}
-		account={props.account}
-		authorizeUser={props.authorizeUser}
-		updateSideNav={props.updateSideNav}
-		updateBreadCrumbs={props.updateBreadCrumbs}
-		registry={props.registry}
-		member={props.member}
-		fullMemberDetails={props.fullMemberDetails}
-		routeProps={routeProps}
-	/>
-);
+const composeElement =
+	(props: {
+		El: typeof Page | React.FC<PageProps>;
+		account: AccountObject;
+		authorizeUser: (arg: SigninReturn) => void;
+		updateSideNav: (links: SideNavigationItem[]) => void;
+		updateBreadCrumbs: (links: BreadCrumb[]) => void;
+		registry: RegistryValues;
+		member: ClientUser | null;
+		fullMemberDetails: SigninReturn;
+		updateApp: () => void;
+		key: string;
+		deleteReduxState: () => void;
+	}) =>
+		(routeProps: RouteComponentProps<any>) =>
+		(
+			<PageDisplayer
+				key={props.key}
+				updateApp={props.updateApp}
+				El={props.El}
+				account={props.account}
+				authorizeUser={props.authorizeUser}
+				updateSideNav={props.updateSideNav}
+				updateBreadCrumbs={props.updateBreadCrumbs}
+				registry={props.registry}
+				member={props.member}
+				fullMemberDetails={props.fullMemberDetails}
+				routeProps={routeProps}
+				deleteReduxState={props.deleteReduxState}
+			/>
+		);
 
 interface PageDisplayerProps {
 	El: typeof Page | React.FC<PageProps>;
@@ -310,6 +315,7 @@ interface PageDisplayerProps {
 	fullMemberDetails: SigninReturn;
 	routeProps: RouteComponentProps<any>;
 	updateApp: () => void;
+	deleteReduxState: () => void;
 }
 
 class PageDisplayer extends React.Component<PageDisplayerProps> {
@@ -352,6 +358,7 @@ class PageDisplayer extends React.Component<PageDisplayerProps> {
 					key="mainpage"
 					registry={this.props.registry}
 					prepareURL={this.prepareURL}
+					deleteReduxState={this.props.deleteReduxState}
 				/>
 			</ErrorHandler>
 		);
@@ -371,6 +378,7 @@ interface PageRouterProps extends RouteComponentProps<any> {
 	registry: RegistryValues;
 	fullMemberDetails: SigninReturn;
 	updateApp: () => void;
+	deleteReduxState: () => void;
 }
 
 interface PageRouterState {
@@ -466,6 +474,7 @@ class PageRouter extends React.Component<PageRouterProps, PageRouterState> {
 								fullMemberDetails: this.props.fullMemberDetails,
 								updateApp: this.props.updateApp,
 								key: value.url,
+								deleteReduxState: this.props.deleteReduxState
 							})}
 						/>
 					))}

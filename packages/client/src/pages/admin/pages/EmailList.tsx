@@ -1,23 +1,23 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Member, Maybe, Either, areMembersTheSame, getFullMemberName } from 'common-lib';
+import { Member, Maybe, Either, areMembersTheSame, getFullMemberName, CAPMember } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
 import { InputProps } from '../../../components/form-inputs/Input';
@@ -308,6 +308,21 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 		const currentSortFunction = sortFunctions[this.state.sortFunction];
 
 		const getSelector = (state: EmailListUIState & EmailListLoadedState): JSX.Element => {
+			const displayMember = (val: CAPMember): React.ReactChild => {
+				if (val.type === 'CAPNHQMember') {
+					const expires = +new Date(val.expirationDate);
+
+					if (expires < Date.now()) {
+						return <span style={{ color: 'red' }}>{ getFullMemberName(val) }</span>;
+					}
+
+					if (expires < Date.now() + 1000 * 60 * 60 * 24 * 30) {
+						return <span style={{ color: 'orange' }}>{ getFullMemberName(val) }</span>;
+					}
+				}
+				return getFullMemberName(val);
+			};
+
 			const selectorProps: Omit<
 				SelectorPropsMultiple<Member, any[]>,
 				'filters' | 'onFilterValuesChange' | 'filterValues'
@@ -322,7 +337,7 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 						visibleItems: newVisibleItems,
 					}),
 				overflow: 750,
-				displayValue: getFullMemberName,
+				displayValue: displayMember,
 			};
 
 			return !state.displayAdvanced ? (

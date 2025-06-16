@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import { ServerEither } from 'auto-client-api';
@@ -369,6 +369,7 @@ export default async function updateGoogleCalendars(
 	const registry = await backend.getRegistryUnsafe(inAccount.id).fullJoin();
 
 	if (inEvent.status === EventStatus.DRAFT) {
+		await removeGoogleCalendarEvents(inEvent, inAccount, config)
 		return [null, null, null];
 	}
 
@@ -407,7 +408,9 @@ export async function removeGoogleCalendarEvents(
 export async function deleteAllGoogleCalendarEvents(
 	inAccount: AccountObject,
 	config: GoogleConfiguration,
+	calendarID?: string,
 ): Promise<void> {
+	calendarID ??= inAccount.mainCalendarID;
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
 		client_email: string;
@@ -423,7 +426,7 @@ export async function deleteAllGoogleCalendarEvents(
 	await jwtClient.authorize();
 	const myCalendar = google.calendar('v3');
 
-	console.log(`Deleting events for ${inAccount.mainCalendarID} (${inAccount.id})`);
+	console.log(`Deleting events for ${calendarID} (${inAccount.id})`);
 
 	let events = (
 		await myCalendar.events.list({
@@ -434,9 +437,10 @@ export async function deleteAllGoogleCalendarEvents(
 	while (events === null || events === undefined || events.length > 0) {
 		if (events !== null && events !== undefined) {
 			for (const event of events) {
+				console.log("deleting event " + inAccount.id + "-" + event.id);
 				await myCalendar.events.delete({
 					auth: jwtClient,
-					calendarId: inAccount.mainCalendarID,
+					calendarId: calendarID,
 					eventId: event.id as string,
 				});
 
@@ -450,19 +454,10 @@ export async function deleteAllGoogleCalendarEvents(
 		events = (
 			await myCalendar.events.list({
 				auth: jwtClient,
-				calendarId: inAccount.mainCalendarID,
+				calendarId: calendarID,
 			})
 		)?.data.items;
 	}
-	// const clearMainResponse = await myCalendar.calendars.clear ({
-	// 	auth: jwtClient,
-	// 	calendarId: inAccount.mainCalendarID
-	// });
-
-	// const clearWingResponse = await myCalendar.calendars.clear ({
-	// 	auth: jwtClient,
-	// 	calendarId: inAccount.wingCalendarID
-	// });
 }
 
 type JWTClient = InstanceType<typeof google.auth.JWT>;
@@ -482,7 +477,7 @@ async function deleteCalendarEvent(
 				eventId: eventUUID,
 			});
 		} catch (error) {
-			// 		console.log("delete event error: " + eventUUID);
+					console.error("delete event error: " + eventUUID + " ");
 			// 9999999999 this shouldn't happen.  Should probably log
 			// 			this occurrence so that leaks can be plugged.
 			// this occurs when the event UUID doesn't exist on the Google calendar,
@@ -492,7 +487,11 @@ async function deleteCalendarEvent(
 			// exectuion
 			// need to catch and handle this error so that when attempting to delete or move
 			// events the code succeeds in execution
-			throw error;
+			// throw error;
+			if (error.code === 410) {
+				console.log('Google calendar event not found, ignoring');
+				return;
+			}
 		}
 		if (typeof deleteResponse !== 'undefined') {
 			if (deleteResponse.status >= 400) {
@@ -502,8 +501,8 @@ async function deleteCalendarEvent(
 				);
 			}
 		} else {
-			// console.log('Delete response undefined');
-			throw new Error('Undefined Google calendar response');
+			// throw new Error('Delete response was undefined');
+			console.error('Delete response was undefined for event: ' + eventUUID);
 		}
 	}
 }
@@ -631,6 +630,10 @@ async function updateFeeEvent(
 	inEvent: RawResolvedEventObject,
 	googleId: string,
 ): Promise<string | null> {
+	if(inEvent.googleCalendarIds.feeId && inEvent.googleCalendarIds.feeId.length > 0) {
+		deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.feeId, googleId);
+	}
+
 	if (!!inEvent.participationFee) {
 		const deadlineNumber = !!inEvent.participationFee ? inEvent.participationFee.feeDue : 0;
 		const deadlineInfo: number = !!inEvent.participationFee
@@ -640,55 +643,15 @@ async function updateFeeEvent(
 			`This is a fee deadline for event ${inEvent.accountID}-${inEvent.id}\n` +
 			(deadlineInfo > 0 ? 'The fee amount is $' + deadlineInfo.toFixed(2) + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
-		if (!inEvent.googleCalendarIds.feeId) {
-			const response = await myCalendar.events.insert({
-				auth: jwtClient,
-				calendarId: googleId,
-				requestBody: event,
-			});
-			if (!response.data.id) {
-				throw new Error('Could not insert fee deadline event');
-			}
-			return response.data.id;
-		} else {
-			try {
-				const inEventId = inEvent.googleCalendarIds.feeId;
-				event.id = inEventId;
-				await myCalendar.events.patch({
-					auth: jwtClient,
-					calendarId: googleId,
-					eventId: inEventId,
-					requestBody: event,
-				});
-				return inEventId;
-			} catch (e) {
-				if ((e as { code: number }).code === 404) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					const { id, ...rest } = event;
-
-					const insertResponse = await myCalendar.events.insert({
-						auth: jwtClient,
-						calendarId: googleId,
-						requestBody: rest,
-					});
-
-					if (!insertResponse.data.id) {
-						throw new Error('Could not insert new fee deadline event');
-					}
-
-					return insertResponse.data.id;
-				} else {
-					throw e;
-				}
-			}
-		}
-	} else if (!!inEvent.googleCalendarIds.feeId) {
-		await myCalendar.events.delete({
+		const response = await myCalendar.events.insert({
 			auth: jwtClient,
 			calendarId: googleId,
-			eventId: inEvent.googleCalendarIds.feeId,
+			requestBody: event,
 		});
-		return null;
+		if (!response.data.id) {
+			throw new Error('Could not insert fee deadline event');
+		}
+		return response.data.id;
 	} else {
 		return null;
 	}
@@ -701,6 +664,10 @@ async function updateRegEvent(
 	inEvent: RawResolvedEventObject,
 	googleId: string,
 ): Promise<string | null> {
+	if(inEvent.googleCalendarIds.regId && inEvent.googleCalendarIds.regId.length > 0) {
+		deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.regId, googleId);
+	}
+
 	if (!!inEvent.registration) {
 		const deadlineNumber = !!inEvent.registration ? inEvent.registration.deadline : 0;
 		const deadlineInfo: string = !!inEvent.registration
@@ -710,61 +677,19 @@ async function updateRegEvent(
 			`This is a registration deadline for event ${inEvent.accountID}-${inEvent.id}\n` +
 			(deadlineInfo.length > 0 ? deadlineInfo + '\n\n' : '\n');
 		const event = buildDeadline(config, inEvent, deadlineNumber, deadlineString);
-		if (!inEvent.googleCalendarIds.regId) {
-			const response = await myCalendar.events.insert({
-				auth: jwtClient,
-				calendarId: googleId,
-				requestBody: event,
-			});
-
-			if (!response.data.id) {
-				throw new Error(
-					'Invalid response from Google calendar when creating Google calendar event',
-				);
-			}
-
-			return response.data.id;
-		} else {
-			try {
-				const inEventId = inEvent.googleCalendarIds.regId;
-				event.id = inEventId;
-				await myCalendar.events.patch({
-					auth: jwtClient,
-					calendarId: googleId,
-					eventId: inEventId,
-					requestBody: event,
-				});
-				return inEventId;
-			} catch (e) {
-				if ((e as { code: number }).code === 404) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
-					const { id, ...rest } = event;
-
-					const insertResponse = await myCalendar.events.insert({
-						auth: jwtClient,
-						calendarId: googleId,
-						requestBody: rest,
-					});
-
-					if (!insertResponse.data.id) {
-						throw new Error(
-							'Invalid response from Google calendar when creating Google calendar event',
-						);
-					}
-
-					return insertResponse.data.id;
-				} else {
-					throw e;
-				}
-			}
-		}
-	} else if (!!inEvent.googleCalendarIds.regId) {
-		await myCalendar.events.delete({
+		const response = await myCalendar.events.insert({
 			auth: jwtClient,
 			calendarId: googleId,
-			eventId: inEvent.googleCalendarIds.regId,
+			requestBody: event,
 		});
-		return null;
+
+		if (!response.data.id) {
+			throw new Error(
+				'Invalid response from Google calendar when creating Google calendar event',
+			);
+		}
+
+		return response.data.id;
 	} else {
 		return null;
 	}
@@ -779,8 +704,12 @@ async function updateMainEvent(
 	registry: RegistryValues,
 ): Promise<string> {
 	const event = buildEvent(config, registry, inEvent);
+console.log(`Updating main event for ${inEvent.accountID}-${inEvent.id} with ID ${inEvent.googleCalendarIds.mainId} on calendar ${googleId}`);
+	if(inEvent.googleCalendarIds.mainId && inEvent.googleCalendarIds.mainId.length > 0) {
+		await deleteCalendarEvent(myCalendar, jwtClient, inEvent.googleCalendarIds.mainId, googleId);
+	}
 
-	if (!inEvent.googleCalendarIds.mainId) {
+
 		const response = await myCalendar.events.insert({
 			auth: jwtClient,
 			calendarId: googleId,
@@ -788,43 +717,15 @@ async function updateMainEvent(
 		});
 
 		if (!response.data.id) {
+			console.log('Could not insert new main event.  Response data:', response.data);
 			throw new Error('Could not insert new main event');
 		}
+		console.log(
+			`Inserted new main event for ${inEvent.accountID}-${inEvent.id} with ID ${response.data.id}`,
+		);
 
 		return response.data.id;
-	} else {
-		try {
-			const inEventId = inEvent.googleCalendarIds.mainId;
-			event.id = inEventId;
-			await myCalendar.events.patch({
-				auth: jwtClient,
-				calendarId: googleId,
-				eventId: inEventId,
-				requestBody: event,
-			});
-			return inEventId;
-		} catch (e) {
-			if ((e as { code: number }).code === 404) {
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { id, ...rest } = event;
-
-				const insertResponse = await myCalendar.events.insert({
-					auth: jwtClient,
-					calendarId: googleId,
-					requestBody: rest,
-				});
-
-				if (!insertResponse.data.id) {
-					throw new Error('Could not create new Google calendar event');
-				}
-
-				return insertResponse.data.id;
-			} else {
-				throw e;
-			}
-		}
 	}
-}
 
 export interface GoogleBackend {
 	removeGoogleCalendarEvents: (event: RawResolvedEventObject) => ServerEither<void>;

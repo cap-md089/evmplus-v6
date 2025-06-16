@@ -1,20 +1,20 @@
 /**
  * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import type * as XLSX from 'xlsx';
@@ -148,11 +148,12 @@ const CustomAttendanceFieldTypeDisplay = {
 	[CustomAttendanceFieldEntryType.DATE]: 'Date',
 	[CustomAttendanceFieldEntryType.CHECKBOX]: 'Checkbox',
 	[CustomAttendanceFieldEntryType.FILE]: 'File',
+	[CustomAttendanceFieldEntryType.QUAL]: 'OPS Qual',
 };
 
 export const EventXL = (event: RawResolvedEventObject): Array<Array<string | number>> => {
 	let row: Array<string | number> = [
-		'EvMPlus.org Event Information and Sign-up/Attendance Roster',
+		'Event Manager Event Information and Sign-up/Attendance Roster',
 	];
 	const retVal: Array<Array<string | number>> = [];
 	retVal.push(row);
@@ -194,13 +195,18 @@ export const EventXL = (event: RawResolvedEventObject): Array<Array<string | num
 		let fieldPreFill;
 
 		for (const customField of event.customAttendanceFields) {
-			if (customField.type !== CustomAttendanceFieldEntryType.FILE) {
+			if (
+				customField.type !== CustomAttendanceFieldEntryType.FILE &&
+				customField.type !== CustomAttendanceFieldEntryType.QUAL
+			) {
 				fieldPreFill =
 					typeof customField.preFill === 'boolean'
 						? customField.preFill
 							? 'Y'
 							: 'N'
 						: customField.preFill;
+			} else if (customField.type !== CustomAttendanceFieldEntryType.QUAL) {
+				fieldPreFill = 'Qual Data'; // need to populate with live data before the event and stored data after the event?
 			} else {
 				fieldPreFill = 'N/A';
 			}

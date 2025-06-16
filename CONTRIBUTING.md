@@ -17,7 +17,7 @@ Unsure where to begin? Start by taking a look at [ARCHITECTURE.md](https://githu
 
 The software requirements for developing EvMPlus are the same as for running it in a production environment; Docker and docker-compose. It is highly recommended that you enable Docker BuildKit to build the development environment and for other builds. All of the same configuration that the production environment uses is needed, with the exception of the AWS DNS setup.
 
-To develop EvMPlus.org, first download a copy of this repository and create an initial build of the repository:
+To develop Event Manager, first download a copy of this repository and create an initial build of the repository:
 
 ```
 git pull https://github.com/cap-md089/evmplus-v6.git

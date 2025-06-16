@@ -1,23 +1,24 @@
 /**
  * Copyright (C) 2020 Andrew Rioux
  *
- * This file is part of EvMPlus.org.
+ * This file is part of Event Manager.
  *
- * EvMPlus.org is free software: you can redistribute it and/or modify
+ * Event Manager is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or
  * (at your option) any later version.
  *
- * EvMPlus.org is distributed in the hope that it will be useful,
+ * Event Manager is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with EvMPlus.org.  If not, see <http://www.gnu.org/licenses/>.
+ * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 import {
+	always,
 	api,
 	CAPMemberContact,
 	CAPMemberContactPriority,
@@ -27,13 +28,16 @@ import {
 	Either,
 	EitherObj,
 	getFullMemberName,
+	hasPermission,
 	HTTPError,
 	identity,
 	isRioux,
 	Maybe,
 	NHQ,
+	Permissions,
 	pipe,
-	stringifyMemberReference,
+	ShortNHQDutyPosition,
+	stringifyMemberReference
 } from 'common-lib';
 import React, { ReactElement, useCallback } from 'react';
 import { Provider, useDispatch, useSelector } from 'react-redux';
@@ -59,6 +63,7 @@ import Loader from '../../../components/Loader';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { TFetchAPI } from '../../../lib/apis';
 import { PageProps } from '../../Page';
+import { MemberSearchResult } from 'common-lib/dist/typings/apis/member';
 
 interface MemberSearchStateLoaded {
 	state: 'LOADED';
@@ -351,28 +356,28 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 				| MemberSearchToggleIncludeAssistants =>
 				(action.type === 'FIRST_NAME_SEARCH_UPDATE' &&
 					state$.value.unitNameInput.length +
-						state$.value.lastNameInput.length +
-						state$.value.dutyNameInput.length +
-						action.payload.length >=
-						3) ||
+					state$.value.lastNameInput.length +
+					state$.value.dutyNameInput.length +
+					action.payload.length >=
+					3) ||
 				(action.type === 'LAST_NAME_SEARCH_UPDATE' &&
 					state$.value.unitNameInput.length +
-						state$.value.firstNameInput.length +
-						state$.value.dutyNameInput.length +
-						action.payload.length >=
-						3) ||
+					state$.value.firstNameInput.length +
+					state$.value.dutyNameInput.length +
+					action.payload.length >=
+					3) ||
 				(action.type === 'UNIT_NAME_SEARCH_UPDATE' &&
 					state$.value.firstNameInput.length +
-						state$.value.lastNameInput.length +
-						state$.value.dutyNameInput.length +
-						action.payload.length >=
-						3) ||
+					state$.value.lastNameInput.length +
+					state$.value.dutyNameInput.length +
+					action.payload.length >=
+					3) ||
 				(action.type === 'DUTY_NAME_SEARCH_UPDATE' &&
 					state$.value.firstNameInput.length +
-						state$.value.lastNameInput.length +
-						state$.value.unitNameInput.length +
-						action.payload.length >=
-						3) ||
+					state$.value.lastNameInput.length +
+					state$.value.unitNameInput.length +
+					action.payload.length >=
+					3) ||
 				action.type === 'TOGGLE_INCLUDE_ASSISTANTS',
 		);
 
@@ -417,28 +422,28 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 					| MemberSearchDutyNameSearchInputAction =>
 					(action.type === 'FIRST_NAME_SEARCH_UPDATE' &&
 						state$.value.unitNameInput.length +
-							state$.value.lastNameInput.length +
-							state$.value.dutyNameInput.length +
-							action.payload.length <
-							3) ||
+						state$.value.lastNameInput.length +
+						state$.value.dutyNameInput.length +
+						action.payload.length <
+						3) ||
 					(action.type === 'LAST_NAME_SEARCH_UPDATE' &&
 						state$.value.unitNameInput.length +
-							state$.value.firstNameInput.length +
-							state$.value.dutyNameInput.length +
-							action.payload.length <
-							3) ||
+						state$.value.firstNameInput.length +
+						state$.value.dutyNameInput.length +
+						action.payload.length <
+						3) ||
 					(action.type === 'UNIT_NAME_SEARCH_UPDATE' &&
 						state$.value.firstNameInput.length +
-							state$.value.lastNameInput.length +
-							state$.value.dutyNameInput.length +
-							action.payload.length <
-							3) ||
+						state$.value.lastNameInput.length +
+						state$.value.dutyNameInput.length +
+						action.payload.length <
+						3) ||
 					(action.type === 'DUTY_NAME_SEARCH_UPDATE' &&
 						state$.value.firstNameInput.length +
-							state$.value.lastNameInput.length +
-							state$.value.unitNameInput.length +
-							action.payload.length <
-							3),
+						state$.value.lastNameInput.length +
+						state$.value.unitNameInput.length +
+						action.payload.length <
+						3),
 			),
 			mapTo(clearMembers()),
 		);
@@ -460,8 +465,9 @@ export function configureStore(fetchApi: TFetchAPI): Store<MemberSearchState, Me
 	return store;
 }
 
-export const shouldRenderMemberSearchWidget = ({ member }: PageProps): boolean =>
-	!!member && ((member.seniorMember && member.dutyPositions.length > 0) || isRioux(member));
+export const shouldRenderMemberSearchWidget = (props: PageProps): boolean =>
+	!!props.member && ((props.member.seniorMember && props.member.dutyPositions.length > 0) || isRioux(props.member)
+		|| hasPermission('MemberSearch')(Permissions.MemberSearch.YES)(props.member));
 
 export interface RequiredMember extends PageProps, FetchAPIProps {
 	member: ClientUser;
@@ -579,6 +585,9 @@ const MemberSearchRenderSearchedMembers = (): ReactElement => {
 	const inputHasBeenEntered = useSelector<MemberSearchState, boolean>(
 		state => state.inputHasBeenEntered,
 	);
+	const dutyInput = useSelector<MemberSearchState, string>(
+		state => state.dutyNameInput
+	);
 	const currentMember = useSelector<MemberSearchState, api.member.MemberSearchResult | null>(
 		state => state.memberViewed,
 		(a, b) =>
@@ -595,8 +604,8 @@ const MemberSearchRenderSearchedMembers = (): ReactElement => {
 			state.state === 'ERROR'
 				? { state: 'ERROR', message: state.message }
 				: state.state === 'LOADED'
-				? { state: 'LOADED', members: state.members }
-				: { state: 'LOADING' },
+					? { state: 'LOADED', members: state.members }
+					: { state: 'LOADING' },
 		(a, b) =>
 			a.state === b.state ||
 			(a.state === 'LOADED' && b.state === 'LOADED' && a.members.length === b.members.length),
@@ -618,13 +627,23 @@ const MemberSearchRenderSearchedMembers = (): ReactElement => {
 				maxHeight: 400,
 			}}
 		>
-			{dataState.members.map(val => (
-				<li
+			{dataState.members.map(val => {
+				const dutyDisplay = val.member.dutyPositions
+					.filter((duty): duty is ShortNHQDutyPosition => duty.duty === dutyInput && duty.type === 'NHQ')
+					.map(duty => {
+						const dutyOrg = duty.orgid === val.member.orgid
+							? val.organization
+							: Maybe.fromValue(val.dutyOrgs.find(({ ORGID }) => ORGID === duty.orgid));
+
+						return `${duty.assistant ? ', Asst' : ', Pri'} ${Maybe.cata<NHQ.Organization, string>(always(''))(org => 'for [' + org.Wing + '-' + org.Unit + ']')(dutyOrg)}`
+					});
+
+				return <li
 					key={stringifyMemberReference(val.member)}
 					onClick={() => updateMember(val)}
 					className={
 						!!currentMember &&
-						stringifyMemberReference(val.member) ===
+							stringifyMemberReference(val.member) ===
 							stringifyMemberReference(currentMember.member)
 							? 'selected'
 							: ''
@@ -636,8 +655,9 @@ const MemberSearchRenderSearchedMembers = (): ReactElement => {
 							val.organization,
 						),
 					)}
+					{dutyDisplay.join('')}
 				</li>
-			))}
+			})}
 		</ul>
 	) : (
 		<div className="selector-values" style={{ padding: '10px' }}>
@@ -671,6 +691,19 @@ const MemberSearchRenderCurrentMemberInfo = (): ReactElement => {
 			)),
 			Maybe.orSome<ReactElement | null>(null),
 		);
+
+
+	const dutyDisplay = ({ member, dutyOrgs, organization }: MemberSearchResult): React.ReactNode[] => 
+		member.dutyPositions.map(duty => (
+			duty.type === 'NHQ'
+			? <li key={`${duty.duty}-${duty.orgid}`}>
+				{duty.assistant ? 'Assistant ' : ''}{duty.duty}: 
+				{Maybe.orSome('')(Maybe.map((org: NHQ.Organization) => ` [${org.Wing}-${org.Unit}]`)(
+					member.orgid === duty.orgid ? organization : Maybe.fromValue(dutyOrgs.find(({ ORGID }) => ORGID === duty.orgid))
+				))}
+			</li>
+			: null
+		));
 
 	const orgDisplay =
 		currentMember && Maybe.isSome(currentMember.organization)
@@ -775,6 +808,7 @@ const MemberSearchRenderCurrentMemberInfo = (): ReactElement => {
 					'CADETPARENTPHONE',
 					'EMERGENCY',
 				)(currentMember.member.contact)}
+				{dutyDisplay(currentMember)}
 			</ul>
 		</div>
 	) : (
