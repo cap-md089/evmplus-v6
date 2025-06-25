@@ -191,9 +191,11 @@ export const sqr601DocumentDefinition = (
 						? loopmember.requirements.LastAprvDate.value -
 								new Date('01/01/2010').getTime() >
 						  0
-							? new Date(
+							? // TODO NEED TO INCORPORATE NJROTC ACCELERATED PROMOTION
+
+							  new Date(
 									loopmember.requirements.LastAprvDate.value +
-										60 * 60 * 24 * 56 * 1000,
+										60 * 60 * 24 * 57 * 1000,
 							  ).toLocaleDateString('en-US')
 							: Math.round(
 									Math.round(
@@ -210,7 +212,27 @@ export const sqr601DocumentDefinition = (
 									(1000 * 60 * 60 * 24 * 7),
 						  ),
 					fontSize: mySmallFontSize,
-					bold: false,
+					bold: Maybe.isSome(loopmember.requirements.LastAprvDate)
+						? new Date(
+								loopmember.requirements.LastAprvDate.value +
+									60 * 60 * 24 * 57 * 1000,
+						  ).getTime() -
+								new Date().getTime() <=
+						  0
+							? false
+							: true
+						: false,
+					// decoration:
+					// 	Maybe.isSome(loopmember.requirements.LastAprvDate) ?
+					// 		new Date(
+					// 			loopmember.requirements.LastAprvDate.value +
+					// 				60 * 60 * 24 * 57 * 1000,
+					// 				).getTime() - new Date().getTime() <= 0
+					// 				? 'lineThrough'
+					// 				: ''
+					// 		:
+					// 			''	,
+					// decorationStyle: 'wavy',
 					alignment: 'left',
 				},
 				{
@@ -277,6 +299,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
+					// TODO add in Cadet Interactive-Cadet Welcome Course (CI-CWC) here
 					// SDA requirements
 					text:
 						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display a blank or 'N/A' for next
@@ -310,7 +333,28 @@ export const sqr601DocumentDefinition = (
 					// HFZ credit expiration date
 					text: getHFZExpire(loopmember.requirements),
 					fontSize: mySmallFontSize,
-					bold: false,
+					// bold: false,
+					bold:
+						getHFZExpire(loopmember.requirements) !== ''
+							? getHFZExpire(loopmember.requirements).charAt(
+									getHFZExpire(loopmember.requirements).length - 1,
+							  ) === 'F'
+								? new Date( // extract out the 'F' if required
+										getHFZExpire(loopmember.requirements).substring(
+											0,
+											getHFZExpire(loopmember.requirements).length - 2,
+										),
+								  ).getTime() -
+										new Date().getTime() <=
+								  0
+									? true
+									: false
+								: new Date(getHFZExpire(loopmember.requirements)).getTime() - // no 'F' present, no extraction required
+										new Date().getTime() <=
+								  0
+								? true
+								: false
+							: false,
 					alignment: 'left',
 				},
 				{
@@ -344,13 +388,7 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
-					// Oath
-					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
-					fontSize: mySmallFontSize,
-					bold: false,
-					alignment: 'left',
-				},
-				{
+					// TODO - add in Cadet Wingman Course credit here
 					// Character Development
 					text:
 						loopmember.requirements.MaxAprvStatus === 'APR' // if approved status, display drill test or 'N/A' for next
@@ -380,13 +418,29 @@ export const sqr601DocumentDefinition = (
 					alignment: 'left',
 				},
 				{
-					// Mentor?
-					text: CadetPromotionRequirementsMap[loopmember.requirements.NextCadetAchvID]
-						.Mentor
-						? loopmember.requirements.CurrentCadetAchv.OtherReq
-							? 'Y'
-							: ''
-						: 'N/A',
+					// Active Participation
+					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					// Oath
+					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					// Uniform
+					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
+					fontSize: mySmallFontSize,
+					bold: false,
+					alignment: 'left',
+				},
+				{
+					// Leadership Expectations
+					text: loopmember.requirements.CurrentCadetAchv.CadetOath ? 'Y' : '',
 					fontSize: mySmallFontSize,
 					bold: false,
 					alignment: 'left',
@@ -515,9 +569,11 @@ export const sqr601DocumentDefinition = (
 						36, // SDA
 						40, // HFZ
 						36, // Drill Test
-						17, // Oath
 						36, // Char Dev
-						29, // Mentor?
+						17, // Oath
+						17, // Oath
+						17, // Oath
+						17, // Oath
 						15, // GES
 						33, // O-Flights
 					],
@@ -579,7 +635,7 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
-								text: 'SDA',
+								text: 'SDA/ CI-CWC',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
@@ -597,19 +653,31 @@ export const sqr601DocumentDefinition = (
 								alignment: 'left',
 							},
 							{
+								text: 'CharDev/ Wingman',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
+								text: 'AP',
+								fontSize: mySmallFontSize,
+								bold: true,
+								alignment: 'left',
+							},
+							{
 								text: 'Oath',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'Char Dev or Wngmn',
-								fontSize: mySmallFontSize,
+								text: 'Uni',
+ 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',
 							},
 							{
-								text: 'Mentor?',
+								text: 'LE',
 								fontSize: mySmallFontSize,
 								bold: true,
 								alignment: 'left',

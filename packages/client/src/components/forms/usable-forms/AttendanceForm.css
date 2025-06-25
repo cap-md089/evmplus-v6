@@ -1,0 +1,4 @@
+label[for="status-0-0"], label[for="status-1-0"], label[for="status-2-0"], label[for="status-3-0"],
+label[for="status-0-0"]::before, label[for="status-1-0"]::before, label[for="status-2-0"]::before, label[for="status-3-0"] {
+    z-index: 0 !important;
+}

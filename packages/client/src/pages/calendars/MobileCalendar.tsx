@@ -94,6 +94,8 @@ export default class MobileCalendar extends Page<CalendarProps> {
 				days[i]?.push?.(event);
 			}
 		});
+		const calendarLink = "https://calendar.google.com/calendar/embed?src=" + this.props.account.mainCalendarID.replace("@", "%40") 
+		 + "&ctz=America%2FNew_York";
 
 		return (
 			<div className="calendar calendar-mobile">
@@ -146,6 +148,8 @@ export default class MobileCalendar extends Page<CalendarProps> {
 					Permissions.ManageEvent.NONE ? (
 					<Link to="/eventform">Add event</Link>
 				) : null}
+				&nbsp;&nbsp;
+				<a href={calendarLink}>Google Calendar</a>
 				<div className="calendar-title">
 					<Link
 						to={`/calendar/${lastMonthLuxon.month}/${lastMonthLuxon.year}`}

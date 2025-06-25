@@ -36,6 +36,7 @@ const CAPEventDefault: Readonly<CAPEventMemberPermissions> = {
 	MusterSheet: Permissions.MusterSheet.NO,
 	AssignTasks: Permissions.AssignTasks.NO,
 	AdministerPT: Permissions.AdministerPT.NO,
+	MemberSearch: Permissions.MemberSearch.NO,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.NONE,
@@ -63,6 +64,7 @@ const CAPEventStaff: Readonly<CAPEventMemberPermissions> = {
 	MusterSheet: Permissions.MusterSheet.YES,
 	AssignTasks: Permissions.AssignTasks.YES,
 	AdministerPT: Permissions.AdministerPT.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.ADDDRAFTEVENTS,
@@ -90,6 +92,7 @@ const CAPEventManager: Readonly<CAPEventMemberPermissions> = {
 	MusterSheet: Permissions.MusterSheet.YES,
 	AssignTasks: Permissions.AssignTasks.YES,
 	AdministerPT: Permissions.AdministerPT.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -117,6 +120,7 @@ const CAPEventAdmin: Readonly<CAPEventMemberPermissions> = {
 	MusterSheet: Permissions.MusterSheet.YES,
 	AssignTasks: Permissions.AssignTasks.YES,
 	AdministerPT: Permissions.AdministerPT.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -146,6 +150,7 @@ const CAPSquadronDefault: Readonly<CAPSquadronMemberPermissions> = {
 	PromotionManagement: Permissions.PromotionManagement.NONE,
 	AssignTasks: Permissions.AssignTasks.NO,
 	AdministerPT: Permissions.AdministerPT.NO,
+	MemberSearch: Permissions.MemberSearch.NO,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.NONE,
@@ -176,6 +181,7 @@ const CAPSquadronStaff: Readonly<CAPSquadronMemberPermissions> = {
 	PromotionManagement: Permissions.PromotionManagement.FULL,
 	AssignTasks: Permissions.AssignTasks.YES,
 	AdministerPT: Permissions.AdministerPT.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.ADDDRAFTEVENTS,
@@ -206,6 +212,7 @@ const CAPSquadronManager: Readonly<CAPSquadronMemberPermissions> = {
 	PromotionManagement: Permissions.PromotionManagement.FULL,
 	AssignTasks: Permissions.AssignTasks.YES,
 	AdministerPT: Permissions.AdministerPT.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -236,6 +243,7 @@ const CAPSquadronAdmin: Readonly<CAPSquadronMemberPermissions> = {
 	PromotionManagement: Permissions.PromotionManagement.FULL,
 	AssignTasks: Permissions.AssignTasks.YES,
 	AdministerPT: Permissions.AdministerPT.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -261,6 +269,7 @@ const CAPGroupDefault: Readonly<CAPGroupMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.NO,
+	MemberSearch: Permissions.MemberSearch.NO,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.NONE,
@@ -285,6 +294,7 @@ const CAPGroupStaff: Readonly<CAPGroupMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.ADDDRAFTEVENTS,
@@ -309,6 +319,7 @@ const CAPGroupManager: Readonly<CAPGroupMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -333,6 +344,7 @@ const CAPGroupAdmin: Readonly<CAPGroupMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -357,6 +369,7 @@ const CAPWingDefault: Readonly<CAPWingMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.NO,
+	MemberSearch: Permissions.MemberSearch.NO,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.NONE,
@@ -382,6 +395,7 @@ const CAPWingStaff: Readonly<CAPWingMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.ADDDRAFTEVENTS,
@@ -407,6 +421,7 @@ const CAPWingManager: Readonly<CAPWingMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -432,6 +447,7 @@ const CAPWingAdmin: Readonly<CAPWingMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -457,6 +473,7 @@ const CAPRegionDefault: Readonly<CAPRegionMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.NO,
+	MemberSearch: Permissions.MemberSearch.NO,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.NONE,
@@ -482,6 +499,7 @@ const CAPRegionStaff: Readonly<CAPRegionMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.ADDDRAFTEVENTS,
@@ -507,6 +525,7 @@ const CAPRegionManager: Readonly<CAPRegionMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,
@@ -532,6 +551,7 @@ const CAPRegionAdmin: Readonly<CAPRegionMemberPermissions> = {
 
 	// Staff privileges
 	AssignTasks: Permissions.AssignTasks.YES,
+	MemberSearch: Permissions.MemberSearch.YES,
 
 	// Manager privileges
 	ManageEvent: Permissions.ManageEvent.FULL,

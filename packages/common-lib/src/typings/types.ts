@@ -113,6 +113,12 @@ export enum AuditableEventType {
 	DELETE = 'Delete',
 }
 
+export enum PopulateGoogleCalendarErrors {
+	NONE = 'None',
+	INSERT = 'InsertError',
+	NOPERMISSIONS = 'NoPermissions',
+}
+
 // http://www.ntfs.com/ntfs-permissions-file-folder.htm
 export enum FileUserAccessControlPermissions {
 	// Read for a folder includes the ability to see files inside of it
@@ -160,6 +166,7 @@ export enum CustomAttendanceFieldEntryType {
 	DATE = 'Date',
 	CHECKBOX = 'Checkbox',
 	FILE = 'File',
+	QUAL = 'Qual',
 }
 
 export enum CAPWATCHImportUpdate {
@@ -314,6 +321,11 @@ export namespace Permissions {
 	}
 
 	export enum CreateEventAccount {
+		NO = 'No',
+		YES = 'Yes',
+	}
+
+	export enum MemberSearch {
 		NO = 'No',
 		YES = 'Yes',
 	}
@@ -1300,12 +1312,24 @@ export interface CustomAttendanceFieldText extends CustomAttendanceFieldBase {
 	preFill: string;
 }
 
+export interface CustomAttendanceFieldQual extends CustomAttendanceFieldBase {
+	/**
+	 * Override Custom Attendance Field Type
+	 */
+	type: CustomAttendanceFieldEntryType.QUAL;
+	/**
+	 * Set prefill type to string
+	 */
+	preFill: string;
+}
+
 export type CustomAttendanceField =
 	| CustomAttendanceFieldCheckbox
 	| CustomAttendanceFieldDate
 	| CustomAttendanceFieldFile
 	| CustomAttendanceFieldNumber
-	| CustomAttendanceFieldText;
+	| CustomAttendanceFieldText
+	| CustomAttendanceFieldQual;
 
 export interface CustomAttendanceFieldValueBase {
 	type: CustomAttendanceFieldEntryType;
@@ -1343,12 +1367,19 @@ export interface CustomAttendanceFieldTextValue extends CustomAttendanceFieldVal
 	value: string;
 }
 
+export interface CustomAttendanceFieldQualValue extends CustomAttendanceFieldValueBase {
+	type: CustomAttendanceFieldEntryType.QUAL;
+
+	value: string;
+}
+
 export type CustomAttendanceFieldValue =
 	| CustomAttendanceFieldCheckboxValue
 	| CustomAttendanceFieldDateValue
 	| CustomAttendanceFieldFileValue
 	| CustomAttendanceFieldNumberValue
-	| CustomAttendanceFieldTextValue;
+	| CustomAttendanceFieldTextValue
+	| CustomAttendanceFieldQualValue;
 
 /**
  * A basic point of contact
@@ -1532,6 +1563,10 @@ export interface CAPSquadronMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 /**
@@ -1613,6 +1648,10 @@ export interface CAPEventMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPGroupMemberPermissions {
@@ -1679,6 +1718,10 @@ export interface CAPGroupMemberPermissions {
 	 * Whether or not the member can view notifications designated for account admins
 	 */
 	ViewAccountNotifications: Permissions.ViewAccountNotifications;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPWingMemberPermissions {
@@ -1749,6 +1792,10 @@ export interface CAPWingMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export interface CAPRegionMemberPermissions {
@@ -1819,6 +1866,10 @@ export interface CAPRegionMemberPermissions {
 	 * Used for creating sub accounts
 	 */
 	CreateEventAccount: Permissions.CreateEventAccount;
+	/**
+	 * Whether or not the member can access the Member Search function
+	 */
+	MemberSearch: Permissions.MemberSearch;
 }
 
 export type MemberPermissions =

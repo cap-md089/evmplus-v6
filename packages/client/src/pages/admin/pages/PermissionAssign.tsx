@@ -34,6 +34,7 @@ import {
 	stripProp,
 	toReference,
 	Permissions,
+	getDefaultMemberPermissions,
 } from 'common-lib';
 import * as React from 'react';
 import Button from '../../../components/Button';
@@ -305,29 +306,7 @@ export default class PermissionAssign extends Page<PageProps, PermissionAssignSt
 							{
 								member: toReference(member),
 								name: getFullMemberName(member),
-								permissions: {
-									AdministerPT: 0,
-									AssignTasks: 0,
-									AssignTemporaryDutyPositions: 0,
-									AttendanceView: 0,
-									CreateNotifications: 0,
-									DownloadCAPWATCH: 0,
-									EventContactSheet: 0,
-									EventLinkList: 0,
-									FileManagement: 0,
-									FlightAssign: 0,
-									ManageEvent: 0,
-									ManageTeam: 0,
-									MusterSheet: 0,
-									ORMOPORD: 0,
-									PTSheet: 0,
-									PermissionManagement: 0,
-									PromotionManagement: 0,
-									ProspectiveMemberManagement: 0,
-									RegistryEdit: 0,
-									ScanAdd: 0,
-									ViewAccountNotifications: 0,
-								},
+								permissions: getDefaultMemberPermissions(this.props.account.type),
 							},
 						],
 				  }

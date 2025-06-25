@@ -166,6 +166,22 @@ export const ReportsWidget = withFetchApi(
 								<div>{this.state.error}</div>
 							) : (
 								<div>
+									SQR 60-1a Cadet status report by flight &nbsp;
+									<Button
+										buttonType="none"
+										onClick={this.createsqr601aSpreadsheet}
+									>
+										xlsx
+									</Button>
+									<br />
+								</div>
+							)}
+							{this.state.state === 'LOADING' ? (
+								<LoaderShort />
+							) : this.state.state === 'ERROR' ? (
+								<div>{this.state.error}</div>
+							) : (
+								<div>
 									SQR 60-20 Cadet HFZ report &nbsp;
 									<Button onClick={() => this.createSQR6020()} buttonType="none">
 										pdf
@@ -360,5 +376,58 @@ export const ReportsWidget = withFetchApi(
 
 			XLSX.writeFile(wb, `SQR 60-1 ${this.props.account.id}-${formatdate}.xlsx`);
 		};
+
+		private createsqr601aSpreadsheet = async (): Promise<void> => {
+			if (this.state.state !== 'LOADED' || !this.props.member) {
+				return;
+			}
+
+			const XLSX = await import('xlsx');
+
+			const wb = XLSX.utils.book_new();
+
+			let wsName = 'UnitInfo';
+			const wsDataEvent = spreadsheets.sqr601aXL();
+			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let sheet = spreadsheets.Formatsqr601aXL(ws);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+			const flights = this.props.registry.RankAndFile.Flights; 
+			const state = this.state;
+
+			flights.forEach(flight => {
+				// need to loop through flights and create a sheet for each flight
+				wsName = flight.toString();
+				console.log("flight", wsName);
+				if(
+					state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight).length +
+					state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight).length > 0
+				) {
+					const [wsDataAttendance, widths]: [any[][], number[]] = spreadsheets.sqr601aMembersXL(
+						state.nhqMembers.filter((member: api.member.promotionrequirements.PromotionRequirementsItem) => member.member.flight === flight),
+						state.newMembers.filter((member: CAPProspectiveMemberObject) => member.flight === flight),
+					);
+
+					ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+					sheet = spreadsheets.Formatsqr601aMembersXL(ws, widths, wsDataAttendance.length); 
+					XLSX.utils.book_append_sheet(wb, sheet, wsName);
+				}
+			});
+
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
+			XLSX.writeFile(wb, `SQR 60-1a ${this.props.account.id}-${formatdate}.xlsx`);
+		};
+
+
 	},
 );

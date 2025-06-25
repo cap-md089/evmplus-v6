@@ -405,6 +405,15 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
 				defaultValue={Permissions.RegistryEdit.NO}
 			/>
+
+			<Label key="41">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="42"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
+			/>
 		</FormBlock>
 	);
 
@@ -758,6 +767,14 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.RegistryEdit.NO, Permissions.RegistryEdit.YES]}
 				defaultValue={Permissions.RegistryEdit.NO}
 			/>
+			<Label key="41">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="42"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
+			/>
 		</FormBlock>
 	);
 
@@ -930,6 +947,14 @@ export default class PermissionsEdit extends React.Component<
 				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
 				defaultValue={Permissions.CreateEventAccount.NO}
 			/>
+			<Label key="43">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="44"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
+			/>
 		</FormBlock>
 	);
 
@@ -1101,6 +1126,14 @@ export default class PermissionsEdit extends React.Component<
 				labels={['No', 'Yes']}
 				values={[Permissions.CreateEventAccount.NO, Permissions.CreateEventAccount.YES]}
 				defaultValue={Permissions.CreateEventAccount.NO}
+			/>
+			<Label key="43">Member Search</Label>
+			<EnumSelect<Permissions.MemberSearch>
+				key="44"
+				name="MemberSearch"
+				labels={['No', 'Yes']}
+				values={[Permissions.MemberSearch.NO , Permissions.MemberSearch.YES]}
+				defaultValue={Permissions.MemberSearch.YES}
 			/>
 		</FormBlock>
 	);
