@@ -82,6 +82,7 @@ import SimpleForm, {
 	TextInput,
 	Title,
 } from '../SimpleForm';
+import Dialogue, { DialogueButtons } from '../../dialogues/Dialogue';
 
 interface EventFormProps {
 	registry: RegistryValues;
@@ -507,6 +508,7 @@ interface EventFormState {
 	files: FileObject[] | null;
 	selectedFolder: string;
 	selectedFiles: FileObject[];
+	subtitleInfoOpen: boolean;
 }
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -521,6 +523,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		files: [],
 		selectedFolder: '',
 		selectedFiles: [],
+		subtitleInfoOpen: false,
 	};
 
 	private commentsRef = React.createRef<HTMLTextAreaElement>();
@@ -617,6 +620,14 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					rel="stylesheet"
 					href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css"
 				/>
+				<Dialogue
+					open={this.state.subtitleInfoOpen}
+					onClose={() => this.setState({ subtitleInfoOpen: false })}
+					displayButtons={DialogueButtons.OK}
+					title="Subtitle Information"
+				>The subtitle field is available to provide additional summary information about the event.  
+				Only event titles are displayed on calendar views; subtitles are displayed in detailed views
+				but not on the calendar view.</Dialogue>
 				<SimpleForm<NewEventFormValues & { addPOCbyID: number | null }>
 					onChange={this.onEventChange}
 					onSubmit={this.onEventSubmit}
@@ -653,7 +664,9 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					<Label>Event Name*~</Label>
 					<TextInput name="name" errorMessage="Event must have a name" />
 
-					<Label>Subtitle~</Label>
+					<Label>Subtitle~ <Button 
+						onClick={() => this.setState({ subtitleInfoOpen: true })} 
+						buttonType='none'>&#9432;</Button></Label>
 					<TextInput
 						boxStyles={{
 							height: '50px',
