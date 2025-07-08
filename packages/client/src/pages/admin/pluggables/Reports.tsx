@@ -40,6 +40,7 @@ import LoaderShort from '../../../components/LoaderShort';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { clientErrorGenerator } from '../../../lib/error';
 import Page, { PageProps } from '../../Page';
+import { WritingOptions } from 'xlsx-js-style';
 
 interface ReportsWidgetLoadingState {
 	state: 'LOADING';
@@ -140,6 +141,22 @@ export const ReportsWidget = withFetchApi(
 					<div className="widget-title">Reports</div>
 					<div className="widget-body">
 						<>
+							{this.state.state === 'LOADING' ? (
+								<LoaderShort />
+							) : this.state.state === 'ERROR' ? (
+								<div>{this.state.error}</div>
+							) : (
+								<div>
+									SQR 52-1 Cadet Orientation Flight report &nbsp;
+									<Button
+										buttonType="none"
+										onClick={this.createsqr521Spreadsheet}
+									>
+										xlsx
+									</Button>
+									<br />
+								</div>
+							)}
 							{this.state.state === 'LOADING' ? (
 								<LoaderShort />
 							) : this.state.state === 'ERROR' ? (
@@ -426,6 +443,53 @@ export const ReportsWidget = withFetchApi(
 				now.getMinutes().toString().padStart(2, '0');
 
 			XLSX.writeFile(wb, `SQR 60-1a ${this.props.account.id}-${formatdate}.xlsx`);
+		};
+
+		private createsqr521Spreadsheet = async (): Promise<void> => {
+			if (this.state.state !== 'LOADED' || !this.props.member) {
+				return;
+			}
+
+			const XLSX = await import('xlsx-js-style');
+			const opts: WritingOptions = {
+				cellDates: true,
+				cellStyles: true,
+			};
+
+			const wb = XLSX.utils.book_new();
+			// wb.Props = {};
+
+			let wsName = 'UnitInfo';
+			const wsDataEvent = spreadsheets.sqr521XL();
+			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			let sheet = spreadsheets.Formatsqr521XL(ws);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+			// const flights = this.props.registry.RankAndFile.Flights; 
+			// const state = this.state;
+
+			wsName = 'CadetInfo';
+			const [wsDataAttendance, widths] = spreadsheets.sqr521MembersXL(
+				this.state.nhqMembers,
+				// this.state.newMembers,
+				// this.props.registry,
+			);
+			ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
+			sheet = spreadsheets.Formatsqr521MembersXL(ws, widths, wsDataAttendance.length);
+			XLSX.utils.book_append_sheet(wb, sheet, wsName);
+
+			const now = new Date();
+			const formatdate =
+				now.getFullYear().toString() +
+				'-' +
+				(now.getMonth() + 1).toString().padStart(2, '0') +
+				'-' +
+				now.getDate().toString().padStart(2, '0') +
+				' ' +
+				now.getHours().toString().padStart(2, '0') +
+				now.getMinutes().toString().padStart(2, '0');
+
+			XLSX.writeFile(wb, `SQR 52-1 ${this.props.account.id}-${formatdate}.xlsx`, opts);
 		};
 
 
