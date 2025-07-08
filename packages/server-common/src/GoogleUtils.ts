@@ -410,7 +410,7 @@ export async function deleteAllGoogleCalendarEvents(
 	config: GoogleConfiguration,
 	calendarID?: string,
 ): Promise<void> {
-	calendarID ??= inAccount.mainCalendarID;
+	// calendarID ??= inAccount.mainCalendarID;
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
 		client_email: string;
@@ -438,12 +438,15 @@ export async function deleteAllGoogleCalendarEvents(
 		if (events !== null && events !== undefined) {
 			for (const event of events) {
 				console.log("deleting event " + inAccount.id + "-" + event.id);
+				try {
 				await myCalendar.events.delete({
 					auth: jwtClient,
 					calendarId: calendarID,
 					eventId: event.id as string,
 				});
-
+			} catch (error) {
+				console.error("Error deleting event: " + event.id);
+			}
 				await new Promise(res => {
 					setTimeout(res, 500);
 				});
