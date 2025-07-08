@@ -40,7 +40,7 @@ import LoaderShort from '../../../components/LoaderShort';
 import { FetchAPIProps, withFetchApi } from '../../../globals';
 import { clientErrorGenerator } from '../../../lib/error';
 import Page, { PageProps } from '../../Page';
-import { WritingOptions } from 'xlsx-js-style';
+import type { WritingOptions } from 'xlsx-js-style';
 
 interface ReportsWidgetLoadingState {
 	state: 'LOADING';

@@ -253,7 +253,7 @@ export const Formatsqr521MembersXL = (
 
 	sheet['!rows'] = [{ hpt: rowHeight }];
 	let j = 2;
-	while (j <= numRows) {
+	// while (j <= numRows) {
 		// rowCount = 0;
 		// (sheet[`D${j}`] as XLSX.CellObject).t = 'd';
 		// (sheet[`D${j}`] as XLSX.CellObject).z = dateFormat;
@@ -270,8 +270,8 @@ export const Formatsqr521MembersXL = (
 		// (sheet[`G${j}`] as XLSX.CellObject).t = 's';
 		// (sheet[`G${j}`] as XLSX.CellObject).t = 's';
 		// (sheet[`G${j}`] as XLSX.CellObject).s = '{ font: { bold: true, color: { rgb: "FF0000" } } }';
-		j += 1;
-	}
+	// 	j += 1;
+	// }
 	sheet['!cols'] = columnMaxWidths.map(wch => ({ wch }));
 	sheet['!cols'] = [
 		{ width: 8 }, // Age Group
