@@ -252,7 +252,7 @@ export const Formatsqr521MembersXL = (
 	const rowHeight = 22;
 
 	sheet['!rows'] = [{ hpt: rowHeight }];
-	let j = 2;
+	// let j = 2;
 	// while (j <= numRows) {
 		// rowCount = 0;
 		// (sheet[`D${j}`] as XLSX.CellObject).t = 'd';
