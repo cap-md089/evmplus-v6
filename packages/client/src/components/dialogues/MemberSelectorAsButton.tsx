@@ -107,6 +107,7 @@ export default class MemberSelectorButton extends React.Component<
 					}
 					onValueClick={this.setSelectedMember}
 					onValueSelect={this.selectMember}
+                    onFilterValuesChange={this.setFilters}
 					selectedValue={this.state.selectedValue}
 					filterValues={this.state.filterValues}
 				/>
@@ -134,4 +135,10 @@ export default class MemberSelectorButton extends React.Component<
 
 		this.props.onMemberSelect(selectedValue);
 	};
+
+    private setFilters = (filterValues: [string]): void => {
+        this.setState({
+            filterValues
+        });
+    };
 }
