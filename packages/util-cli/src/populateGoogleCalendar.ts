@@ -120,7 +120,7 @@ void (async () => {
 		}
 		try {
 			console.log(`Creating Google Calendar events for event ${event.id}`);
-        	const [mainId, regId, feeId] = await createGoogleCalendarEvents(backend, fullEventEither.value, account, config)  
+        	const [mainId, regId, feeId] = await createGoogleCalendarEvents(backend, fullEventEither.value, account, config, newCalendarID);
 
 			await modifyAndBind(table, { id: event.id }).patch({ googleCalendarIds: { mainId, feeId, regId } }).execute();
 		} catch(error) {

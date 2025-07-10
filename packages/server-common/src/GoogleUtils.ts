@@ -312,7 +312,9 @@ export async function createGoogleCalendarEvents(
 	inEvent: RawResolvedEventObject,
 	inAccount: AccountObject,
 	config: GoogleConfiguration,
+	calendarID?: string,
 ): Promise<[string | null, string | null, string | null]> {
+	calendarID ??= inAccount.mainCalendarID;
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
 		client_email: string;
@@ -335,12 +337,12 @@ export async function createGoogleCalendarEvents(
 	const registry = await backend.getRegistryUnsafe(inAccount.id).fullJoin();
 
 	return Promise.all([
-		updateMainEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID, registry),
+		updateMainEvent(config, myCalendar, jwtClient, inEvent, calendarID, registry),
 		typeof inEvent.registration !== 'undefined'
-			? updateRegEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+			? updateRegEvent(config, myCalendar, jwtClient, inEvent, calendarID)
 			: null,
 		typeof inEvent.participationFee !== 'undefined'
-			? updateFeeEvent(config, myCalendar, jwtClient, inEvent, inAccount.mainCalendarID)
+			? updateFeeEvent(config, myCalendar, jwtClient, inEvent, calendarID)
 			: null,
 	]);
 }
@@ -410,7 +412,7 @@ export async function deleteAllGoogleCalendarEvents(
 	config: GoogleConfiguration,
 	calendarID?: string,
 ): Promise<void> {
-	// calendarID ??= inAccount.mainCalendarID;
+	calendarID ??= inAccount.mainCalendarID;
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const privatekey = require(config.GOOGLE_KEYS_PATH + '/' + inAccount.id + '.json') as {
 		client_email: string;
@@ -431,13 +433,13 @@ export async function deleteAllGoogleCalendarEvents(
 	let events = (
 		await myCalendar.events.list({
 			auth: jwtClient,
-			calendarId: inAccount.mainCalendarID,
+			calendarId: calendarID,
 		})
 	)?.data.items;
 	while (events === null || events === undefined || events.length > 0) {
 		if (events !== null && events !== undefined) {
 			for (const event of events) {
-				console.log("deleting event " + inAccount.id + "-" + event.id);
+				console.log("deleting event " + calendarID + "-" + event.id);
 				try {
 				await myCalendar.events.delete({
 					auth: jwtClient,
