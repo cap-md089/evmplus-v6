@@ -139,6 +139,7 @@ services:
         volumes:
             - /srv/backups/capwatch_zips:/downloads
             - /srv/backups/mysqldumps:/srv/backups/mysqldumps
+            - ./cronjobs:/usr/evm-plus/cronjobs
 
     download_capwatch_update:
         build:
