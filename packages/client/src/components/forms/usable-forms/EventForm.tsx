@@ -509,6 +509,7 @@ interface EventFormState {
 	selectedFolder: string;
 	selectedFiles: FileObject[];
 	subtitleInfoOpen: boolean;
+	eventNameInfoOpen: boolean;
 }
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -524,6 +525,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		selectedFolder: '',
 		selectedFiles: [],
 		subtitleInfoOpen: false,
+		eventNameInfoOpen: false,
 	};
 
 	private commentsRef = React.createRef<HTMLTextAreaElement>();
@@ -621,6 +623,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css"
 				/>
 				<Dialogue
+					open={this.state.eventNameInfoOpen}
+					onClose={() => this.setState({ eventNameInfoOpen: false })}
+					displayButtons={DialogueButtons.OK}
+					title="Event Name Information"
+				>The event name field is available to provide a concise title for display on the calendar view.  
+				Only event titles are displayed on calendar views.</Dialogue>
+				<Dialogue
 					open={this.state.subtitleInfoOpen}
 					onClose={() => this.setState({ subtitleInfoOpen: false })}
 					displayButtons={DialogueButtons.OK}
@@ -661,8 +670,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>Main information</Title>
 
-					<Label>Event Name*~</Label>
-					<TextInput name="name" errorMessage="Event must have a name" />
+					<Label>Event Name*~ <Button 
+						onClick={() => this.setState({ eventNameInfoOpen: true })} 
+						buttonType='none'>&#9432;</Button></Label>
+					<TextInput 						boxStyles={{
+							height: '50px',
+						}}
+						name="name" errorMessage="Event must have a name" />
 
 					<Label>Subtitle~ <Button 
 						onClick={() => this.setState({ subtitleInfoOpen: true })} 

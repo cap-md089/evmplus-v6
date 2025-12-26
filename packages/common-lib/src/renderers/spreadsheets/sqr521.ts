@@ -18,25 +18,25 @@
  */
 
 import type * as XLSX from 'xlsx-js-style';
-import { Maybe } from '../../lib/Maybe';
-import { get } from '../../lib/Util';
+// import { Maybe } from '../../lib/Maybe';
+// import { get } from '../../lib/Util';
 import { PromotionRequirementsItem } from '../../typings/apis/member/promotionrequirements';
-import { pipe } from 'ramda';
+// import { pipe } from 'ramda';
 import {
-	CadetPromotionStatus,
+	// CadetPromotionStatus,
 	CAPMember,
 	CAPNHQMemberObject,
 } from '../..';
 
-const getHFZExpire = (reqs: CadetPromotionStatus): string =>
-	pipe(
-		get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
-		Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
-		Maybe.map(({ DateTaken, IsPassed }) => [DateTaken.substr(0, 10), IsPassed] as const),
-		Maybe.map(([s, f]) => [+new Date(s) + 182 * 24 * 60 * 60 * 1000, f] as const),
-		Maybe.map(([s, f]) => new Date(s).toLocaleDateString('en-US') + (!f ? ' F' : '')),
-		Maybe.orSome(''),
-	)(reqs);
+// const getHFZExpire = (reqs: CadetPromotionStatus): string =>
+// 	pipe(
+// 		get<CadetPromotionStatus, 'HFZRecord'>('HFZRecord'),
+// 		Maybe.filter(({ IsPassed }) => IsPassed || reqs.CurrentCadetAchv.CadetAchvID < 4),
+// 		Maybe.map(({ DateTaken, IsPassed }) => [DateTaken.substr(0, 10), IsPassed] as const),
+// 		Maybe.map(([s, f]) => [+new Date(s) + 182 * 24 * 60 * 60 * 1000, f] as const),
+// 		Maybe.map(([s, f]) => new Date(s).toLocaleDateString('en-US') + (!f ? ' F' : '')),
+// 		Maybe.orSome(''),
+// 	)(reqs);
 
 // const unpoweredFlights = [1, 2, 3, 4, 5];
 const poweredFlights = [6, 7, 8, 9, 10];
@@ -132,6 +132,8 @@ export const sqr521MembersXL = (
 		'Oride 3',
 		'Oride 4',
 		'Oride 5',
+		'# CANX',
+		'# Incomp',
 		'Cellphone',
 		'Email',
 		'Parent Phone',
@@ -172,25 +174,67 @@ export const sqr521MembersXL = (
 		}));
 
 	for (const loopmember of phase1CadetsDoc) {
-		console.log(
-			loopmember.requirements !== null
-				? getHFZExpire(loopmember.requirements)
-				: 'reqs = null',
-			loopmember.requirements,
-		);
+		// console.log(
+		// 	loopmember.requirements !== null
+		// 		? getHFZExpire(loopmember.requirements)
+		// 		: 'reqs = null',
+		// 	loopmember.requirements,
+		// );
 		let flightCount = 0;
-        const poweredFlightDates: string[] = [ '', '', '', '', '' ];
+		const poweredFlightDates: (string | { v: string; s: object })[] = [ '', '', '', '', '' ];
         if (loopmember.requirements?.oflights) {
             loopmember.requirements.oflights.forEach(ride => {
                 const idx = poweredFlights.indexOf(ride.Syllabus);
                 if (idx !== -1) {
-                    poweredFlightDates[idx] = ride.FltDate
-                        ? new Date(ride.FltDate).toLocaleDateString('en-US')
-                        : '';
-					flightCount += 1;
+					// Determine the correct offset for Eastern Time (ET) based on DST
+					const flightDateObj = ride.FltDate ? new Date(ride.FltDate.split('T')[0]) : null;
+					let offset = '-05:00'; // Default to EST
+					if (flightDateObj) {
+						// const month = flightDateObj.getMonth() + 1; // JS months are 0-based
+						// const day = flightDateObj.getDate();
+						const year = flightDateObj.getFullYear();
+
+						// DST starts second Sunday in March, ends first Sunday in November
+						const dstStart = new Date(year, 2, 1); // March 1
+						const dstEnd = new Date(year, 10, 1); // November 1
+
+						// Find second Sunday in March
+						let dstStartDay = dstStart.getDay();
+						let dstStartDate = 8 + ((7 - dstStartDay) % 7);
+						const dstStartDateObj = new Date(year, 2, dstStartDate);
+
+						// Find first Sunday in November
+						let dstEndDay = dstEnd.getDay();
+						let dstEndDate = 1 + ((7 - dstEndDay) % 7);
+						const dstEndDateObj = new Date(year, 10, dstEndDate);
+
+						if (flightDateObj >= dstStartDateObj && flightDateObj < dstEndDateObj) {
+							offset = '-04:00'; // EDT
+						}
+					}
+					let dateStr = ride.FltDate
+						? new Date((ride.FltDate.split('T')[0]) + `T00:01:00${offset}`).toLocaleDateString('en-US')
+						: '';
+                    let cellStyle = {};
+                    if (ride.FltDate) {
+                        const flightDate = new Date(dateStr);
+                        const now = new Date();
+                        cellStyle = {
+                            font: {
+                                color: { rgb: flightDate < now ? "0000FF" : "008000" } // Blue if past, green if future
+                            }
+                        };
+                    }
+                    poweredFlightDates[idx] = { v: dateStr, s: cellStyle };
                 }
             });
         }
+		const cancelledFlightsCount = loopmember.requirements?.oflights
+			? loopmember.requirements.oflights.filter(ride => ride.Syllabus === 99 && ride.FltTime === 0).length
+			: 0;
+		const incompleteFlightsCount = loopmember.requirements?.oflights
+			? loopmember.requirements.oflights.filter(ride => ride.Syllabus === 99 && ride.FltTime > 0).length
+			: 0;
 		// const joinedDate = new Date(loopmember.member.joined);
 		const birthDate: number = new Date(loopmember.member.dateOfBirth).getTime();
 		const olderThan = new Date().setDate(new Date().getDate() - (365.25 * 18));
@@ -227,6 +271,8 @@ export const sqr521MembersXL = (
 			poweredFlightDates[2] ?? '',
 			poweredFlightDates[3] ?? '',
 			poweredFlightDates[4] ?? '',
+			cancelledFlightsCount > 0 ? cancelledFlightsCount : '',
+			incompleteFlightsCount > 0 ? incompleteFlightsCount : '',
 			loopmember.member.contact.CELLPHONE.PRIMARY 
 			    ? formatPhoneNumber(loopmember.member.contact.CELLPHONE.PRIMARY)
 			    : '',
@@ -287,6 +333,8 @@ export const Formatsqr521MembersXL = (
 		{ wch: dateWidth }, // Oride 3
 		{ wch: dateWidth }, // Oride 4
 		{ wch: dateWidth }, // Oride 5
+		{ width: 7 }, // # CANX
+		{ width: 9 }, // # Incomplete
 		{ width: 18 }, // Cellphone
 		{ width: 40 }, // Email
 		{ width: 18 }, // Parent Phone
