@@ -29,7 +29,14 @@ cd /usr/evm-plus/packages/util-cli
 
 echo "Downloading CAPWATCH file"
 
-export CAPWATCH_ZIP_PATH=$(node dist/downloadCapwatchInContainer.js)
+# export CAPWATCH_ZIP_PATH=$(node dist/downloadCapwatchInContainer.js)
+export CAPID=$(cat /run/secrets/capwatch_capid)
+export PASSWORD=$(cat /run/secrets/capwatch_password)
+export ORGID=$(cat /run/secrets/capwatch_orgid)
+export CAPWATCH_ZIP_PATH="/downloads/CAPWATCH-$CAPID-$ORGID-$(date +%F).zip"
+
+curl --http1.1 -u "$CAPID:$PASSWORD" "https://www.capnhq.gov/CAP.CapWatchAPI.Web/api/cw?unitOnly=0&ORGID=$ORGID" -o $CAPWATCH_ZIP_PATH
+#export CAPWATCH_ZIP_PATH=$(node dist/downloadCapwatchInContainer.js)
 
 echo "CAPWATCH downloaded to $CAPWATCH_ZIP_PATH"
 
