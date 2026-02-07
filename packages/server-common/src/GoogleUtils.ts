@@ -48,7 +48,7 @@ export interface GoogleConfiguration {
 export const SMUniforms = [
 	'Dress Blue A',
 	'Dress Blue B',
-	'Airman Battle Uniform (ABU)',
+	'Airman Battle Uniform (ABU) or Operational Camouflage Pattern (OCP)',
 	'PT Gear',
 	'Polo Shirts',
 	'Blue Utilities',
@@ -59,7 +59,7 @@ export const SMUniforms = [
 export const CUniforms = [
 	'Dress Blue A',
 	'Dress Blue B',
-	'Airman Battle Uniform (ABU)',
+	'Airman Battle Uniform (ABU) or Operational Camouflage Pattern (OCP)',
 	'PT Gear',
 	'Civilian Attire',
 	'Flight Suit',
