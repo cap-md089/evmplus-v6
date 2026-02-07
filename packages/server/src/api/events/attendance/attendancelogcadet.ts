@@ -24,7 +24,7 @@
 // export const Uniforms = [
 // 	'Dress Blue A',
 // 	'Dress Blue B',
-// 	'Airman Battle Uniform (ABU)',
+// 	'Airman Battle Uniform (ABU) or Operational Camouflage Pattern (OCP)',
 // 	'PT Gear',
 // 	'Polo Shirts (Senior Members)',
 // 	'Blue Utilities (Senior Members)',
