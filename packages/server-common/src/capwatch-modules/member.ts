@@ -63,6 +63,11 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async function* (
 		'NHQ_CadetHFZInformation',
 	);
 	const oFlightCollection = schema.getCollection<NHQ.OFlight>('NHQ_OFlight');
+	const mbrAddressesCollection = schema.getCollection<{ CAPID: number }>('NHQ_MbrAddresses');
+	const mbrCharsCollection = schema.getCollection<{ CAPID: number }>('NHQ_MbrChars');
+	const mbrCommitteeCollection = schema.getCollection<{ CAPID: number }>('NHQ_MbrCommittee');
+	const memberPrmCollection = schema.getCollection<{ CAPID: number }>('NHQ_MemberPrm');
+	const trainingCollection = schema.getCollection<{ CAPID: number }>('NHQ_Training');
 
 	const extraCollections = [];
 
@@ -72,7 +77,12 @@ const memberParse: CAPWATCHModule<NHQ.NHQMember> = async function* (
 		'CadetDutyPositions.txt': cadetDutyPositionCollection,
 		'CadetActivities.txt': cadetActivitiesCollection,
 		'OFlight.txt': oFlightCollection,
-		'MbrAchievements': mbrAchievementsCollection,
+		'MbrAddresses.txt': mbrAddressesCollection,
+		'Training.txt': trainingCollection,
+		'MbrAchievements.txt': mbrAchievementsCollection,
+		'MbrChars.txt': mbrCharsCollection,
+		'MbrCommittee.txt': mbrCommitteeCollection,
+		'MemberPrm.txt': memberPrmCollection,
 		'CadetAchv.txt': cadetAchvCollection,
 		'CadetAchvAprs.txt': cadetAchvAprsCollection,
 		'CadetHFZInformation.txt': cadetHFZInformationCollection,

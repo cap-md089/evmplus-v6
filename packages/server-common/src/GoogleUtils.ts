@@ -20,7 +20,6 @@
 import { ServerEither } from 'auto-client-api';
 import {
 	AccountObject,
-	destroy,
 	EventStatus,
 	isOneOfSelected,
 	Maybe,
@@ -754,8 +753,7 @@ export const getRequestFreeGoogleBackend = (
 	removeGoogleCalendarEvents: event =>
 		prevBackend
 			.getAccount(event.accountID)
-			.map(account => removeGoogleCalendarEvents(event, account, conf))
-			.map(destroy),
+			.map(account => removeGoogleCalendarEvents(event, account, conf)),
 	updateGoogleCalendars: event =>
 		prevBackend
 			.getAccount(event.accountID)

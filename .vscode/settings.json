@@ -20,5 +20,6 @@
 		"packages/server-jest-config",
 		"packages/util-cli",
 	],
-	"FSharp.suggestGitignore": false
+	"FSharp.suggestGitignore": false,
+	"js/ts.tsdk.path": "node_modules/typescript/lib"
 }

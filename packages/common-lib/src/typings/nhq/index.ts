@@ -237,6 +237,84 @@ export interface MbrContact {
 	DoNotContact: boolean;
 }
 
+export interface MbrAddress {
+	CAPID: number;
+	Type: string;
+	Priority: string;
+	Addr1: string;
+	Addr2: string;
+	City: string;
+	State: string;
+	Zip: string;
+	Latitude: string;
+	Longitude: string;
+	UsrID: string;
+	DateMod: string;
+	RecID: number;
+}
+
+export interface MbrChar {
+	CAPID: number;
+	Hair: string;
+	Eyes: string;
+	CAPDriverLNo: string;
+	Height: string;
+	Weight: string;
+	UserID: string;
+	DateMod: string;
+	EmerNotify: string;
+	EmerNotifyPhone: string;
+	MilitaryDpd: string;
+	BranchOfService: string;
+}
+
+export interface MbrCommittee {
+	CAPID: number;
+	Committee: string;
+	Chair: number;
+	ORGID: number;
+	DateAssigned: string;
+}
+
+export interface MemberPrm {
+	CAPID: number;
+	ORGIDLvl: number;
+	MbrName: string;
+	Region: string;
+	Wing: string;
+	Unit: string;
+	MbrUnit: string;
+	Scope: string;
+	Expiration: string;
+	UsrID: string;
+	WebAppName: string;
+	FunctArea: string;
+	WebModName: string;
+	Process: string;
+	DateMod: string;
+}
+
+export interface ORGStatisticsRecord {
+	ORGID: number;
+	Region: string;
+	Wing: string;
+	Unit: string;
+	MbrType: string;
+	CntType: string;
+	Quantity: string;
+	CntDate: string;
+}
+
+export interface Training {
+	CAPID: number;
+	TypeCrs: string;
+	HowComplete: string;
+	CrsID: string;
+	Completed: string;
+	UsrID: string;
+	DateMod: string;
+}
+
 export interface NHQMember {
 	CAPID: number;
 	SSN: '';

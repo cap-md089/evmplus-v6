@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 import { Schema, Session } from '@mysql/xdevapi';
 import { spawn } from 'child_process';
 import { CAPWATCHImportErrors, Either, ValidateRuleSet, Validator } from 'common-lib';
@@ -31,12 +30,17 @@ import cadetHFZInformationParse from './capwatch-modules/cadethfzinformation';
 import cadetAchievementEnumParse from './capwatch-modules/cdtachvenum';
 import commanders from './capwatch-modules/commanders';
 import dutyPosition from './capwatch-modules/dutyposition';
+import mbrAddressesParse from './capwatch-modules/mbraddresses';
 import mbrAchievements from './capwatch-modules/mbrachievement';
+import mbrCharsParse from './capwatch-modules/mbrchars';
+import mbrCommitteeParse from './capwatch-modules/mbrcommittee';
 import mbrContact from './capwatch-modules/mbrcontact';
 import memberParse from './capwatch-modules/member';
+import memberPrmParse from './capwatch-modules/memberprm';
 import oFlight from './capwatch-modules/oflight';
 import organization from './capwatch-modules/organization';
 import orgContact from './capwatch-modules/orgcontact';
+import orgStatisticsParse from './capwatch-modules/orgstatistics';
 import plGroups from './capwatch-modules/pl/groups';
 import plLookup from './capwatch-modules/pl/lookup';
 import plMemberPathCredit from './capwatch-modules/pl/memberPathCredit';
@@ -46,6 +50,7 @@ import plTaskGroupAssignments from './capwatch-modules/pl/taskGroupAssignments';
 import plTasks from './capwatch-modules/pl/tasks';
 import seniorAwards from './capwatch-modules/seniorawards';
 import seniorLevel from './capwatch-modules/seniorlevel';
+import trainingParse from './capwatch-modules/training';
 import { CAP } from './member/members';
 import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRequestFreeRegistryBackend, RegistryBackend } from './Registry';
@@ -62,14 +67,20 @@ export const importModules = {
 	cadetAchievementEnumParse,
 	commanders,
 	dutyPosition,
+	mbrAddressesParse,
 	mbrAchievements,
+	mbrCharsParse,
+	mbrCommitteeParse,
 	mbrContact,
 	memberParse,
+	memberPrmParse,
 	oFlight,
 	organization,
 	orgContact,
+	orgStatisticsParse,
 	seniorAwards,
 	seniorLevel,
+	trainingParse,
 	pl: {
 		groups: plGroups,
 		lookup: plLookup,
@@ -195,6 +206,22 @@ const modules: Array<{
 		file: 'MbrAchievements.txt',
 	},
 	{
+		module: mbrAddressesParse,
+		file: 'MbrAddresses.txt',
+	},
+	{
+		module: mbrCharsParse,
+		file: 'MbrChars.txt',
+	},
+	{
+		module: mbrCommitteeParse,
+		file: 'MbrCommittee.txt',
+	},
+	{
+		module: memberPrmParse,
+		file: 'MemberPrm.txt',
+	},
+	{
 		module: cadetAchv,
 		file: 'CadetAchv.txt',
 	},
@@ -218,14 +245,10 @@ const modules: Array<{
 		module: seniorLevel,
 		file: 'SeniorLevel.txt',
 	},
-	/*  {
-		module: mbrAddresses,
-		file: 'MbrAddresses.txt'
-	},
 	{
-		module: mbrChars,
-		file: 'MbrChars.txt'
-	},*/
+		module: trainingParse,
+		file: 'Training.txt',
+	},
 	/* the following modules need only be imported occassionally as they do not change often */
 	{
 		module: commanders,
@@ -238,6 +261,10 @@ const modules: Array<{
 	{
 		module: orgContact,
 		file: 'OrgContact.txt',
+	},
+	{
+		module: orgStatisticsParse,
+		file: 'ORGStatistics.txt',
 	} /*
 	{
 		module: orgAddresses,
