@@ -24,7 +24,6 @@ import DialogueButtonForm from '../../../components/dialogues/DialogueButtonForm
 import MemberSelectorButton from '../../../components/dialogues/MemberSelectorAsButton';
 import TextBox from '../../../components/form-inputs/TextBox';
 import { DateTimeInput, Label, TextInput } from '../../../components/forms/SimpleForm';
-import LoaderShort from '../../../components/LoaderShort';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 
@@ -84,7 +83,7 @@ export default class SuWidget extends Page<PageProps, SuState> {
 			<div className="widget-title">Su</div>
 			<div className="widget-body">
 				{this.state.state === 'LOADING' ? (
-					<LoaderShort />
+					this.renderCompactLoader()
 				) : this.state.state === 'ERROR' ? (
 					<div>{this.state.message}</div>
 				) : (
@@ -161,6 +160,37 @@ export default class SuWidget extends Page<PageProps, SuState> {
 				)}
 			</div>
 		</div>
+	);
+
+	private renderCompactLoader = (): JSX.Element => (
+		<span
+			style={{
+				display: 'inline-flex',
+				flexDirection: 'column',
+				alignItems: 'flex-start',
+				justifyContent: 'space-between',
+				height: '58px',
+			}}
+		>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '16rem',
+					height: '11px',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '8rem',
+					height: '11px',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+		</span>
 	);
 
 	private suMember = async (member: Member | null): Promise<void> => {

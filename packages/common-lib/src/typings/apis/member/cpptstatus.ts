@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2020 Andrew Rioux, Glenn Rioux
+ * Copyright (C) 2026 Andrew Rioux
  *
  * This file is part of Event Manager.
  *
@@ -17,10 +17,28 @@
  * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export * from './AttendanceXlsx';
-export * from './EventListXlsx';
-export * from './sqr521';
-export * from './sqr6020';
-export * from './sqr601';
-export * from './sqr601a';
-export * from './sqr603cppt';
+import { APIEither } from '../../api';
+
+export interface CPPTStatusItem {
+	capid: number;
+	memberType: string;
+	memberRank: string;
+	nameFirst: string;
+	nameLast: string;
+	dob: string;
+	cpptCompletionDate: string;
+}
+
+export interface Get {
+	(params: {}, body: {}): APIEither<CPPTStatusItem[]>;
+
+	url: '/api/member/cpptstatus';
+
+	method: 'get';
+
+	requiresMember: 'required';
+
+	needsToken: false;
+
+	useValidator: false;
+}

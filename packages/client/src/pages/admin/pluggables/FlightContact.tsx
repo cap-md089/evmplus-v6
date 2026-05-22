@@ -48,7 +48,6 @@ import SimpleForm, {
 	TextInput,
 } from '../../../components/forms/SimpleForm';
 import Loader from '../../../components/Loader';
-import LoaderShort from '../../../components/LoaderShort';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 import './FlightContact.css';
@@ -145,7 +144,7 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 			</Link>
 			<div className="widget-body">
 				{this.state.state === 'LOADING' ? (
-					<LoaderShort />
+					this.renderCompactLoader()
 				) : this.state.state === 'ERROR' ? (
 					<div>{this.state.message}</div>
 				) : (
@@ -169,6 +168,26 @@ export class FlightContactWidget extends Page<PageProps, FlightContactState> {
 				)}
 			</div>
 		</div>
+	);
+
+	private renderCompactLoader = (): JSX.Element => (
+		<span
+			style={{
+				display: 'inline-flex',
+				alignItems: 'center',
+				height: '1.25em',
+			}}
+		>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '14rem',
+					height: '0.7em',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+		</span>
 	);
 }
 

@@ -20,7 +20,6 @@
 import { Either, FileObject, get, stringifyMemberReference } from 'common-lib';
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import LoaderShort from '../../../components/LoaderShort';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 
@@ -80,7 +79,7 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 				<div className="widget-title">Drive information</div>
 				<div className="widget-body">
 					{this.state.state === 'LOADING' ? (
-						<LoaderShort />
+						this.renderCompactLoader()
 					) : this.state.state === 'ERROR' ? (
 						<div>{this.state.message}</div>
 					) : (
@@ -99,4 +98,35 @@ export class DriveWidget extends Page<PageProps, DriveWidgetState> {
 			</div>
 		);
 	}
+
+	private renderCompactLoader = (): JSX.Element => (
+		<span
+			style={{
+				display: 'inline-flex',
+				flexDirection: 'column',
+				alignItems: 'flex-start',
+				justifyContent: 'space-between',
+				height: '58px',
+			}}
+		>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '16rem',
+					height: '11px',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '8rem',
+					height: '11px',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+		</span>
+	);
 }

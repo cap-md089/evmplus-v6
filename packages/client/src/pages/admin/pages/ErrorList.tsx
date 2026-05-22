@@ -40,7 +40,6 @@ import { Link } from 'react-router-dom';
 import Button from '../../../components/Button';
 import DropDownList from '../../../components/DropDownList';
 import Loader from '../../../components/Loader';
-import LoaderShort from '../../../components/LoaderShort';
 import fetchApi from '../../../lib/apis';
 import Page, { PageProps } from '../../Page';
 import { RequiredMember } from '../pluggables/SiteAdmin';
@@ -74,7 +73,7 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 			</Link>
 			<div className="widget-body">
 				{Maybe.cata<APIEndpointReturnValue<api.errors.GetErrors>, React.ReactChild>(
-					always(<LoaderShort />),
+					always(this.renderCompactLoader()),
 				)(
 					Either.cata<HTTPError, Errors[], React.ReactChild>(err => (
 						<div>{err.message}</div>
@@ -92,6 +91,37 @@ export class ErrorListWidget extends Page<RequiredMember, ErrorListWidgetState> 
 				)(this.state.errors)}
 			</div>
 		</div>
+	);
+
+	private renderCompactLoader = (): JSX.Element => (
+		<span
+			style={{
+				display: 'inline-flex',
+				flexDirection: 'column',
+				alignItems: 'flex-start',
+				justifyContent: 'space-between',
+				height: '58px',
+			}}
+		>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '16rem',
+					height: '11px',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+			<span
+				style={{
+					display: 'inline-block',
+					width: '8rem',
+					height: '11px',
+					borderRadius: '999px',
+					backgroundColor: '#d7dee5',
+				}}
+			/>
+		</span>
 	);
 }
 

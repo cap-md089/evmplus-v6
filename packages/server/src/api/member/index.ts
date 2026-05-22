@@ -26,6 +26,7 @@ import absent from './absent';
 import basic from './attendance/basic';
 import other from './attendance/other';
 import short from './attendance/short';
+import cpptstatus from './cpptstatus';
 // import capwatchimport from './capwatch/importcapwatch';
 import flightassign from './flights/flightassign';
 import flightassignbulk from './flights/flightassignbulk';
@@ -58,6 +59,7 @@ addAPI(Validator, adder, setdutypositions);
 
 addAPI(Validator, adder, currentuser);
 addAPI(Validator, adder, praccount);
+addAPI(Validator, adder, cpptstatus);
 
 addAPI(Validator, adder, setpermissions);
 addAPI(Validator, adder, getpermissions);

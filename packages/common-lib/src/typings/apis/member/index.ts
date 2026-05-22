@@ -29,6 +29,7 @@ import { AbsenteeInformation, Member, MemberType, NHQ, PasswordSetResult } from 
 export * as account from './account';
 export * as attendance from './attendance';
 export * as capwatch from './capwatch';
+export * as cpptstatus from './cpptstatus';
 export * as flight from './flight';
 export * as permissions from './permissions';
 export * as promotionrequirements from './promotionrequirements';
