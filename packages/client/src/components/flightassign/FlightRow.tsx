@@ -28,6 +28,7 @@ interface FlightRowProps {
 	onDragStart: (flight: string) => void;
 	onDrop: (member: MemberReference) => void;
 	members: Member[];
+	displayMember: (val: Member) => React.ReactNode;
 	name: string;
 	first: boolean;
 	highlighted: boolean;
@@ -179,6 +180,7 @@ export default class FlightRow extends React.Component<FlightRowProps, FlightRow
 						key={index}
 						onDrop={this.onDrop}
 						onDragStart={this.onDragStart}
+						displayMember={this.props.displayMember}
 					/>
 				))}
 			</div>

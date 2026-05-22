@@ -25,6 +25,7 @@ interface FlightMemberProps {
 	onDragStart: () => void;
 	onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
 	member: Member;
+	displayMember?: (val: Member) => React.ReactNode;
 }
 
 export default class FlightMember extends React.Component<FlightMemberProps> {
@@ -52,7 +53,10 @@ export default class FlightMember extends React.Component<FlightMemberProps> {
 				onDragLeave={this.handleOver}
 				onDragEnter={this.handleOver}
 			>
-				{this.getDutyColor(this.props.member)}&nbsp;{getFullMemberName(this.props.member)}
+				{this.getDutyColor(this.props.member)}&nbsp;
+				{this.props.displayMember
+					? this.props.displayMember(this.props.member)
+					: getFullMemberName(this.props.member)}
 			</div>
 		</>
 	);
