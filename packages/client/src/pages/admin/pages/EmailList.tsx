@@ -243,6 +243,15 @@ const advancedFilters = [
 
 const simpleFilters = [nameInput, memberFilter] as const;
 
+const expirationLegendStyle: React.CSSProperties = {
+	border: '1px solid #ccc',
+	padding: 8,
+	marginBottom: 10,
+	backgroundColor: '#fafafa',
+	maxWidth: 500,
+	lineHeight: 1.4,
+};
+
 export default class EmailList extends Page<PageProps, EmailListState> {
 	public state: EmailListState = {
 		state: 'LOADING',
@@ -389,6 +398,11 @@ export default class EmailList extends Page<PageProps, EmailListState> {
 				<div>{this.state.error}</div>
 			) : (
 				<>
+					<div style={expirationLegendStyle}>
+						Membership expiration colors: <span style={{ color: 'red' }}>Red</span> = Expired within the last 90 days,
+						 <span style={{ color: 'orange' }}> Orange</span> = Expires within 30 days,
+						 Default color = Active membership.
+					</div>
 					<Button
 						onClick={() => {
 							this.setState(prev =>

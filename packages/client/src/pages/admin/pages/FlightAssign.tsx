@@ -20,6 +20,7 @@
 import {
 	areMembersTheSame,
 	Either,
+	getFullMemberName,
 	hasPermission,
 	Member,
 	MemberReference,
@@ -65,6 +66,16 @@ const saveButtonMargin = {
 
 const saveMessage = {
 	marginLeft: 10,
+};
+
+const expirationLegendStyle: React.CSSProperties = {
+	border: '1px solid #ccc',
+	padding: 8,
+	margin: 15,
+	marginBottom: 10,
+	backgroundColor: '#fafafa',
+	maxWidth: 500,
+	lineHeight: 1.4,
 };
 
 const wrapMember = (member: Member): WrappedMember => ({
@@ -185,6 +196,11 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 		return (
 			<>
 				<div>
+					<div style={expirationLegendStyle}>
+						Membership expiration colors: <span style={{ color: 'red' }}>Red</span> = Expired within the last 90 days,
+						 <span style={{ color: 'orange' }}> Orange</span> = Expires within 30 days,
+						 Default color = Active membership.
+					</div>
 					{flights.map((flight, index) => (
 						<FlightRow
 							key={index}
@@ -194,6 +210,7 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 							onDrop={this.onDrop(flight[0])}
 							name={flight[0]}
 							members={flight[1]}
+							displayMember={this.displayMember}
 							first={!first++}
 							highlighted={flight[0] === this.state.highlighted}
 						/>
@@ -232,6 +249,22 @@ export default class FlightAssign extends Page<PageProps, FlightAssignState> {
 			open: false,
 			highlighted: flight,
 		});
+	};
+
+	private displayMember = (val: Member): React.ReactNode => {
+		if (val.type === 'CAPNHQMember' && 'expirationDate' in val) {
+			const expires = +new Date(val.expirationDate);
+
+			if (expires < Date.now()) {
+				return <span style={{ color: 'red' }}>{getFullMemberName(val)}</span>;
+			}
+
+			if (expires < Date.now() + 1000 * 60 * 60 * 24 * 30) {
+				return <span style={{ color: 'orange' }}>{getFullMemberName(val)}</span>;
+			}
+		}
+
+		return getFullMemberName(val);
 	};
 
 	private onDrop = (flight: string) => (memRef: MemberReference) => {
