@@ -146,7 +146,6 @@ export const sqr601aMembersXL = (
 	};
 
 	const phase1Cadets = nhqmembers;
-	nhqmembers[0].member.flight
 
 	const phase1CadetsDoc = [
 		...phase1Cadets,
