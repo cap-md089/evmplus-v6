@@ -508,8 +508,10 @@ interface EventFormState {
 	files: FileObject[] | null;
 	selectedFolder: string;
 	selectedFiles: FileObject[];
-	subtitleInfoOpen: boolean;
-	eventNameInfoOpen: boolean;
+	helpDialog: null | {
+		title: string;
+		content: string;
+	};
 }
 
 export default class EventForm extends React.Component<EventFormProps, EventFormState> {
@@ -524,8 +526,7 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 		files: [],
 		selectedFolder: '',
 		selectedFiles: [],
-		subtitleInfoOpen: false,
-		eventNameInfoOpen: false,
+		helpDialog: null,
 	};
 
 	private commentsRef = React.createRef<HTMLTextAreaElement>();
@@ -623,20 +624,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css"
 				/>
 				<Dialogue
-					open={this.state.eventNameInfoOpen}
-					onClose={() => this.setState({ eventNameInfoOpen: false })}
+					open={this.state.helpDialog !== null}
+					onClose={() => this.setState({ helpDialog: null })}
 					displayButtons={DialogueButtons.OK}
-					title="Event Name Information"
-				>The event name field is available to provide a concise title for display on the calendar view.  
-				Only event titles are displayed on calendar views.</Dialogue>
-				<Dialogue
-					open={this.state.subtitleInfoOpen}
-					onClose={() => this.setState({ subtitleInfoOpen: false })}
-					displayButtons={DialogueButtons.OK}
-					title="Subtitle Information"
-				>The subtitle field is available to provide additional summary information about the event.  
-				Only event titles are displayed on calendar views; subtitles are displayed in detailed views
-				but not on the calendar view.</Dialogue>
+					title={this.state.helpDialog?.title ?? 'Field Information'}
+				>
+					{this.state.helpDialog?.content ?? ''}
+				</Dialogue>
 				<SimpleForm<NewEventFormValues & { addPOCbyID: number | null }>
 					onChange={this.onEventChange}
 					onSubmit={this.onEventSubmit}
@@ -670,17 +664,21 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>Main information</Title>
 
-					<Label>Event Name*~ <Button 
-						onClick={() => this.setState({ eventNameInfoOpen: true })} 
-						buttonType='none'>&#9432;</Button></Label>
+					{this.renderHelpLabel(
+						'Event Name*~',
+						'Event Name Information',
+						'Provide a concise event title. This title is what members primarily see in calendar views.',
+					)}
 					<TextInput 						boxStyles={{
 							height: '50px',
 						}}
 						name="name" errorMessage="Event must have a name" />
 
-					<Label>Subtitle~ <Button 
-						onClick={() => this.setState({ subtitleInfoOpen: true })} 
-						buttonType='none'>&#9432;</Button></Label>
+					{this.renderHelpLabel(
+						'Subtitle~',
+						'Subtitle Information',
+						'Use subtitle to add context such as audience, focus, or special notes. It appears in detail views.',
+					)}
 					<TextInput
 						boxStyles={{
 							height: '50px',
@@ -688,17 +686,29 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						name="subtitle"
 					/>
 
-					<Label>Meet date and time*~</Label>
+					{this.renderHelpLabel(
+						'Meet date and time*~',
+						'Meet Date and Time Information',
+						'Set when participants are expected to gather before the event begins.',
+					)}
 					<DateTimeInput
 						name="meetDateTime"
 						time={true}
 						originalTimeZoneOffset={this.props.registry.Website.Timezone}
 					/>
 
-					<Label>Meet location*~</Label>
+					{this.renderHelpLabel(
+						'Meet location*~',
+						'Meet Location Information',
+						'Enter the physical location where attendees should report initially.',
+					)}
 					<TextInput name="meetLocation" errorMessage="Event must have a meet location" />
 
-					<Label>Start date and time*~</Label>
+					{this.renderHelpLabel(
+						'Start date and time*~',
+						'Start Date and Time Information',
+						'Set when the event officially starts. This cannot be before meet date/time.',
+					)}
 					<DateTimeInput
 						name="startDateTime"
 						time={true}
@@ -706,10 +716,18 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						errorMessage="Event cannot start before meeting"
 					/>
 
-					<Label>Event location*~</Label>
+					{this.renderHelpLabel(
+						'Event location*~',
+						'Event Location Information',
+						'Provide the location where the main event activities occur.',
+					)}
 					<TextInput name="location" errorMessage="Event must have a location" />
 
-					<Label>End date and time*~</Label>
+					{this.renderHelpLabel(
+						'End date and time*~',
+						'End Date and Time Information',
+						'Set when event activities end. This cannot be before start date/time.',
+					)}
 					<DateTimeInput
 						name="endDateTime"
 						time={true}
@@ -717,7 +735,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						errorMessage="Event cannot end before it starts"
 					/>
 
-					<Label>Pickup date and time*~</Label>
+					{this.renderHelpLabel(
+						'Pickup date and time*~',
+						'Pickup Date and Time Information',
+						'Set when attendees are picked up or released after the event ends.',
+					)}
 					<DateTimeInput
 						name="pickupDateTime"
 						time={true}
@@ -725,18 +747,28 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						errorMessage="Event cannot have a pickup before it ends"
 					/>
 
-					<Label>Pickup location*~</Label>
+					{this.renderHelpLabel(
+						'Pickup location*~',
+						'Pickup Location Information',
+						'Enter where attendees should be picked up or released.',
+					)}
 					<TextInput
 						name="pickupLocation"
 						errorMessage="Event must have a pickup location"
 					/>
 
-					<Label>Transportation provided~</Label>
+					{this.renderHelpLabel(
+						'Transportation provided~',
+						'Transportation Provided Information',
+						'Enable this if your unit is arranging transportation for participants.',
+					)}
 					<Checkbox name="transportationProvided" />
 
-					<Label>
-						Transportation description{values.transportationProvided ? '*' : ''}
-					</Label>
+					{this.renderHelpLabel(
+						`Transportation description${values.transportationProvided ? '*' : ''}`,
+						'Transportation Description Information',
+						'Describe transportation details such as vehicle plan, departure notes, and constraints.',
+					)}
 					<TextInput
 						name="transportationDescription"
 						errorMessage="Transportation description required if there is transportation provided"
@@ -744,51 +776,91 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>Activity Information</Title>
 
-					<Label>Comments (Visible to the public)~</Label>
+					{this.renderHelpLabel(
+						'Comments (Visible to the public)~',
+						'Public Comments Information',
+						'These comments are shown publicly and should contain attendee-facing event details.',
+					)}
 					<div className="formbox">
 						<textarea ref={this.commentsRef} />
 					</div>
 
-					<Label>Member Comments (Visible only when signed in)</Label>
+					{this.renderHelpLabel(
+						'Member Comments (Visible only when signed in)',
+						'Member Comments Information',
+						'These comments are restricted to signed-in members and may include internal guidance.',
+					)}
 					<div className="formbox">
 						<textarea ref={this.mbrcommentsRef} />
 					</div>
 
-					<Label>Activity type~</Label>
+					{this.renderHelpLabel(
+						'Activity type~',
+						'Activity Type Information',
+						'Select one or more activity categories to classify this event for filtering and reporting.',
+					)}
 					<OtherMultCheckbox name="activity" labels={labels.Activities} />
 
-					<Label>Lodging arrangement</Label>
+					{this.renderHelpLabel(
+						'Lodging arrangement',
+						'Lodging Arrangement Information',
+						'Indicate lodging plans if the event includes overnight or extended stay requirements.',
+					)}
 					<OtherMultCheckbox
 						name="lodgingArrangments"
 						labels={labels.LodgingArrangments}
 					/>
 
-					<Label>Event website~</Label>
+					{this.renderHelpLabel(
+						'Event website~',
+						'Event Website Information',
+						'Provide an external URL for additional event information if available.',
+					)}
 					<TextInput name="eventWebsite" />
 
-					<Label>High adventure description</Label>
+					{this.renderHelpLabel(
+						'High adventure description',
+						'High Adventure Description Information',
+						'Describe high-adventure aspects and risks to set expectations for participants and staff.',
+					)}
 					<TextInput name="highAdventureDescription" />
 
 					<Title>Logistics Information</Title>
 
-					<Label>Senior Member Uniform*~</Label>
+					{this.renderHelpLabel(
+						'Senior Member Uniform*~',
+						'Senior Member Uniform Information',
+						'Select required or accepted uniform options for senior members.',
+					)}
 					<SimpleMultCheckbox
 						name="smuniform"
 						labels={labels.SMUniforms}
 						errorMessage="Uniform selection is required"
 					/>
 
-					<Label>Cadet Uniform*~</Label>
+					{this.renderHelpLabel(
+						'Cadet Uniform*~',
+						'Cadet Uniform Information',
+						'Select required or accepted uniform options for cadets.',
+					)}
 					<SimpleMultCheckbox
 						name="cuniform"
 						labels={labels.CUniforms}
 						errorMessage="Uniform selection is required"
 					/>
 
-					<Label>Required participant forms~</Label>
+					{this.renderHelpLabel(
+						'Required participant forms~',
+						'Required Participant Forms Information',
+						'Select forms members must complete before attendance.',
+					)}
 					<OtherMultCheckbox name="requiredForms" labels={labels.RequiredForms} />
 
-					<Label>Required equipment</Label>
+					{this.renderHelpLabel(
+						'Required equipment',
+						'Required Equipment Information',
+						'List any required gear members need to bring for this event.',
+					)}
 					<ListEditor<string, InputProps<string>>
 						name="requiredEquipment"
 						addNew={() => ''}
@@ -797,14 +869,26 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						errorMessage="Items cannot be empty"
 					/>
 
-					<Label>Use registration deadline</Label>
+					{this.renderHelpLabel(
+						'Use registration deadline',
+						'Registration Deadline Toggle Information',
+						'Enable to enforce a registration deadline and show registration guidance.',
+					)}
 					<Checkbox name="useRegistration" />
 
 					<FormBlock hidden={!values.useRegistration} name="registration">
-						<Label>Registration information</Label>
+						{this.renderHelpLabel(
+							'Registration information',
+							'Registration Information Field',
+							'Provide instructions for how members should register or what registration requires.',
+						)}
 						<TextInput name="information" />
 
-						<Label>Registration deadline</Label>
+						{this.renderHelpLabel(
+							'Registration deadline',
+							'Registration Deadline Information',
+							'Set the cutoff date and time for registrations.',
+						)}
 						<DateTimeInput
 							name="deadline"
 							time={true}
@@ -812,18 +896,35 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						/>
 					</FormBlock>
 
-					<Label>Accept signups</Label>
+					{this.renderHelpLabel(
+						'Accept signups',
+						'Accept Signups Information',
+						'Enable this to allow members to sign up for this event.',
+					)}
 					<Checkbox name="acceptSignups" />
 
-					<Label>Sign up deny message</Label>
+					{this.renderHelpLabel(
+						'Sign up deny message',
+						'Signup Deny Message Information',
+						'This message is shown when signups are closed or denied.',
+					)}
 					<TextInput name="signUpDenyMessage" />
 
-					<Label>Send signup email</Label>
+					{this.renderHelpLabel(
+						'Send signup email',
+						'Send Signup Email Information',
+						'Enable this to send a confirmation email to members when they sign up.',
+					)}
 					<Checkbox name="useEmailBody" />
 
 					<FormBlock hidden={!values.useEmailBody} name="emailBody">
 						<Label>
 							Signup Email Message Body
+							{' '}
+							{this.renderHelpButton(
+								'Signup Email Message Body Information',
+								'Edit the email template sent on signup. You can use placeholders like %%MEMBER_NAME%% and %%EVENT_NAME%%.',
+							)}
 							<br />
 							<br />
 							Use <code>%%MEMBER_NAME%%</code> to address the member signing up
@@ -839,17 +940,33 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						</TextBox>
 					</FormBlock>
 
-					<Label>Allow signing up part time</Label>
+					{this.renderHelpLabel(
+						'Allow signing up part time',
+						'Part-Time Signup Information',
+						'Enable this if members can sign up for only part of the event window.',
+					)}
 					<Checkbox name="signUpPartTime" />
 
-					<Label>Use participation fee</Label>
+					{this.renderHelpLabel(
+						'Use participation fee',
+						'Participation Fee Toggle Information',
+						'Enable this if participants must pay a fee to attend.',
+					)}
 					<Checkbox name="useParticipationFee" />
 
 					<FormBlock hidden={!values.useParticipationFee} name="participationFee">
-						<Label>Participation fee</Label>
+						{this.renderHelpLabel(
+							'Participation fee',
+							'Participation Fee Amount Information',
+							'Enter the required fee amount for each participant.',
+						)}
 						<NumberInput name="feeAmount" />
 
-						<Label>Participation fee due</Label>
+						{this.renderHelpLabel(
+							'Participation fee due',
+							'Participation Fee Due Information',
+							'Set when participation fees must be paid.',
+						)}
 						<DateTimeInput
 							name="feeDue"
 							time={true}
@@ -857,13 +974,22 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						/>
 					</FormBlock>
 
-					<Label>Meals~</Label>
+					{this.renderHelpLabel(
+						'Meals~',
+						'Meals Information',
+						'Indicate meal plans or meal-related expectations for this event.',
+					)}
 					<OtherMultCheckbox name="mealsDescription" labels={labels.Meals} />
 
 					<Title>Points of Contact</Title>
 
 					{!!this.state.pocAddbyIDError && (
 						<TextBox>{this.state.pocAddbyIDError}</TextBox>
+					)}
+					{this.renderHelpLabel(
+						'Internal POC CAPID',
+						'Internal Point of Contact CAPID Information',
+						'Enter a CAPID to add an internal point of contact quickly.',
 					)}
 					<NumberInput name="addPOCbyID" />
 					<TextBox>
@@ -873,6 +999,14 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					</TextBox>
 					<Divider />
 					<TextBox />
+
+					<TextBox>
+					{this.renderHelpLabel(
+						'Points of contact',
+						'Points of Contact Information',
+						'Configure internal and external contacts for event coordination and notifications.',
+					)}
+					</TextBox>
 
 					<ListEditor<InternalPointOfContactEdit | ExternalPointOfContact, POCInputProps>
 						name="pointsOfContact"
@@ -901,6 +1035,13 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					/>
 
 					<Title>Custom Attendance Fields</Title>
+					<TextBox>
+					{this.renderHelpLabel(
+						'Custom attendance fields',
+						'Custom Attendance Fields Information',
+						'Add custom questions or fields that members complete during signup.',
+					)}
+					</TextBox>
 
 					<ListEditor<CustomAttendanceField, InputProps<CustomAttendanceField>>
 						name="customAttendanceFields"
@@ -920,7 +1061,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>File attachments</Title>
 
-					<Label>Event files</Label>
+					{this.renderHelpLabel(
+						'Event files',
+						'Event Files Information',
+						'Attach files members should reference, such as packing lists, forms, or instructions.',
+					)}
 					<FileInput
 						name="fileIDs"
 						single={true}
@@ -931,9 +1076,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 					{this.props.account.id === 'volu' && <Title>Academic Requirements</Title>}
 
 					{this.props.account.id === 'volu' && (
-						<Label>
-							Academic requirement tag (what course does this event satisfy?)
-						</Label>
+						this.renderHelpLabel(
+							'Academic requirement tag (what course does this event satisfy?)',
+							'Academic Requirement Tag Information',
+							'Select the academic requirement this event fulfills for tracking and reporting.',
+						)
 					)}
 					{this.props.account.id === 'volu' && (
 						<Select name="requirementTag" labels={requirementTagLabels} />
@@ -941,11 +1088,19 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 
 					<Title>Extra information</Title>
 
-					<Label>Desired number of participants</Label>
+					{this.renderHelpLabel(
+						'Desired number of participants',
+						'Desired Participant Count Information',
+						'Set your planning target for participant count.',
+					)}
 					<NumberInput name="desiredNumberOfParticipants" />
 
 					{this.props.account.type === AccountType.CAPSQUADRON ? (
-						<Label>Group event number</Label>
+						this.renderHelpLabel(
+							'Group event number',
+							'Group Event Number Information',
+							'Track whether a group event number is required or has been requested.',
+						)
 					) : null}
 					{this.props.account.type === AccountType.CAPSQUADRON ? (
 						<RadioButtonWithOther<EchelonEventNumber>
@@ -960,7 +1115,11 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						labels={['Not Required', 'To Be Applied For', 'Applied For']}
 					/> */}
 
-					<Label>Event status~</Label>
+					{this.renderHelpLabel(
+						'Event status~',
+						'Event Status Information',
+						'Set the lifecycle state of the event (draft, tentative, confirmed, complete, etc.).',
+					)}
 					<EnumRadioButton<EventStatus>
 						name="status"
 						labels={
@@ -985,32 +1144,100 @@ export default class EventForm extends React.Component<EventFormProps, EventForm
 						defaultValue={EventStatus.DRAFT}
 					/>
 
-					<Label>Entry complete</Label>
+					{this.renderHelpLabel(
+						'Entry complete',
+						'Entry Complete Information',
+						'Mark this when event data entry is complete and ready for normal operations.',
+					)}
 					<Checkbox name="complete" />
 
-					<Label>Show upcoming</Label>
+					{this.renderHelpLabel(
+						'Show upcoming',
+						'Show Upcoming Information',
+						'Enable this to include the event in upcoming-event displays.',
+					)}
 					<Checkbox name="showUpcoming" />
 
-					<Label>Administrative comments</Label>
+					{this.renderHelpLabel(
+						'Administrative comments',
+						'Administrative Comments Information',
+						'Internal notes for staff and administration; not intended as public event messaging.',
+					)}
 					<BigTextBox name="administrationComments" />
 
 					{process.env.NODE_ENV === 'development' && (
 						<>
-							<Label>Keep attendance private</Label>
+							{this.renderHelpLabel(
+								'Keep attendance private',
+								'Private Attendance Information',
+								'When enabled, attendance visibility is restricted for testing or privacy scenarios.',
+							)}
 							<Checkbox name="privateAttendance" />
 						</>
 					)}
 
 					<Title>Team information</Title>
+					<TextBox>
+					{this.renderHelpLabel(
+						'Team assignment',
+						'Team Assignment Information',
+						'Assign this event to a team to scope management and optional signup restrictions.',
+					)}
+					</TextBox>
 
 					<TeamSelector teamList={this.props.teamList} name="teamID" />
 
-					<Label>Limit sign ups to team members</Label>
+					{this.renderHelpLabel(
+						'Limit sign ups to team members',
+						'Limit Signups to Team Information',
+						'Enable this to allow signup only for members of the selected team.',
+					)}
 					<Checkbox name="limitSignupsToTeam" />
 				</SimpleForm>
 			</>
 		);
 	}
+
+	private renderHelpButton = (title: string, content: string): JSX.Element => (
+		<Button
+			onClick={() =>
+				this.setState({
+					helpDialog: {
+						title,
+						content: this.getNormalizedHelpContent(title, content),
+					},
+				})
+			}
+			buttonType="none"
+		>
+			&#9432;
+		</Button>
+	);
+
+	private getNormalizedHelpContent = (title: string, content: string): string => {
+		const topic = title.replace(/\s+Information$/u, '').toLowerCase();
+		const prefix = `Use this field to manage ${topic}.`;
+		const trimmed = content.trim();
+
+		if (!trimmed) {
+			return prefix;
+		}
+
+		const normalizedContent =
+			trimmed.charAt(0).toUpperCase() + trimmed.slice(1).replace(/\s+/gu, ' ');
+
+		return `${prefix} ${normalizedContent}`;
+	};
+
+	private renderHelpLabel = (
+		label: React.ReactNode,
+		title: string,
+		content: string,
+	): JSX.Element => (
+		<Label>
+			{label} {this.renderHelpButton(title, content)}
+		</Label>
+	);
 
 	private onEventChange = (
 		event: NewEventFormValues & { addPOCbyID: number | null },
