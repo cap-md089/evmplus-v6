@@ -32,6 +32,28 @@ const parseDate = (value: string): Date | null => {
 	return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const isCadetStatus = (item: api.member.cpptstatus.CPPTStatusItem): boolean =>
+	/cadet/i.test(item.memberType) || /cadet/i.test(item.memberRank);
+
+const isAtLeast18 = (dobValue: string, referenceDate: Date): boolean => {
+	const dob = parseDate(dobValue);
+
+	if (!dob) {
+		return false;
+	}
+
+	let age = referenceDate.getFullYear() - dob.getFullYear();
+	const hasHadBirthdayThisYear =
+		referenceDate.getMonth() > dob.getMonth() ||
+		(referenceDate.getMonth() === dob.getMonth() && referenceDate.getDate() >= dob.getDate());
+
+	if (!hasHadBirthdayThisYear) {
+		age -= 1;
+	}
+
+	return age >= 18;
+};
+
 export const sqr603CPPTXL = (): Array<Array<string | number>> => {
 	const retVal: Array<Array<string | number>> = [];
 
@@ -80,7 +102,6 @@ export const sqr603CPPTMembersXL = (
 		'Member Type',
 		'Full Name',
 		'CAPID',
-		'Date of Birth',
 		'CPPT Completion Date',
 		'CPPT Expiration Date',
 	];
@@ -92,6 +113,10 @@ export const sqr603CPPTMembersXL = (
 	for (const item of [...memberStatuses].sort((a, b) =>
 		`${a.nameLast}, ${a.nameFirst}`.localeCompare(`${b.nameLast}, ${b.nameFirst}`),
 	)) {
+		if (isCadetStatus(item) && !isAtLeast18(item.dob, generatedAt)) {
+			continue;
+		}
+
 		const completionDate = parseDate(item.cpptCompletionDate);
 		const expirationDate = completionDate ? new Date(completionDate.getTime()) : null;
 
@@ -130,7 +155,6 @@ export const sqr603CPPTMembersXL = (
 			item.memberType,
 			nameCell,
 			item.capid,
-			item.dob,
 			item.cpptCompletionDate,
 			expirationDate ? expirationDate.toISOString().substring(0, 10) : '',
 		];
@@ -157,14 +181,8 @@ export const Formatsqr603CPPTMembersXL = (
 	sheet['!cols'] = widths.map(width => ({ width: width + 2 }));
 
 	for (let i = 2; i <= rowCount; i++) {
-		const dobCell = sheet[`D${i}`] as XLSX.CellObject | undefined;
-		const cpptCell = sheet[`E${i}`] as XLSX.CellObject | undefined;
-		const expirationCell = sheet[`F${i}`] as XLSX.CellObject | undefined;
-
-		if (dobCell && dobCell.v) {
-			dobCell.t = 'd';
-			dobCell.z = 'mm/dd/yyyy';
-		}
+		const cpptCell = sheet[`D${i}`] as XLSX.CellObject | undefined;
+		const expirationCell = sheet[`E${i}`] as XLSX.CellObject | undefined;
 
 		if (cpptCell && cpptCell.v) {
 			cpptCell.t = 'd';
