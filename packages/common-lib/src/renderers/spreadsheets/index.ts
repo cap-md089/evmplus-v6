@@ -23,4 +23,4 @@ export * from './sqr521';
 export * from './sqr6020';
 export * from './sqr601';
 export * from './sqr601a';
-export * from './sqr603cppt';
+export * from './rpt603cppt';

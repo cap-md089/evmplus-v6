@@ -25,7 +25,6 @@ export interface CPPTStatusItem {
 	memberRank: string;
 	nameFirst: string;
 	nameLast: string;
-	dob: string;
 	cpptCompletionDate: string;
 }
 

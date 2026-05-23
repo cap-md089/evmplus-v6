@@ -32,39 +32,17 @@ const parseDate = (value: string): Date | null => {
 	return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
-const isCadetStatus = (item: api.member.cpptstatus.CPPTStatusItem): boolean =>
-	/cadet/i.test(item.memberType) || /cadet/i.test(item.memberRank);
-
-const isAtLeast18 = (dobValue: string, referenceDate: Date): boolean => {
-	const dob = parseDate(dobValue);
-
-	if (!dob) {
-		return false;
-	}
-
-	let age = referenceDate.getFullYear() - dob.getFullYear();
-	const hasHadBirthdayThisYear =
-		referenceDate.getMonth() > dob.getMonth() ||
-		(referenceDate.getMonth() === dob.getMonth() && referenceDate.getDate() >= dob.getDate());
-
-	if (!hasHadBirthdayThisYear) {
-		age -= 1;
-	}
-
-	return age >= 18;
-};
-
-export const sqr603CPPTXL = (): Array<Array<string | number>> => {
+export const rpt603CPPTXL = (): Array<Array<string | number>> => {
 	const retVal: Array<Array<string | number>> = [];
 
-	retVal.push(['Event Manager SQR 60-3 CPPT Status Report']);
+	retVal.push(['Event Manager RPT 60-3 CPPT Status Report']);
 	retVal.push(['This document was generated on: ', '', '', Date.now()]);
 	retVal.push([]);
 
 	return retVal;
 };
 
-export const Formatsqr603CPPTXL = (sheet: XLSX.Sheet): XLSX.Sheet => {
+export const Formatrpt603CPPTXL = (sheet: XLSX.Sheet): XLSX.Sheet => {
 	const dateFormat = 'mm/dd/yyyy hh:mm';
 	const dateWidth = dateFormat.length;
 
@@ -86,7 +64,7 @@ export const Formatsqr603CPPTXL = (sheet: XLSX.Sheet): XLSX.Sheet => {
 	return sheet;
 };
 
-export const sqr603CPPTMembersXL = (
+export const rpt603CPPTMembersXL = (
 	memberStatuses: api.member.cpptstatus.CPPTStatusItem[],
 ): [Array<Array<string | number>>, number[]] => {
 	const generatedAt = new Date();
@@ -113,10 +91,6 @@ export const sqr603CPPTMembersXL = (
 	for (const item of [...memberStatuses].sort((a, b) =>
 		`${a.nameLast}, ${a.nameFirst}`.localeCompare(`${b.nameLast}, ${b.nameFirst}`),
 	)) {
-		if (isCadetStatus(item) && !isAtLeast18(item.dob, generatedAt)) {
-			continue;
-		}
-
 		const completionDate = parseDate(item.cpptCompletionDate);
 		const expirationDate = completionDate ? new Date(completionDate.getTime()) : null;
 
@@ -173,7 +147,7 @@ export const sqr603CPPTMembersXL = (
 	return [retVal, widths];
 };
 
-export const Formatsqr603CPPTMembersXL = (
+export const Formatrpt603CPPTMembersXL = (
 	sheet: XLSX.Sheet,
 	widths: number[],
 	rowCount: number,

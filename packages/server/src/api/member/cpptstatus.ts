@@ -18,21 +18,31 @@
  */
 
 import {
+	RawCAPGroupAccountObject,
+	RawCAPWingAccountObject,
 	api,
 	asyncLeft,
 	asyncRight,
 	errorGenerator,
 	hasOneDutyPosition,
 	hasPermission,
+	isRegularCAPAccountObject,
 	Permissions,
 	SessionType,
 } from 'common-lib';
 import {
+	CAP,
+	AccountBackend,
+	BasicAccountRequest,
 	Backends,
 	bindForArray,
+	combineBackends,
+	getCombinedMemberBackend,
+	MemberBackend,
 	getRawMySQLBackend,
 	PAM,
 	RawMySQLBackend,
+	TeamsBackend,
 	withBackends,
 } from 'server-common';
 import { Endpoint } from '../..';
@@ -54,7 +64,6 @@ SELECT
 	E.MemberRank,
 	E.NameFirst,
 	E.NameLast,
-	E.DOB,
 	DATE_FORMAT(C.CPPTCompletionDate, '%Y-%m-%d') AS CPPTCompletionDate
 FROM (
 	SELECT
@@ -62,8 +71,7 @@ FROM (
 		M.doc ->> '$.Type' AS MemberType,
 		M.doc ->> '$.Rank' AS MemberRank,
 		M.doc ->> '$.NameFirst' AS NameFirst,
-		M.doc ->> '$.NameLast' AS NameLast,
-		SUBSTR(M.doc ->> '$.DOB', 1, 10) AS DOB
+		M.doc ->> '$.NameLast' AS NameLast
 	FROM ${schemaName}.NHQ_Member M
 	WHERE M.ORGID IN ${bindForArray(orgids)}
 	AND (
@@ -89,17 +97,43 @@ LEFT JOIN (
 ) C ON C.CAPID = E.CAPID
 ORDER BY E.NameLast, E.NameFirst`;
 
-export const func: Endpoint<Backends<[RawMySQLBackend]>, api.member.cpptstatus.Get> = backend =>
+const getMemberDutyInOrgSql = (schemaName: string): string => `
+SELECT 1
+FROM ${schemaName}.NHQ_DutyPosition D
+WHERE D.CAPID = ?
+AND D.ORGID = ?
+UNION
+SELECT 1
+FROM ${schemaName}.NHQ_CadetDutyPosition D
+WHERE D.CAPID = ?
+AND D.ORGID = ?
+LIMIT 1`;
+
+const getUpperLevelOrgId = (
+	account: RawCAPGroupAccountObject | RawCAPWingAccountObject,
+): number => account.orgid;
+
+export const func: Endpoint<
+	Backends<[RawMySQLBackend, AccountBackend, MemberBackend, CAP.CAPMemberBackend, TeamsBackend]>,
+	api.member.cpptstatus.Get
+> = backend =>
 	PAM.RequireSessionType(SessionType.REGULAR)(req => {
-		if (req.account.type !== 'CAPSquadron') {
+		const isSquadronContext = req.account.type === 'CAPSquadron';
+
+		if (
+			!isSquadronContext &&
+			req.account.type !== 'CAPGroup' &&
+			req.account.type !== 'CAPWing'
+		) {
 			return asyncLeft({
 				type: 'OTHER',
 				code: 400,
-				message: 'This operation is only supported for squadrons',
+				message: 'This operation is only supported for squadron, group, and wing accounts',
 			});
 		}
 
 		if (
+			isSquadronContext &&
 			!hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(req.member) &&
 			!hasAllowedDutyPosition(req.member)
 		) {
@@ -110,49 +144,90 @@ export const func: Endpoint<Backends<[RawMySQLBackend]>, api.member.cpptstatus.G
 			});
 		}
 
-		const orgIds =
-			req.account.orgIDs.length > 0
-				? req.account.orgIDs
-				: req.account.mainOrg > 0
-				? [req.account.mainOrg]
-				: [];
-
-		if (orgIds.length === 0) {
-			return asyncRight(wrapper([]), errorGenerator('Could not build CPPT status report'));
+		if (!isRegularCAPAccountObject(req.account)) {
+			return asyncLeft({
+				type: 'OTHER',
+				code: 400,
+				message: 'You cannot do that for this type of account',
+			});
 		}
 
-		return asyncRight(
-			backend
-				.getSchema()
-				.getSession()
-				.sql(getCPPTStatusSql(orgIds, backend.getSchema().getName()))
-				.bind(orgIds)
-				.execute(),
-			errorGenerator('Could not query CPPT status data'),
-		)
-			.map(result => result.fetchAll())
-			.map(rows =>
-				rows.map(
-					([
-						capid,
-						memberType,
-						memberRank,
-						nameFirst,
-						nameLast,
-						dob,
-						cpptCompletionDate,
-					]) => ({
-						capid: parseInt(capid.toString(), 10),
-						memberType: memberType.toString(),
-						memberRank: memberRank.toString(),
-						nameFirst: nameFirst.toString(),
-						nameLast: nameLast.toString(),
-						dob: dob?.toString() ?? '',
-						cpptCompletionDate: cpptCompletionDate?.toString() ?? '',
-					}),
-				),
-			)
-			.map(wrapper);
+		return backend.getSubordinateCAPUnitIDs(req.account).flatMap(orgIds => {
+			if (orgIds.length === 0) {
+				return asyncRight(wrapper([]), errorGenerator('Could not build CPPT status report'));
+			}
+
+			const getCPPTStatusReport = () =>
+				asyncRight(
+					backend
+						.getSchema()
+						.getSession()
+						.sql(getCPPTStatusSql(orgIds, backend.getSchema().getName()))
+						.bind(orgIds)
+						.execute(),
+					errorGenerator('Could not query CPPT status data'),
+				)
+					.map(result => result.fetchAll())
+					.map(rows =>
+						rows.map(
+							([
+								capid,
+								memberType,
+								memberRank,
+								nameFirst,
+								nameLast,
+								cpptCompletionDate,
+							]) => ({
+								capid: parseInt(capid.toString(), 10),
+								memberType: memberType.toString(),
+								memberRank: memberRank.toString(),
+								nameFirst: nameFirst.toString(),
+								nameLast: nameLast.toString(),
+								cpptCompletionDate: cpptCompletionDate?.toString() ?? '',
+							}),
+						),
+					)
+					.map(wrapper);
+
+			if (req.account.type === 'CAPGroup' || req.account.type === 'CAPWing') {
+				const upperLevelOrgId = getUpperLevelOrgId(req.account);
+
+				const memberAssignedInScope = req.member.orgid === upperLevelOrgId;
+
+				if (memberAssignedInScope) {
+					return getCPPTStatusReport();
+				}
+
+				return asyncRight(
+					backend
+						.getSchema()
+						.getSession()
+						.sql(getMemberDutyInOrgSql(backend.getSchema().getName()))
+						.bind([req.member.id, upperLevelOrgId, req.member.id, upperLevelOrgId])
+						.execute(),
+					errorGenerator('Could not verify member duty scope'),
+				)
+					.map(result => result.fetchAll().length > 0)
+					.filter(hasDutyInScope => hasDutyInScope, {
+						type: 'OTHER',
+						code: 403,
+						message:
+							'Member must be assigned to this group/wing or hold a duty position in this group/wing to access this report',
+					})
+					.flatMap(() => getCPPTStatusReport());
+			}
+
+			return getCPPTStatusReport();
+		});
 	});
 
-export default withBackends(func, getRawMySQLBackend);
+export default withBackends(
+	func,
+	combineBackends<
+		BasicAccountRequest,
+		[
+			RawMySQLBackend,
+			Backends<[AccountBackend, MemberBackend, CAP.CAPMemberBackend, TeamsBackend]>,
+		]
+	>(getRawMySQLBackend, getCombinedMemberBackend()),
+);

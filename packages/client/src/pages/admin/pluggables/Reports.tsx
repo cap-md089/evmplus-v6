@@ -18,7 +18,7 @@
  */
 
 import {
-	// AccountType,
+	AccountType,
 	api,
 	AsyncEither,
 	asyncRight,
@@ -27,6 +27,7 @@ import {
 	Either,
 	hasOneDutyPosition,
 	hasPermission,
+	isRegularCAPAccountObject,
 	// isCAPMember,
 	Permissions,
 	reports,
@@ -76,10 +77,55 @@ const hasAllowedDutyPosition = hasOneDutyPosition([
 	'Deputy Commander For Cadets',
 ]);
 
-export const shouldRenderReports = (props: PageProps): boolean =>
-	!!props.member &&
-	(hasAllowedDutyPosition(props.member) ||
-		hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(props.member));
+const getUpperLevelOrgId = (props: PageProps): number | null => {
+	if (!isRegularCAPAccountObject(props.account)) {
+		return null;
+	}
+
+	if (props.account.type !== AccountType.CAPGROUP && props.account.type !== AccountType.CAPWING) {
+		return null;
+	}
+
+	return props.account.orgid;
+};
+
+const canAccessUpperLevelReports = (props: PageProps): boolean => {
+	if (!props.member || !isRegularCAPAccountObject(props.account)) {
+		return false;
+	}
+
+	if (props.account.type !== AccountType.CAPGROUP && props.account.type !== AccountType.CAPWING) {
+		return false;
+	}
+
+	const upperLevelOrgId = getUpperLevelOrgId(props);
+
+	if (upperLevelOrgId === null) {
+		return false;
+	}
+
+	const memberAssignedInScope = props.member.orgid === upperLevelOrgId;
+	const hasDutyInScope = props.member.dutyPositions.some(
+		duty => duty.type === 'NHQ' && duty.orgid === upperLevelOrgId,
+	);
+
+	return memberAssignedInScope || hasDutyInScope;
+};
+
+export const shouldRenderReports = (props: PageProps): boolean => {
+	if (!props.member || !isRegularCAPAccountObject(props.account)) {
+		return false;
+	}
+
+	if (props.account.type === AccountType.CAPGROUP || props.account.type === AccountType.CAPWING) {
+		return canAccessUpperLevelReports(props);
+	}
+
+	return (
+		hasAllowedDutyPosition(props.member) ||
+		hasPermission('PromotionManagement')(Permissions.PromotionManagement.FULL)(props.member)
+	);
+};
 
 export const canUseReports = (props: PageProps): boolean => {
 	if (!props.member) {
@@ -105,13 +151,7 @@ export const ReportsWidget = withFetchApi(
 				return;
 			}
 
-
-			const requests = await AsyncEither.All([
-				this.props.fetchApi.member.promotionrequirements.account({}, {}),
-				this.props.fetchApi.member.memberList(
-					{ type: 'CAPProspectiveMember' },
-					{},
-				),
+			const sharedRequests = await AsyncEither.All([
 				this.props.fetchApi.member.cpptstatus({}, {}),
 				// Ignore; this just preemptively loads pdfmake so we can use it whenever without actually going out to get the JS
 				asyncRight(import('pdfmake'), clientErrorGenerator('Could not import pdfmake')),
@@ -119,26 +159,56 @@ export const ReportsWidget = withFetchApi(
 				asyncRight(import('xlsx'), clientErrorGenerator('Could not import xlsx-js-style')),
 			]);
 
-			if (Either.isLeft(requests)) { 
+			if (Either.isLeft(sharedRequests)) {
 				this.setState(prev => ({
 					...prev,
 					state: 'ERROR',
-					error: requests.value.message,
+					error: sharedRequests.value.message,
 				}));
-			} else {
-				const [nhqMembers, newMembers, cpptStatuses] = requests.value;
+				return;
+			}
+
+			const [cpptStatuses] = sharedRequests.value;
+
+			if (this.props.account.type !== AccountType.CAPSQUADRON) {
 				this.setState(prev => ({
 					...prev,
 					state: 'LOADED',
-					newMembers,
-					nhqMembers,
+					newMembers: [],
+					nhqMembers: [],
 					cpptStatuses,
 				}));
+				return;
 			}
+
+			const sqrRequests = await AsyncEither.All([
+				this.props.fetchApi.member.promotionrequirements.account({}, {}),
+				this.props.fetchApi.member.memberList({ type: 'CAPProspectiveMember' }, {}),
+			]);
+
+			if (Either.isLeft(sqrRequests)) {
+				this.setState(prev => ({
+					...prev,
+					state: 'ERROR',
+					error: sqrRequests.value.message,
+				}));
+				return;
+			}
+
+			const [nhqMembers, newMembers] = sqrRequests.value;
+
+			this.setState(prev => ({
+				...prev,
+				state: 'LOADED',
+				newMembers,
+				nhqMembers,
+				cpptStatuses,
+			}));
 	}
 
 	public render = (): React.ReactElement => {
 		const isLoaded = this.state.state === 'LOADED';
+		const canViewSqrReports = this.props.account.type === AccountType.CAPSQUADRON;
 
 		return (
 			<div className="widget">
@@ -148,85 +218,89 @@ export const ReportsWidget = withFetchApi(
 						<div>{this.state.error}</div>
 					) : (
 						<>
+							{canViewSqrReports && (
+								<>
+									<div>
+										{isLoaded ? (
+											<>
+												SQR 52-1 Cadet Orientation Flight report &nbsp;
+												<Button
+													buttonType="none"
+													onClick={this.createsqr521Spreadsheet}
+												>
+													xlsx
+												</Button>
+											</>
+										) : (
+											this.renderCompactLoader()
+										)}
+										<br />
+									</div>
+									<div>
+										{isLoaded ? (
+											<>
+												SQR 60-1 Cadet status report &nbsp;
+												<Button onClick={() => this.createSQR601()} buttonType="none">
+													pdf
+												</Button>{' '}
+												&nbsp;
+												<Button
+													buttonType="none"
+													onClick={this.createsqr601Spreadsheet}
+												>
+													xlsx
+												</Button>
+											</>
+										) : (
+											this.renderCompactLoader()
+										)}
+										<br />
+									</div>
+									<div>
+										{isLoaded ? (
+											<>
+												SQR 60-1a Cadet status report by flight &nbsp;
+												<Button
+													buttonType="none"
+													onClick={this.createsqr601aSpreadsheet}
+												>
+													xlsx
+												</Button>
+											</>
+										) : (
+											this.renderCompactLoader()
+										)}
+										<br />
+									</div>
+									<div>
+										{isLoaded ? (
+											<>
+												SQR 60-20 Cadet HFZ report &nbsp;
+												<Button onClick={() => this.createSQR6020()} buttonType="none">
+													pdf
+												</Button>{' '}
+												&nbsp;
+												<Button
+													buttonType="none"
+													onClick={this.createsqr6020Spreadsheet}
+												>
+													xlsx
+												</Button>
+											</>
+										) : (
+											this.renderCompactLoader()
+										)}
+										<br />
+									</div>
+								</>
+							)}
 							<div>
 								{isLoaded ? (
 									<>
-										SQR 52-1 Cadet Orientation Flight report &nbsp;
+										RPT 60-3 CPPT Status &nbsp;
 										<Button
 											buttonType="none"
-											onClick={this.createsqr521Spreadsheet}
-										>
-											xlsx
-										</Button>
-									</>
-								) : (
-									this.renderCompactLoader()
-								)}
-								<br />
-							</div>
-							<div>
-								{isLoaded ? (
-									<>
-										SQR 60-1 Cadet status report &nbsp;
-										<Button onClick={() => this.createSQR601()} buttonType="none">
-											pdf
-										</Button>{' '}
-										&nbsp;
-										<Button
-											buttonType="none"
-											onClick={this.createsqr601Spreadsheet}
-										>
-											xlsx
-										</Button>
-									</>
-								) : (
-									this.renderCompactLoader()
-								)}
-								<br />
-							</div>
-							<div>
-								{isLoaded ? (
-									<>
-										SQR 60-1a Cadet status report by flight &nbsp;
-										<Button
-											buttonType="none"
-											onClick={this.createsqr601aSpreadsheet}
-										>
-											xlsx
-										</Button>
-									</>
-								) : (
-									this.renderCompactLoader()
-								)}
-								<br />
-							</div>
-							<div>
-								{isLoaded ? (
-									<>
-										SQR 60-20 Cadet HFZ report &nbsp;
-										<Button onClick={() => this.createSQR6020()} buttonType="none">
-											pdf
-										</Button>{' '}
-										&nbsp;
-										<Button
-											buttonType="none"
-											onClick={this.createsqr6020Spreadsheet}
-										>
-											xlsx
-										</Button>
-									</>
-								) : (
-									this.renderCompactLoader()
-								)}
-								<br />
-							</div>
-							<div>
-								{isLoaded ? (
-									<>
-										SQR 60-3 CPPT Status &nbsp;
-										<Button
-											buttonType="none"
-											onClick={this.createsqr603Spreadsheet}
+											onClick={this.createrpt603Spreadsheet}
 										>
 											xlsx
 										</Button>
@@ -399,7 +473,7 @@ export const ReportsWidget = withFetchApi(
 			XLSX.writeFile(wb, `SQR 60-20 ${this.props.account.id}-${formatdate}.xlsx`);
 		};
 
-		private createsqr603Spreadsheet = async (): Promise<void> => {
+		private createrpt603Spreadsheet = async (): Promise<void> => {
 			if (this.state.state !== 'LOADED' || !this.props.member) {
 				return;
 			}
@@ -413,17 +487,17 @@ export const ReportsWidget = withFetchApi(
 			const wb = XLSX.utils.book_new();
 
 			let wsName = 'UnitInfo';
-			const wsDataEvent = spreadsheets.sqr603CPPTXL();
+			const wsDataEvent = spreadsheets.rpt603CPPTXL();
 			let ws = XLSX.utils.aoa_to_sheet(wsDataEvent);
-			let sheet = spreadsheets.Formatsqr603CPPTXL(ws);
+			let sheet = spreadsheets.Formatrpt603CPPTXL(ws);
 			XLSX.utils.book_append_sheet(wb, sheet, wsName);
 
 			wsName = 'CPPTStatus';
-			const [wsDataAttendance, widths] = spreadsheets.sqr603CPPTMembersXL(
+			const [wsDataAttendance, widths] = spreadsheets.rpt603CPPTMembersXL(
 				this.state.cpptStatuses,
 			);
 			ws = XLSX.utils.aoa_to_sheet(wsDataAttendance);
-			sheet = spreadsheets.Formatsqr603CPPTMembersXL(
+			sheet = spreadsheets.Formatrpt603CPPTMembersXL(
 				ws,
 				widths,
 				wsDataAttendance.length,
@@ -441,7 +515,7 @@ export const ReportsWidget = withFetchApi(
 				now.getHours().toString().padStart(2, '0') +
 				now.getMinutes().toString().padStart(2, '0');
 
-			XLSX.writeFile(wb, `SQR 60-3 ${this.props.account.id}-${formatdate}.xlsx`, opts);
+			XLSX.writeFile(wb, `RPT 60-3 ${this.props.account.id}-${formatdate}.xlsx`, opts);
 		};
 
 		private createsqr601Spreadsheet = async (): Promise<void> => {
