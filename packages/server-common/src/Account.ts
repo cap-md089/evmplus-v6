@@ -713,13 +713,13 @@ export const getSubordinateCAPUnits = (backend: AccountBackend) => (
 		.flatMap(asyncIterRaiseEither(errorGenerator('Could not get subordinate unit information')))
 		.map(accounts => accounts.flatMap(identity));
 
-export const getSubordinateCAPUnitIDs = (schema: Schema) => (
+export const getSubordinateCAPUnitIDs = (backend: RawMySQLBackend) => (
 	wing: RegularCAPAccountObject,
 ): ServerEither<number[]> =>
-	asyncRight(schema.getSession(), errorGenerator('Could not get subordinate unit ORG IDs'))
+	asyncRight(backend.getSession(), errorGenerator('Could not get subordinate unit ORG IDs'))
 		.map(session =>
 			session
-				.sql(orgidQuerySQL(schema, getORGIDsFromRegularCAPAccount(wing)))
+				.sql(orgidQuerySQL(backend.getSchema(), getORGIDsFromRegularCAPAccount(wing)))
 				.bind(getORGIDsFromRegularCAPAccount(wing))
 				.execute(),
 		)
@@ -765,7 +765,7 @@ export interface AccountBackend {
 
 export const getAccountBackend = (
 	req: BasicMySQLRequest | BasicAccountRequest,
-	prevBackend: RegistryBackend,
+	prevBackend: Backends<[RegistryBackend, RawMySQLBackend]>,
 ): AccountBackend =>
 	'backend' in req
 		? req.backend
@@ -779,7 +779,7 @@ export const getAccountBackend = (
 
 export const getRequestFreeAccountsBackend = (
 	mysqlx: Schema,
-	prevBackend: Backends<[RegistryBackend]>,
+	prevBackend: Backends<[RegistryBackend, RawMySQLBackend]>,
 ): AccountBackend => {
 	const getCAPOrgInfo = memoize(getCAPOrganization(mysqlx));
 
@@ -817,7 +817,7 @@ export const getRequestFreeAccountsBackend = (
 				),
 			get('id'),
 		),
-		getSubordinateCAPUnitIDs: memoize(getSubordinateCAPUnitIDs(mysqlx), get('id')),
+		getSubordinateCAPUnitIDs: memoize(getSubordinateCAPUnitIDs(prevBackend), get('id')),
 		getSubordinateCAPUnits: unit => getSubordinateCAPUnits(backend)(unit),
 	};
 

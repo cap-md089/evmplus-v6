@@ -45,7 +45,7 @@ import {
 import { CAP } from './member/members';
 import { getPAMBackend, PAMBackend } from './member/pam';
 import { getMemberBackend, MemberBackend, getRequestFreeMemberBackend } from './Members';
-import { RawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
+import { RawMySQLBackend, getRawMySQLBackend, requestlessMySQLBackend } from './MySQLUtil';
 import { getRegistryBackend, RegistryBackend, getRequestFreeRegistryBackend } from './Registry';
 import { EmailBackend, getEmailBackend } from './sendEmail';
 import { getTaskBackend, TaskBackend } from './Task';
@@ -102,6 +102,7 @@ export const getCombinedEventsBackend = (): ((
 ) => Backends<
 	[
 		EmailBackend,
+		RawMySQLBackend,
 		CAP.CAPMemberBackend,
 		TeamsBackend,
 		MemberBackend,
@@ -117,6 +118,7 @@ export const getCombinedEventsBackend = (): ((
 		BasicMySQLRequest,
 		[
 			EmailBackend,
+			RawMySQLBackend,
 			CAP.CAPMemberBackend,
 			TimeBackend,
 			TeamsBackend,
@@ -129,6 +131,7 @@ export const getCombinedEventsBackend = (): ((
 		]
 	>(
 		getEmailBackend,
+		getRawMySQLBackend,
 		CAP.getCAPMemberBackend,
 		getTimeBackend,
 		getTeamsBackend,
@@ -176,11 +179,11 @@ export const getCombinedAttendanceBackend = (): ((
 
 export const getCombinedFileBackend = (): ((
 	req: BasicMySQLRequest,
-) => Backends<[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, FileBackend]>) =>
+) => Backends<[RawMySQLBackend, GenBackend<ReturnType<typeof getCombinedMemberBackend>>, FileBackend]>) =>
 	combineBackends<
 		BasicMySQLRequest,
-		[GenBackend<ReturnType<typeof getCombinedMemberBackend>>, FileBackend]
-	>(getCombinedMemberBackend(), getFileBackend);
+		[RawMySQLBackend, GenBackend<ReturnType<typeof getCombinedMemberBackend>>, FileBackend]
+	>(getRawMySQLBackend, getCombinedMemberBackend(), getFileBackend);
 
 export const getCombinedTasksBackend = (): ((
 	req: BasicAccountRequest,
@@ -212,9 +215,10 @@ export const getDefaultTestBackend = <
 		]
 	>
 >(
+	session: mysql.Session,
 	opts?: DefaultTestBackendOptions<T>,
 ): ((
-	mysql: mysql.Schema,
+	schema: mysql.Schema
 ) => Backends<
 	[
 		T,
@@ -252,7 +256,7 @@ export const getDefaultTestBackend = <
 	>(
 		always(opts?.overrides) as () => T,
 		(): EmailBackend => ({ sendEmail: () => () => asyncRight(void 0, errorGenerator('')) }),
-		requestlessMySQLBackend,
+		requestlessMySQLBackend(session),
 		getTimeBackend,
 		getRequestFreeRegistryBackend,
 		getRequestFreeAccountsBackend,

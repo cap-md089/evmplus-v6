@@ -634,7 +634,7 @@ export const upgradeProspectiveMemberToCAPNHQ = (
 	nhqReference: CAPNHQMemberReference,
 ): ServerEither<void> =>
 	asyncRight(
-		backend.getSchema().getSession().startTransaction(),
+		backend.getSession().startTransaction(),
 		errorGenerator('Could not get session'),
 	)
 		.filter(identity, {
@@ -642,7 +642,7 @@ export const upgradeProspectiveMemberToCAPNHQ = (
 			code: 500,
 			message: 'Failed to prepare to upgrade prospective member',
 		})
-		.map(always(backend.getSchema().getSession()))
+		.map(always(backend.getSession()))
 		.flatMap(session =>
 			AsyncEither.All([
 				asyncRight(

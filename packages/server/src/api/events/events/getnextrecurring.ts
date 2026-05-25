@@ -36,8 +36,10 @@ import {
 	generateResults,
 	getAccountBackend,
 	getCombinedEventsBackend,
+	getRawMySQLBackend,
 	getRegistryBackend,
 	getTimeBackend,
+	RawMySQLBackend,
 	RegistryBackend,
 	TimeBackend,
 	withBackends,
@@ -46,7 +48,7 @@ import { Endpoint } from '../../..';
 import wrapper from '../../../lib/wrapper';
 
 export const func: Endpoint<
-	Backends<[TimeBackend, AccountBackend, EventsBackend]>,
+	Backends<[RawMySQLBackend, TimeBackend, AccountBackend, EventsBackend]>,
 	api.events.events.GetNextRecurring
 > = backend => req =>
 	asyncRight(
@@ -74,6 +76,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicMySQLRequest,
-		[TimeBackend, RegistryBackend, AccountBackend, EventsBackend]
-	>(getTimeBackend, getRegistryBackend, getAccountBackend, getCombinedEventsBackend()),
+		[RawMySQLBackend, TimeBackend, RegistryBackend, AccountBackend, EventsBackend]
+	>(getRawMySQLBackend, getTimeBackend, getRegistryBackend, getAccountBackend, getCombinedEventsBackend()),
 );

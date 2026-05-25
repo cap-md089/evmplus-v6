@@ -104,7 +104,6 @@ declare module "@mysql/xdevapi" {
   }
 
   interface DatabaseObject {
-    getSession(): Session;
   }
 
   interface Grouping {
@@ -134,8 +133,6 @@ declare module "@mysql/xdevapi" {
     getNamespace(): string;
 
     getRawStatement(): string;
-
-    getSession(): Session;
   }
 
   interface TableFiltering {
@@ -179,8 +176,6 @@ declare module "@mysql/xdevapi" {
     public removeOne(id: string): Promise<Result>;
 
     public replaceOne(id: string, data: T): Promise<Result>;
-
-    public getSession(): Session;
   }
 
   class CollectionAdd<T> {
@@ -319,8 +314,6 @@ declare module "@mysql/xdevapi" {
     public getTables(): Promise<Table[]>;
 
     public inspect(): { name: string };
-
-    public getSession(): Session;
   }
 
   class Session {
@@ -453,8 +446,6 @@ declare module "@mysql/xdevapi" {
     public getNamespace(): string;
 
     public getRawStatement(): string;
-
-    public getSession(): Session;
   }
 
   class Table<T = any> {

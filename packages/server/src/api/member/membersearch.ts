@@ -116,7 +116,7 @@ export const func: Endpoint<
 			.flatMap(safeOrgIds =>
 				asyncRight(backend.getSchema(), errorGenerator('Could not get members'))
 					.map(schema =>
-						schema
+						backend
 							.getSession()
 							.sql(
 								memberSearchSQL(

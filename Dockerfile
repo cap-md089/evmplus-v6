@@ -20,12 +20,12 @@
 #
 # This container is what is used by most of the node containers
 #
-FROM node:16.14-buster AS base
+FROM node:26-bookworm AS base
 
 # Install the imagemagick library for favicons
 RUN apt update && \
 	apt install imagemagick \
-	&& yarn global add lerna@3.22
+	&& npm i -g yarn lerna@3.22
 
 #
 # This container provides the compiler used in a development environment,

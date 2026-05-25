@@ -464,18 +464,21 @@ export const getNewID = (account: AccountObject) => (
 
 export interface RawMySQLBackend {
 	getSchema: () => mysql.Schema;
+	getSession: () => mysql.Session;
 	getCollection: <T extends TableNames>(
 		tableName: T,
 	) => mysql.Collection<mysql.WithoutEmpty<TableDataType<T>>>;
 }
 
 export const getRawMySQLBackend = (req: BasicMySQLRequest): RawMySQLBackend => ({
+	getSession: always(req.mysqlxSession),
 	getSchema: always(req.mysqlx),
 	getCollection: <T extends TableNames>(name: T) =>
 		req.mysqlx.getCollection<TableDataType<T>>(name),
 });
 
-export const requestlessMySQLBackend = (schema: mysql.Schema): RawMySQLBackend => ({
+export const requestlessMySQLBackend = (session: mysql.Session) => (schema: mysql.Schema): RawMySQLBackend => ({
 	getSchema: always(schema),
+	getSession: always(session),
 	getCollection: <T extends TableNames>(name: T) => schema.getCollection<TableDataType<T>>(name),
 });

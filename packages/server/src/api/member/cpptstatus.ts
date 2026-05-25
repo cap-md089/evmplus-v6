@@ -160,7 +160,6 @@ export const func: Endpoint<
 			const getCPPTStatusReport = () =>
 				asyncRight(
 					backend
-						.getSchema()
 						.getSession()
 						.sql(getCPPTStatusSql(orgIds, backend.getSchema().getName()))
 						.bind(orgIds)
@@ -200,7 +199,6 @@ export const func: Endpoint<
 
 				return asyncRight(
 					backend
-						.getSchema()
 						.getSession()
 						.sql(getMemberDutyInOrgSql(backend.getSchema().getName()))
 						.bind([req.member.id, upperLevelOrgId, req.member.id, upperLevelOrgId])

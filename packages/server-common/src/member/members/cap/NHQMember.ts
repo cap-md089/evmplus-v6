@@ -61,6 +61,7 @@ import { loadExtraCAPMemberInformation } from '.';
 import { AccountBackend } from '../../..';
 import { Backends } from '../../../backends';
 import {
+	RawMySQLBackend,
 	bindForArray,
 	collectResults,
 	collectSqlResults,
@@ -71,18 +72,18 @@ import {
 import { ServerEither } from '../../../servertypes';
 import { TeamsBackend } from '../../../Team';
 
-export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string) => (
+export const getCAPNHQMembersForORGIDs = (backend: RawMySQLBackend) => (accountID: string) => (
 	rawTeamObjects: RawTeamObject[],
 ) => (ORGIDs: number[]): ServerEither<CAPNHQMemberObject[]> =>
 	asyncRight(
 		Promise.all([
 			collectSqlResults<NHQ.NHQMember>(
-				schema
+				backend
 					.getSession()
 					.sql(
 						`
 						SELECT doc FROM
-							${schema.getName()}.NHQ_Member
+							${backend.getSchema().getName()}.NHQ_Member
 						WHERE
 							ORGID in ${bindForArray(ORGIDs)};
 						`,
@@ -90,14 +91,14 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 					.bind(ORGIDs),
 			),
 			collectSqlResults<NHQ.MbrContact>(
-				schema
+				backend
 					.getSession()
 					.sql(
 						`
 						SELECT C.doc FROM
-							${schema.getName()}.NHQ_MbrContact AS C
+							${backend.getSchema().getName()}.NHQ_MbrContact AS C
 						INNER JOIN
-							${schema.getName()}.NHQ_Member AS M
+							${backend.getSchema().getName()}.NHQ_Member AS M
 						ON
 							C.CAPID = M.CAPID
 						WHERE
@@ -108,19 +109,19 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 			),
 			collectResults(
 				findAndBind(
-					schema.getCollection<CAPExtraMemberInformation>('ExtraMemberInformation'),
+					backend.getSchema().getCollection<CAPExtraMemberInformation>('ExtraMemberInformation'),
 					{
 						accountID,
 					},
 				),
 			),
 			collectSqlResults<NHQ.DutyPosition>(
-				schema
+				backend
 					.getSession()
 					.sql(
 						`
 						SELECT doc FROM
-							${schema.getName()}.NHQ_DutyPosition
+							${backend.getSchema().getName()}.NHQ_DutyPosition
 						WHERE
 							ORGID in ${bindForArray(ORGIDs)};
 					`,
@@ -128,12 +129,12 @@ export const getCAPNHQMembersForORGIDs = (schema: Schema) => (accountID: string)
 					.bind(ORGIDs),
 			),
 			collectSqlResults<NHQ.CadetDutyPosition>(
-				schema
+				backend
 					.getSession()
 					.sql(
 						`
 						SELECT doc FROM
-							${schema.getName()}.NHQ_CadetDutyPosition
+							${backend.getSchema().getName()}.NHQ_CadetDutyPosition
 						WHERE
 							ORGID in ${bindForArray(ORGIDs)};
 					`,
@@ -937,16 +938,16 @@ const achvResultsReducers: Array<
 	],
 ];
 
-export const getUnitPromotionRequirements = (schema: Schema) => (
+export const getUnitPromotionRequirements = (backend: RawMySQLBackend) => (
 	account: RawCAPSquadronAccountObject,
 ): ServerEither<{ [CAPID: number]: CadetPromotionStatus }> =>
 	asyncRight(
-		schema.getSession(),
+		backend.getSession(),
 		errorGenerator('Could not get promotion requirements for the unit'),
 	)
 		.map(session =>
 			session
-				.sql('USE ' + schema.getName())
+				.sql('USE ' + backend.getSchema().getName())
 				.execute()
 				.then(always(session)),
 		)
@@ -1077,7 +1078,7 @@ WITH
 (SELECT * FROM LASTHFZ) UNION
 (SELECT * FROM LASTHFZPASS);`;
 
-export const getCadetPromotionRequirements = (schema: Schema) => (
+export const getCadetPromotionRequirements = (backend: RawMySQLBackend) => (
 	member: CAPNHQMemberObject,
 ): ServerEither<CadetPromotionStatus> =>
 	member.seniorMember
@@ -1086,10 +1087,10 @@ export const getCadetPromotionRequirements = (schema: Schema) => (
 				code: 400,
 				message: 'Cannot get promotion requirements for a senior member',
 		  })
-		: asyncRight(schema.getSession(), errorGenerator('Could not load promotion requirements'))
+		: asyncRight(backend.getSession(), errorGenerator('Could not load promotion requirements'))
 				.map(session =>
 					session
-						.sql('USE ' + schema.getName())
+						.sql('USE ' + backend.getSchema().getName())
 						.execute()
 						.then(always(session)),
 				)

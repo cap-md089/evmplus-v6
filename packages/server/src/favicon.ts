@@ -38,10 +38,12 @@ import {
 	getAccountBackend,
 	getCombinedMemberBackend,
 	getFileBackend,
+	getRawMySQLBackend,
 	getRegistryBackend,
 	MemberBackend,
 	MySQLRequest,
 	PAM,
+	RawMySQLBackend,
 	RegistryBackend,
 } from 'server-common';
 
@@ -50,8 +52,9 @@ export default async (request: express.Request, res: express.Response): Promise<
 
 	const backend = combineBackends<
 		BasicMySQLRequest,
-		[RegistryBackend, AccountBackend, CAP.CAPMemberBackend, MemberBackend, FileBackend]
+		[RawMySQLBackend, RegistryBackend, AccountBackend, CAP.CAPMemberBackend, MemberBackend, FileBackend]
 	>(
+		getRawMySQLBackend,
 		getRegistryBackend,
 		getAccountBackend,
 		CAP.getCAPMemberBackend,

@@ -67,6 +67,7 @@ import { Backends, notImplementedError } from './backends';
 import { CAP } from './member/members';
 import { MemberBackend } from './Members';
 import {
+	RawMySQLBackend,
 	collectResults,
 	deleteItemFromCollectionA,
 	findAndBind,
@@ -95,7 +96,7 @@ type LoadedUserFileObject<T extends boolean> = T extends true
 	? { file: FileObject; fileChildrenCount: number }
 	: { file: FileObject };
 
-export const getUserFileObject = (backend: Backends<[MemberBackend]>) => (schema: Schema) => <
+export const getUserFileObject = (backend: Backends<[RawMySQLBackend, MemberBackend]>) => (schema: Schema) => <
 	T extends boolean
 >(
 	loadFileChildrenCount: T,
@@ -110,7 +111,7 @@ export const getUserFileObject = (backend: Backends<[MemberBackend]>) => (schema
 			: backend.getMember(account)(member),
 		loadFileChildrenCount
 			? asyncRight(
-					schema
+					backend
 						.getSession()
 						.sql(
 							`
@@ -292,7 +293,7 @@ export const getPersonalFoldersParentFolder = (account: AccountObject): RawFileO
 });
 
 export const getFilePath = (schema: Schema) => (
-	backend: Backends<[FileBackend, MemberBackend]>,
+	backend: Backends<[RawMySQLBackend, FileBackend, MemberBackend]>,
 ) => (account: AccountObject) => (member: MaybeObj<User>) => (
 	file: RawFileObject,
 ): ServerEither<
@@ -367,7 +368,7 @@ export const getFilePath = (schema: Schema) => (
 		  );
 
 export const getRegularFileObject = (schema: Schema) => (
-	backend: Backends<[FileBackend, MemberBackend]>,
+	backend: Backends<[RawMySQLBackend, FileBackend, MemberBackend]>,
 ) => (account: AccountObject) => (member: MaybeObj<User>) => (
 	fileID: string,
 ): ServerEither<RawFileObject> =>
@@ -401,7 +402,7 @@ export const getRegularFileObject = (schema: Schema) => (
 		);
 
 export const getFileObject = (schema: Schema) => (
-	backend: Backends<[FileBackend, MemberBackend]>,
+	backend: Backends<[RawMySQLBackend, FileBackend, MemberBackend]>,
 ) => (account: AccountObject) => (member: MaybeObj<User>) => (
 	fileID: string | null,
 ): ServerEither<RawFileObject> =>
@@ -436,7 +437,7 @@ export const getFileObject = (schema: Schema) => (
 	);
 
 export const expandRawFileObject = (schema: Schema) => (
-	backend: Backends<[MemberBackend, FileBackend]>,
+	backend: Backends<[RawMySQLBackend, MemberBackend, FileBackend]>,
 ) => (account: AccountObject) => (member: MaybeObj<User>) => (
 	file: RawFileObject,
 ): ServerEither<FileObject> =>
@@ -445,7 +446,7 @@ export const expandRawFileObject = (schema: Schema) => (
 		folderPath,
 	}));
 
-export const expandFileObject = (backend: Backends<[MemberBackend, FileBackend]>) => (
+export const expandFileObject = (backend: Backends<[RawMySQLBackend, MemberBackend, FileBackend]>) => (
 	account: AccountObject,
 ) => (file: FileObject): ServerEither<FullFileObject> =>
 	backend
@@ -548,7 +549,7 @@ export const deleteFileObject = (conf: ServerConfiguration) => (schema: Schema) 
 
 export const getChildren = (schema: Schema) => (
 	backend: Backends<
-		[AccountBackend, FileBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]
+		[RawMySQLBackend, AccountBackend, FileBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]
 	>,
 ) => (account: AccountObject) => (requester: MaybeObj<User>) => (
 	file: RawFileObject,
@@ -640,7 +641,7 @@ export interface FileBackend {
 	saveFileObject: (file: RawFileObject) => ServerEither<RawFileObject>;
 	getChildren: (
 		backends: Backends<
-			[AccountBackend, FileBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]
+			[RawMySQLBackend, AccountBackend, FileBackend, MemberBackend, TeamsBackend, CAP.CAPMemberBackend]
 		>,
 	) => (
 		member: MaybeObj<User>,
@@ -649,7 +650,7 @@ export interface FileBackend {
 
 export const getFileBackend = (
 	req: BasicMySQLRequest,
-	prevBackend: Backends<[AccountBackend, MemberBackend]>,
+	prevBackend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
 ): FileBackend => {
 	const backend: FileBackend = {
 		...getRequestFreeFileBackend(req.mysqlx, prevBackend),
@@ -663,7 +664,7 @@ export const getFileBackend = (
 
 export const getRequestFreeFileBackend = (
 	mysqlx: Schema,
-	prevBackend: Backends<[AccountBackend, MemberBackend]>,
+	prevBackend: Backends<[RawMySQLBackend, AccountBackend, MemberBackend]>,
 ): FileBackend => {
 	const backend: FileBackend = {
 		getFileObject: memoize(

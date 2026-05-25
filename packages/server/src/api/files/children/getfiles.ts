@@ -36,7 +36,9 @@ import {
 	FileBackend,
 	getCombinedMemberBackend,
 	getFileBackend,
+	getRawMySQLBackend,
 	MemberBackend,
+	RawMySQLBackend,
 	TeamsBackend,
 	withBackends,
 } from 'server-common';
@@ -48,7 +50,7 @@ const canRead = userHasFilePermission(FileUserAccessControlPermissions.READ);
 const logFunc = debug('server:api:files:children:getfiles');
 
 export const func: Endpoint<
-	Backends<[AccountBackend, TeamsBackend, FileBackend, MemberBackend, CAP.CAPMemberBackend]>,
+	Backends<[RawMySQLBackend, AccountBackend, TeamsBackend, FileBackend, MemberBackend, CAP.CAPMemberBackend]>,
 	api.files.children.GetBasicFiles
 > = backend => req =>
 	backend
@@ -78,6 +80,6 @@ export default withBackends(
 	func,
 	combineBackends<
 		BasicAccountRequest,
-		[Backends<[AccountBackend, TeamsBackend, MemberBackend, CAP.CAPMemberBackend]>, FileBackend]
-	>(getCombinedMemberBackend(), getFileBackend),
+		[RawMySQLBackend, Backends<[AccountBackend, TeamsBackend, MemberBackend, CAP.CAPMemberBackend]>, FileBackend]
+	>(getRawMySQLBackend, getCombinedMemberBackend(), getFileBackend),
 );

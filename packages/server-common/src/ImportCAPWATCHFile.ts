@@ -358,7 +358,7 @@ export default async function* (
 			CAP.CAPMemberBackend,
 		]
 	>(
-		requestlessMySQLBackend,
+		requestlessMySQLBackend(session),
 		getRequestFreeRegistryBackend,
 		getRequestFreeAccountsBackend,
 		getTimeBackend,

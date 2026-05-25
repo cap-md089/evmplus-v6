@@ -320,7 +320,7 @@ export const memberEventTags = (backend: Backends<[RawMySQLBackend]>) => (accoun
 	memberReference: CAPNHQMemberReference,
 ): ServerEither<string[]> =>
 	asyncRight(
-		backend.getSchema().getSession(),
+		backend.getSession(),
 		errorGenerator('Could not get current member requirement tags'),
 	)
 		.map(session =>
@@ -382,7 +382,7 @@ export const getRequestFreeCAPMemberBackend = (
 					.getTeams(account)
 					.flatMap(teams =>
 						Maybe.isSome(getORGIDsFromCAPAccount(account))
-							? getCAPNHQMembersForORGIDs(mysqlx)(account.id)(teams)(
+							? getCAPNHQMembersForORGIDs(prevBackends)(account.id)(teams)(
 									(getORGIDsFromCAPAccount(account) as Some<number[]>).value,
 							  ).map(Maybe.some)
 							: asyncRight(Maybe.none(), errorGenerator('Could not get members')),
@@ -397,12 +397,12 @@ export const getRequestFreeCAPMemberBackend = (
 		upgradeProspectiveMemberToCAPNHQ({ ...backend, ...prevBackends }),
 	getBirthday: memoize(getBirthday(mysqlx), stringifyMemberReference),
 	getPromotionRequirements: memoize(
-		getCadetPromotionRequirements(mysqlx),
+		getCadetPromotionRequirements(prevBackends),
 		stringifyMemberReference,
 	),
 	getOrgInfo: memoize(getOrgInfo(prevBackends), ({ orgid }) => orgid),
 	getMemberEventTags: memberEventTags(prevBackends),
-	getAccountPromotionRequirements: getUnitPromotionRequirements(mysqlx),
+	getAccountPromotionRequirements: getUnitPromotionRequirements(prevBackends),
 });
 
 export const getEmptyCAPMemberBackend = (): CAPMemberBackend => ({
