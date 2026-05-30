@@ -181,7 +181,7 @@ ENV LANG en_US.UTF-8
 
 RUN apt update \
 	&& apt install -y --no-install-recommends \
-	ca-certificates apt-transport-https wget libpython2.7 python locales bash cron zip \
+	ca-certificates apt-transport-https wget python3 locales bash cron zip \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
 	&& wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
