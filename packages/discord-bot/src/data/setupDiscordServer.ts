@@ -61,7 +61,7 @@ export const setupCAPServer = (config: DiscordCLIConfiguration) => (mysql: MySQL
 ) => (guildId: string) => async (rules: Partial<DiscordSetupRules>): Promise<void> => {
 	const { schema, session } = await getXSession(config, mysql);
 
-	const backend = getDiscordBackend(schema);
+	const backend = getDiscordBackend(session)(schema);
 
 	try {
 		const guild = await client.guilds.fetch(guildId);

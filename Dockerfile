@@ -20,11 +20,28 @@
 #
 # This container is what is used by most of the node containers
 #
-FROM node:26-bookworm AS base
+FROM debian:trixie-slim AS node-base
+
+# Set environment variables for the Node version
+ENV NODE_VERSION=16.14.2
+
+# Install dependencies needed to fetch and extract the archive
+RUN apt-get update && apt-get install -y \
+    curl \
+    ca-certificates \
+    xz-utils \
+    && curl -fsSLO "https://nodejs.org/download/release/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
+    && tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
+    && rm "node-v$NODE_VERSION-linux-x64.tar.xz" \
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs
+
+CMD [ "node" ]
+
+FROM node-base AS base
 
 # Install the imagemagick library for favicons
 RUN apt update && \
-	apt install imagemagick \
+	apt install -y imagemagick \
 	&& npm i -g yarn lerna@3.22
 
 #
@@ -36,7 +53,7 @@ FROM base AS development-builder
 WORKDIR /usr/evm-plus
 
 RUN yarn global add typescript ttypescript \
-	&& apt install git
+	&& apt install -y git
 
 #
 # This container is used to program in a Docker environment, and access

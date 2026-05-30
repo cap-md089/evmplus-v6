@@ -17,7 +17,7 @@
  * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import { asyncRight, errorGenerator } from 'common-lib';
 import {
 	combineBackends,
@@ -64,7 +64,7 @@ export type DiscordBackends = Backends<
 	]
 >;
 
-export const getDiscordBackend = combineBackends<
+export const getDiscordBackend = (session: Session) => combineBackends<
 	Schema,
 	[
 		EmailBackend,
@@ -83,7 +83,7 @@ export const getDiscordBackend = combineBackends<
 	]
 >(
 	(): EmailBackend => ({ sendEmail: () => () => asyncRight(void 0, errorGenerator('')) }),
-	requestlessMySQLBackend,
+	requestlessMySQLBackend(session),
 	getTimeBackend,
 	getRequestFreeRegistryBackend,
 	getRequestFreeAccountsBackend,

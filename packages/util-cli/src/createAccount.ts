@@ -146,7 +146,7 @@ void (async () => {
 		id: parseInt(capidInput, 10),
 	};
 
-	const backend = backendGenerator(config)(session.getSchema(config.DB_SCHEMA));
+	const backend = backendGenerator(config)(session)(session.getSchema(config.DB_SCHEMA));
 
 	await backend.setPermissions(accountObj)(member)(
 		getDefaultAdminPermissions(AccountType.CAPSQUADRON),

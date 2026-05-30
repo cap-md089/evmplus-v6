@@ -43,7 +43,7 @@ export default async (
 	const session = await mysqlClient.getSession();
 	const schema = session.getSchema(conf.DB_SCHEMA);
 
-	const backend = getDiscordBackend(schema);
+	const backend = getDiscordBackend(session)(schema);
 
 	try {
 		const account = await backend.getAccount(accountID).fullJoin();

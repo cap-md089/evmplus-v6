@@ -74,7 +74,7 @@ export default (client: Client) => (mysqlClient: mysql.Client) => (conf: Discord
 
 	const { schema, session } = await getXSession(conf, mysqlClient);
 
-	const backend = getDiscordBackend(schema);
+	const backend = getDiscordBackend(session)(schema);
 
 	try {
 		const account = await getAccount(schema)(guild.id);

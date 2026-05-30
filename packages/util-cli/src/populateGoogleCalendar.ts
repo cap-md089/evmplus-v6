@@ -86,7 +86,7 @@ void (async () => {
 		.getSchema(config.DB_SCHEMA)
 		.getCollection<EventObject>('Events');
 
-	const backend = backendGenerator(config)(session.getSchema(config.DB_SCHEMA));
+	const backend = backendGenerator(config)(session)(session.getSchema(config.DB_SCHEMA));
 
 	const accountEither = await backend.getAccount(accountid);
 

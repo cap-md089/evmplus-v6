@@ -17,12 +17,11 @@
  * along with Event Manager.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { Schema } from '@mysql/xdevapi';
+import { Schema, Session } from '@mysql/xdevapi';
 import { asyncRight, CLIConfiguration, errorGenerator } from 'common-lib';
 import {
 	AccountBackend,
 	AuditsBackend,
-	Backends,
 	CAP,
 	combineBackends,
 	EmailBackend,
@@ -49,24 +48,7 @@ import {
 
 export const backendGenerator = (
 	conf: CLIConfiguration,
-): ((
-	schema: Schema,
-) => Backends<
-	[
-		TimeBackend,
-		RawMySQLBackend,
-		RegistryBackend,
-		AccountBackend,
-		TeamsBackend,
-		CAP.CAPMemberBackend,
-		MemberBackend,
-		FileBackend,
-		AuditsBackend,
-		GoogleBackend,
-		EventsBackend,
-		PAM.PAMBackend,
-	]
->) =>
+) => (session: Session) =>
 	combineBackends<
 		Schema,
 		[
@@ -86,7 +68,7 @@ export const backendGenerator = (
 		]
 	>(
 		(): EmailBackend => ({ sendEmail: () => () => asyncRight(void 0, errorGenerator('')) }),
-		requestlessMySQLBackend,
+		requestlessMySQLBackend(session),
 		getTimeBackend,
 		getRequestFreeRegistryBackend,
 		getRequestFreeAccountsBackend,

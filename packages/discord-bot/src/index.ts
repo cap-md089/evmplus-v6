@@ -94,7 +94,7 @@ export default function setupDiscordBot(
 			return;
 		}
 
-		const backend = getDiscordBackend(schema);
+		const backend = getDiscordBackend(session)(schema);
 
 		const guildUserSetup = userSetupFunction(backend)(discordServer.value.serverID);
 		const account = await getAccount(schema)(discordServer.value.serverID);
@@ -237,7 +237,7 @@ export default function setupDiscordBot(
 			return;
 		}
 
-		const backend = getDiscordBackend(schema);
+		const backend = getDiscordBackend(session)(schema);
 
 		const guildUserSetup = userSetupFunction(backend)(discordServer.value.serverID);
 		const account = await getAccount(schema)(discordServer.value.serverID);
@@ -274,7 +274,7 @@ export default function setupDiscordBot(
 
 		const capunitMember = await getMember(schema)(member);
 
-		const backend = getDiscordBackend(schema);
+		const backend = getDiscordBackend(session)(schema);
 
 		try {
 			if (capunitMember.hasValue) {

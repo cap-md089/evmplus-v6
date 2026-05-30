@@ -90,7 +90,7 @@ void (async () => {
     // const schema = session.getSchema(cliConf.DB_SCHEMA);
 	// const capImport = ImportCAPWATCHFile(capwatchPath, schema, session);
 
-    const backend = backendGenerator(cliConf)(session.getSchema(cliConf.DB_SCHEMA));
+    const backend = backendGenerator(cliConf)(session)(session.getSchema(cliConf.DB_SCHEMA));
 
     const inAccount = await backend.getAccount(accountID)
     if (Either.isLeft(inAccount)) {
