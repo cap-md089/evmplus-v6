@@ -181,7 +181,7 @@ ENV LANG en_US.UTF-8
 
 RUN apt update \
 	&& apt install -y --no-install-recommends \
-	ca-certificates apt-transport-https wget python3 locales bash cron zip \
+	ca-certificates apt-transport-https wget python3 locales bash cron zip unzip \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8 \
 	&& wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.25-linux-glibc2.12-x86-64bit.tar.gz \
@@ -205,10 +205,10 @@ COPY cronjobs/backup.sh ./cronjobs/backup.sh
 COPY cronjobs/start-crond.sh ./cronjobs/start-crond.sh
 COPY scripts/database-dump.js ./cronjobs/database-dump.js
 
-RUN chmod 0744 /etc/cron.d/crontab \
-	&& chmod 0744 /usr/evm-plus/cronjobs/download.sh \
-	&& chmod 0744 /usr/evm-plus/cronjobs/backup.sh \
-	&& chmod 0744 /usr/evm-plus/cronjobs/start-crond.sh \
+RUN chmod 0755 /etc/cron.d/crontab \
+	&& chmod 0755 /usr/evm-plus/cronjobs/download.sh \
+	&& chmod 0755 /usr/evm-plus/cronjobs/backup.sh \
+	&& chmod 0755 /usr/evm-plus/cronjobs/start-crond.sh \
 	&& crontab /etc/cron.d/crontab \
 	&& touch /var/log/cron.log
 
