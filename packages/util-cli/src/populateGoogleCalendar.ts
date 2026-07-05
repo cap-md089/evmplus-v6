@@ -84,6 +84,16 @@ void (async () => {
 
 	await session
 		.getSchema(config.DB_SCHEMA)
+		.getCollection<AccountObject>('Accounts')
+		.modify('id = :id')
+		.bind('id', accountid)
+		.patch({mainCalendarID: newCalendarID})
+		.execute();
+
+	await session.close();
+
+	await session
+		.getSchema(config.DB_SCHEMA)
 		.getCollection<EventObject>('Events');
 
 	const backend = backendGenerator(config)(session.getSchema(config.DB_SCHEMA));
@@ -99,6 +109,7 @@ void (async () => {
 	const account = accountEither.value;
 
 	const events = backend.queryEvents('true')(account)({});
+
 
 	// clear new calendar
 	try{
@@ -130,16 +141,6 @@ void (async () => {
     }
 
 	console.log(`Finished processing events for account ${accountid}`);
-
-	await session
-		.getSchema(config.DB_SCHEMA)
-		.getCollection<AccountObject>('Accounts')
-		.modify('id = :id')
-		.bind('id', account.id)
-		.patch({mainCalendarID: newCalendarID})
-		.execute();
-
-	await session.close();
 
 	readlineInterface.close();
 
