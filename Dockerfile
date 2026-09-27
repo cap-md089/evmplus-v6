@@ -52,7 +52,7 @@ FROM base AS development-builder
 
 WORKDIR /usr/evm-plus
 
-RUN yarn global add typescript ttypescript \
+RUN yarn global add typescript@6 ttypescript \
 	&& apt install -y git
 
 #
