@@ -56,10 +56,10 @@ export const CadetExecutiveStaffRoles = [
 	'Cadet Commander',
 	'Cadet Deputy Commander for Operations',
 	'Cadet Deputy Commander for Support',
+	'Cadet First Sergeant',
 ];
 
 export const CadetLineStaffRoles = [
-	'Cadet First Sergeant',
 	'Cadet Flight Commander',
 	'Cadet Flight Sergeant',
 	'Cadet Element Leader',
